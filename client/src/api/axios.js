@@ -1,8 +1,8 @@
-import axios from 'axios'
+import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL,
+  baseURL: "https://zaincode.io/api",
   withCredentials: true, // ✅ this is crucial
-})
+});
 
-export default api
+export default api;
