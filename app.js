@@ -138,8 +138,8 @@ if (isProduction) {
 
   app.use(express.static(clientBuildPath));
 
-  // SPA fallback (only non-API routes)
-  app.get("*", (req, res, next) => {
+  // SPA fallback (Fixed for Node 22/path-to-regexp)
+  app.get("(.*)", (req, res, next) => {
     if (req.path.startsWith("/api")) return next();
     res.sendFile(path.join(clientBuildPath, "index.html"));
   });
