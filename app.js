@@ -133,17 +133,17 @@ app.get("/health", (req, res) => {
 /* =========================
    Frontend Serve (PROD)
 ========================= */
-// if (isProduction) {
-//   const clientBuildPath = path.join(__dirname, "client", "dist");
+if (isProduction) {
+  const clientBuildPath = path.join(__dirname, "client", "dist");
 
-//   app.use(express.static(clientBuildPath));
+  app.use(express.static(clientBuildPath));
 
-//   // SPA fallback (only non-API routes)
-//   app.get("/*./", (req, res, next) => {
-//     if (req.path.startsWith("/api")) return next();
-//     res.sendFile(path.join(clientBuildPath, "index.html"));
-//   });
-// }
+  // SPA fallback (only non-API routes)
+  app.get(/^(.*)$/, (req, res, next) => {
+    if (req.path.startsWith("/api")) return next();
+    res.sendFile(path.join(clientBuildPath, "index.html"));
+  });
+}
 
 /* =========================
    API 404
