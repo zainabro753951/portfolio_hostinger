@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "build": "VITE_BACKEND_URL=/api VITE_SOCKET_URL=/ npm install --prefix client --include=dev && npm run build --prefix client",
+    "build": "npm install --prefix client --include=dev && cross-env VITE_BACKEND_URL=/api VITE_SOCKET_URL=/ npm run build --prefix client",
     "create-super-admin": "node seeders/CreateSuperAdmin.js"
   },
   "type": "module",
@@ -36,5 +36,8 @@
     "socket.io": "^4.8.3",
     "ua-parser-js": "^2.0.7",
     "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0"
   }
 }
