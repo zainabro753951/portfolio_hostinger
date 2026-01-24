@@ -3,13 +3,14 @@ import { Server } from "socket.io";
 let io;
 
 export const initSocket = (server) => {
+  // Agar same port hai, toh 'cors' object ki zaroorat nahi padti
+  // Magar development flexibility ke liye hum isse empty ya specific rakh sakte hain
   io = new Server(server, {
     cors: {
-      origin: process.env.FRONTEND_URLS?.split(",") || [
-        "http://localhost:5173",
-        "http://localhost:5174",
-      ],
-      credentials: true,
+      // Same port ke liye "*" ya origin define karne ki sakht zaroorat nahi hoti
+      // Lekin agar aap safe side rehna chahte hain:
+      origin: "*",
+      methods: ["GET", "POST"],
     },
   });
 
@@ -18,17 +19,15 @@ export const initSocket = (server) => {
   io.on("connection", (socket) => {
     console.log("🟢 Socket Connected:", socket.id);
 
-    // Add user
     activeUsers.set(socket.id, true);
 
-    // 🔥 Broadcast updated count to ALL clients
+    // Broadcast count
     io.emit("activeUsersCount", {
       count: activeUsers.size,
     });
 
-    // 🔴 Disconnect event
     socket.on("disconnect", (reason) => {
-      console.log("🔴 Socket Disconnected:", socket.id, "| Reason:", reason);
+      console.log("🔴 Socket Disconnected:", socket.id);
       activeUsers.delete(socket.id);
 
       io.emit("activeUsersCount", {
