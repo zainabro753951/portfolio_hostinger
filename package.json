@@ -1,11 +1,11 @@
 {
   "name": "admin_backend",
   "version": "1.0.0",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "build": "npm install --prefix client --include=dev && npx cross-env VITE_BACKEND_URL=/api VITE_SOCKET_URL=/ npm run build --prefix client",
+    "build": "npm install --prefix client --include=dev && npm run build --prefix client",
     "create-super-admin": "node seeders/CreateSuperAdmin.js"
   },
   "type": "module",
@@ -36,8 +36,5 @@
     "socket.io": "^4.8.3",
     "ua-parser-js": "^2.0.7",
     "winston": "^3.19.0"
-  },
-  "devDependencies": {
-    "cross-env": "^10.1.0"
   }
 }
