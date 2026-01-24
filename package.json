@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "build": "npm install --prefix client --include=dev && npm run build --prefix client",
+    "build": "VITE_BACKEND_URL=/api VITE_SOCKET_URL=/ npm install --prefix client --include=dev && npm run build --prefix client",
     "create-super-admin": "node seeders/CreateSuperAdmin.js"
   },
   "type": "module",

@@ -5,6 +5,8 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
 
+  base: "/", // 👈 IMPORTANT
+
   // DEV only
   server:
     mode === "development"
