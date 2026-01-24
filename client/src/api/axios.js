@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://zaincode.io/api",
+  baseURL: import.meta.env.VITE_BACKEND_URL,
   withCredentials: true, // ✅ this is crucial
 });
 
