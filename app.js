@@ -134,14 +134,26 @@ app.get("/health", (req, res) => {
    Frontend Serve (PROD)
 ========================= */
 if (isProduction) {
-  const clientBuildPath = path.join(__dirname, "client", "dist");
+  const clientBuildPath = path.resolve(__dirname, "client", "dist");
 
-  app.use(express.static(clientBuildPath));
+  // 1. Static files ko serve karein (CSS, JS, Images)
+  // 'index: false' isliye taake ye khud se index.html serve na kare, hum niche control karenge
+  app.use(express.static(clientBuildPath, { index: false }));
 
-  // SPA fallback (Fixed for Node 22/path-to-regexp)
-  app.get("(.*)", (req, res, next) => {
-    if (req.path.startsWith("/api")) return next();
-    res.sendFile(path.join(clientBuildPath, "index.html"));
+  // 2. SPA fallback - Sirf un requests ke liye jo upar kisi API ya file se match nahi huin
+  // Node 22 ke liye '/:any*' sabse safe wildcard hai
+  app.get("/:any*", (req, res, next) => {
+    // Agar request '/api' se shuru ho rahi hai toh usey ignore karein
+    // taake niche wala 'API 404' handler usay pakar sake
+    if (req.path.startsWith("/api")) {
+      return next();
+    }
+
+    res.sendFile(path.join(clientBuildPath, "index.html"), (err) => {
+      if (err) {
+        next(err); // Global error handler ko bhej dein
+      }
+    });
   });
 }
 
