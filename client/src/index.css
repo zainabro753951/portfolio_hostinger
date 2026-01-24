@@ -1,0 +1,177 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-theme-purple: #9235ea;
+  --color-theme-cyan: #06b6d4;
+  --color-light-blue: #5161cf;
+  --color-theme-dark: #0f0921;
+  --font-fira-code: 'Fira Code', monospace;
+  --font-inter: 'Inter', sans-serif;
+  --breakpoint-xs: 300px;
+}
+.gradient-text {
+  background: linear-gradient(to right, #9235ea, #5161cf, #06b6d4); /* Gradient colors */
+  -webkit-background-clip: text; /* Safari, Chrome */
+  -webkit-text-fill-color: transparent; /* Safari, Chrome */
+  background-clip: text; /* Firefox */
+  color: transparent;
+}
+
+.reloader-text {
+  font-weight: 700;
+  background: linear-gradient(90deg, #0ae5ff, #0a1dff, #0ae5ff);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  animation: gradientMove 3s linear infinite;
+}
+
+@keyframes gradientMove {
+  0% {
+    background-position: 0% center;
+  }
+  50% {
+    background-position: 100% center;
+  }
+  100% {
+    background-position: 0% center;
+  }
+}
+
+.gradient-button {
+  background-image: linear-gradient(to right, #9235ea, #5161cf, #06b6d4);
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.gradient-button-shadow:hover {
+  box-shadow: 0 0 20px #06b5d4cd;
+  margin-bottom: 2px;
+  margin-top: -2px;
+}
+
+.bg-circut {
+  background-image: url('/imgs/bg-circuit.png');
+  background-position: center center;
+}
+.purple-shadow-circle {
+  box-shadow: 0 0 40px 20px rgba(147, 53, 234, 0.171), 0 0 100px 40px rgba(147, 53, 234, 0.098),
+    0 0 250px 90px rgba(147, 53, 234, 0.057), 0 0 180px 60px rgba(147, 53, 234, 0.016);
+}
+
+.half-cirle-left {
+  border-radius: 50% 0% 0% 50%;
+}
+.half-cirle-right {
+  border-radius: 0% 50% 50% 0%;
+}
+
+.badge:hover .black-circle {
+  box-shadow: 0 0 10px #06b6d4, 0 0 20px #06b6d4, 0 0 30px #06b6d4;
+}
+
+.badge:hover {
+  margin-top: -2px;
+  margin-bottom: 2px;
+}
+.exp-cards:hover {
+  box-shadow: 0 0 10px #06b5d46c, 0 0 20px #06b5d463, 0 0 30px #06b5d442;
+  margin-top: -2px;
+  margin-bottom: 2px;
+}
+
+.code-block {
+  box-shadow: 0 0 10px #06b5d46c, 0 0 20px #06b5d41f;
+}
+
+.list-tick li::before {
+  content: '\2713';
+  color: #06b6d4;
+  font-weight: 900;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.text-hover:hover {
+  text-shadow: 0 0 10px #06b6d4, 0 0 20px #06b6d4, 0 0 30px #06b6d4;
+  margin-top: -2px;
+  margin-bottom: 2px;
+  color: #06b6d4;
+}
+
+.badge:hover {
+  margin-top: -2px;
+  margin-bottom: 2px;
+}
+.exp-cards:hover {
+  box-shadow: 0 0 10px #06b5d46c, 0 0 20px #06b5d463, 0 0 30px #06b5d442;
+  margin-top: -2px;
+  margin-bottom: 2px;
+}
+
+.code-block {
+  box-shadow: 0 0 10px #06b5d46c, 0 0 20px #06b5d41f;
+}
+
+.list-tick li::before {
+  content: '\2713';
+  color: #06b6d4;
+  font-weight: 900;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.text-hover:hover {
+  text-shadow: 0 0 10px #06b6d4, 0 0 20px #06b6d4, 0 0 30px #06b6d4;
+  margin-top: -2px;
+  margin-bottom: 2px;
+  color: #06b6d4;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px; /* Default width */
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05); /* Soft track background */
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-theme-cyan); /* Thumb color */
+  border-radius: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.1); /* Slight border for contrast */
+  transition: background 0.3s, border 0.3s, width 0.3s; /* Smooth hover effect */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-theme-cyan-light); /* Slightly lighter on hover */
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Optional: Glassmorphic effect */
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  backdrop-filter: blur(4px);
+}
+
+/* 👇 Custom dropdown options background */
+.custom-select option {
+  background: linear-gradient(to right, rgba(6, 182, 212, 0.3), rgba(37, 99, 235, 0.2));
+  color: #67e8f9; /* text-cyan-300 */
+}
+
+/* Hover effect on dropdown options */
+.custom-select option:hover {
+  background: rgba(6, 182, 212, 0.5);
+}
+
+.glass-btn {
+  @apply px-3 py-2 rounded-lg bg-white/10 border border-white/30 backdrop-blur-md
+         hover:bg-white/20 transition shadow-md text-sm font-semibold;
+}
+
+.glass-active {
+  @apply bg-white/40 border-white/60 shadow-lg;
+}

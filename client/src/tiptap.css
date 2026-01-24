@@ -1,0 +1,244 @@
+/* ============================================================
+   ✅ GLOBAL RESPONSIVE FONT SCALE
+   Mobile-first: xs → sm → md
+============================================================ */
+:root {
+  --font-xs: 4.3vw; /* Mobile */
+  --font-sm: 2.3vw; /* Tablet */
+  --font-md: 1.3vw; /* Desktop */
+}
+
+/* Base font-size (applied to all text elements) */
+.rich-editor-content,
+.rich-output {
+  font-size: var(--font-xs);
+  line-height: 1.5;
+}
+
+/* Tablet */
+@media (min-width: 640px) {
+  .rich-editor-content,
+  .rich-output {
+    font-size: var(--font-sm);
+  }
+}
+
+/* Desktop */
+@media (min-width: 768px) {
+  .rich-editor-content,
+  .rich-output {
+    font-size: var(--font-md);
+  }
+}
+
+/* ============================================================
+   ✅ HEADINGS (Responsive only font-size)
+============================================================ */
+.rich-editor-content h1,
+.rich-output h1 {
+  font-size: calc(var(--font-xs) * 2.1);
+  line-height: 1.05;
+}
+@media (min-width: 640px) {
+  .rich-editor-content h1,
+  .rich-output h1 {
+    font-size: calc(var(--font-sm) * 2.1);
+  }
+}
+@media (min-width: 768px) {
+  .rich-editor-content h1,
+  .rich-output h1 {
+    font-size: calc(var(--font-md) * 2.1);
+  }
+}
+
+.rich-editor-content h2,
+.rich-output h2 {
+  font-size: calc(var(--font-xs) * 1.7);
+  line-height: 1.1;
+}
+@media (min-width: 640px) {
+  .rich-editor-content h2,
+  .rich-output h2 {
+    font-size: calc(var(--font-sm) * 1.7);
+  }
+}
+@media (min-width: 768px) {
+  .rich-editor-content h2,
+  .rich-output h2 {
+    font-size: calc(var(--font-md) * 1.7);
+  }
+}
+
+.rich-editor-content h3,
+.rich-output h3 {
+  font-size: calc(var(--font-xs) * 1.4);
+  line-height: 1.15;
+}
+@media (min-width: 640px) {
+  .rich-editor-content h3,
+  .rich-output h3 {
+    font-size: calc(var(--font-sm) * 1.4);
+  }
+}
+@media (min-width: 768px) {
+  .rich-editor-content h3,
+  .rich-output h3 {
+    font-size: calc(var(--font-md) * 1.4);
+  }
+}
+
+.rich-editor-content h4,
+.rich-output h4 {
+  font-size: calc(var(--font-xs) * 1.2);
+  line-height: 1.2;
+}
+@media (min-width: 640px) {
+  .rich-editor-content h4,
+  .rich-output h4 {
+    font-size: calc(var(--font-sm) * 1.2);
+  }
+}
+@media (min-width: 768px) {
+  .rich-editor-content h4,
+  .rich-output h4 {
+    font-size: calc(var(--font-md) * 1.2);
+  }
+}
+
+.rich-editor-content h5,
+.rich-output h5 {
+  font-size: var(--font-xs);
+  line-height: 1.25;
+}
+@media (min-width: 640px) {
+  .rich-editor-content h5,
+  .rich-output h5 {
+    font-size: var(--font-sm);
+  }
+}
+@media (min-width: 768px) {
+  .rich-editor-content h5,
+  .rich-output h5 {
+    font-size: var(--font-md);
+  }
+}
+
+/* ============================================================
+   ✅ INLINE ELEMENTS - PRESERVE USER STYLES
+============================================================ */
+.rich-editor-content strong,
+.rich-editor-content b,
+.rich-editor-content em,
+.rich-editor-content i,
+.rich-editor-content u,
+.rich-editor-content mark,
+.rich-editor-content a,
+.rich-editor-content span,
+.rich-output strong,
+.rich-output b,
+.rich-output em,
+.rich-output i,
+.rich-output u,
+.rich-output mark,
+.rich-output a,
+.rich-output span {
+  font-size: inherit; /* responsive scaling */
+}
+
+/* ============================================================
+   ✅ LISTS (UL / OL) - Fully functional
+============================================================ */
+.rich-editor-content ul,
+.rich-output ul {
+  list-style: disc;
+  padding-left: 1.6rem;
+  font-size: inherit;
+}
+
+.rich-editor-content ol,
+.rich-output ol {
+  list-style: decimal;
+  padding-left: 1.6rem;
+  font-size: inherit;
+}
+
+.rich-editor-content li,
+.rich-output li {
+  margin: 0.35rem 0;
+  font-size: inherit; /* responsive */
+}
+
+/* ✅ UL bullet customization */
+.rich-editor-content ul li::marker,
+.rich-output ul li::marker {
+  font-size: 1em;
+  content: '• ';
+}
+
+/* ✅ Task List Items */
+.rich-editor-content .task-list-item,
+.rich-output .task-list-item {
+  list-style: none;
+  padding-left: 2em;
+  position: relative;
+  display: flex;
+  align-items: center;
+  font-size: inherit;
+}
+
+.rich-editor-content .task-list-item::before,
+.rich-output .task-list-item::before {
+  content: '☐';
+  position: absolute;
+  left: 0;
+}
+
+.rich-editor-content .task-list-item.checked::before,
+.rich-output .task-list-item.checked::before {
+  content: '✅';
+}
+
+/* ============================================================
+   ✅ IMAGES
+============================================================ */
+.rich-editor-content img,
+.rich-output img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ============================================================
+   ✅ BLOCKQUOTE
+============================================================ */
+.rich-editor-content blockquote,
+.rich-output blockquote {
+  font-size: inherit;
+  line-height: 1.45;
+  padding: 1.4rem 1.6rem;
+  margin: 1.6rem 0;
+  background: rgba(146, 53, 234, 0.12);
+  backdrop-filter: blur(14px) saturate(180%);
+  border-left: 6px solid #06b6d4;
+  border-radius: 14px;
+  border: 1px solid rgba(81, 97, 207, 0.3);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+
+/* SM */
+@media (min-width: 640px) {
+  .rich-editor-content blockquote,
+  .rich-output blockquote {
+    padding: 1.2rem 1.4rem;
+    border-left-width: 7px;
+  }
+}
+
+/* MD */
+@media (min-width: 768px) {
+  .rich-editor-content blockquote,
+  .rich-output blockquote {
+    padding: 1rem 1.2rem;
+    border-left-width: 8px;
+  }
+}
