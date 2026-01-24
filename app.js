@@ -78,6 +78,8 @@ app.use(cookieParser());
 /* =========================
    CORS (DEV ONLY)
 ========================= */
+console.log(isProduction);
+
 if (!isProduction) {
   app.use(
     cors({
