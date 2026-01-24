@@ -1003,3 +1003,5 @@
 {"level":"info","message":"::1 - - [24/Jan/2026:07:28:13 +0000] \"GET /api/site-settings/get HTTP/1.1\" 304 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36\"","timestamp":"2026-01-24 12:28:13"}
 {"level":"info","message":"::1 - - [24/Jan/2026:07:28:13 +0000] \"GET /api/get/activities HTTP/1.1\" 200 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36\"","timestamp":"2026-01-24 12:28:13"}
 {"level":"info","message":"::1 - - [24/Jan/2026:07:28:14 +0000] \"GET /api/message/get HTTP/1.1\" 304 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36\"","timestamp":"2026-01-24 12:28:14"}
+{"level":"info","message":"🚀 Server running on port 3000","timestamp":"2026-01-24 17:48:09"}
+{"level":"info","message":"🚀 Server running on port 3000","timestamp":"2026-01-24 17:58:44"}
