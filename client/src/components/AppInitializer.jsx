@@ -14,7 +14,6 @@ import { useGetMessage } from "../Queries/GetMessage";
 import { useGetExp } from "../Queries/GetExp";
 import { useGetService } from "../Queries/GetServices";
 import { useGetFAQ } from "../Queries/GetFAQ";
-import { useGetActivities } from "../Queries/GetRecentyActivity";
 
 // 🧩 Slices
 import { addProjects } from "../features/projectSlice";
@@ -28,7 +27,6 @@ import { addContactMessages } from "../features/messageSlice";
 import { addExp } from "../features/experienceSlice";
 import { addServices } from "../features/serviceSlice";
 import { addFAQs } from "../features/FAQSlice";
-import { fetchActivities } from "../features/recentActivitySlice";
 
 // 🧩 Components
 import ErrorFallback from "./ErrorFallBack";
@@ -48,7 +46,6 @@ const AppInitializer = ({ children }) => {
   const messages = useGetMessage();
   const services = useGetService();
   const faqs = useGetFAQ();
-  const activities = useGetActivities();
 
   // ✅ Memoized Data
   const memo = useMemo(
@@ -61,7 +58,6 @@ const AppInitializer = ({ children }) => {
       experience: experience?.data?.experiences || [],
       services: services?.data?.services || [],
       faqs: faqs?.data?.faqs || [],
-      activities: activities?.data?.activities || [],
       testimonials: testimonial.data?.testimonials || [],
       plans: plans.data?.plans || [],
       messages: messages.data?.data || [],
@@ -82,7 +78,6 @@ const AppInitializer = ({ children }) => {
       messages?.data,
       services?.data,
       faqs?.data,
-      activities?.data,
     ],
   );
 
@@ -225,16 +220,6 @@ const AppInitializer = ({ children }) => {
       isLoading,
     );
   }, [memo.faqs, faqs.isFetching, faqs.isPending, dispatch]);
-
-  // 🔹 Commit 12 — Activities
-  useEffect(() => {
-    const isLoading = activities.isFetching || activities.isPending;
-    updateReducer(
-      fetchActivities,
-      memo.activities.length ? { activities: memo.activities } : null,
-      isLoading,
-    );
-  }, [memo.activities, activities.isFetching, activities.isPending, dispatch]);
 
   // ✅ Global Loading/Error
   const isLoading = [

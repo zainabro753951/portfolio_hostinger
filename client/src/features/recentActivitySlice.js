@@ -2,25 +2,30 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   isLoading: false,
-  activities: []
-}
+  isError: false,
+  errorMessage: "",
+  activities: [],
+};
 
 export const recentActivities = createSlice({
   name: "recentActivities",
   initialState,
   reducers: {
     fetchActivities: (state, action) => {
-       if (action.payload?.isLoading !== undefined) {
-        state.isLoading = action.payload.isLoading
-      }
+      const payload = action.payload || {};
 
-      // If the data object is passed
-      if (action.payload?.activities) {
-        state.activities = Array.isArray(action.payload.activities) ? action.payload.activities : []
+      if (payload.isLoading !== undefined) state.isLoading = payload.isLoading;
+      if (payload.isError !== undefined) state.isError = payload.isError;
+      if (payload.errorMessage !== undefined)
+        state.errorMessage = payload.errorMessage;
+      if (payload.activities) {
+        state.activities = Array.isArray(payload.activities)
+          ? payload.activities
+          : [];
       }
-    }
-  }
-})
+    },
+  },
+});
 
-export const { fetchActivities } = recentActivities.actions
-export default recentActivities.reducer
+export const { fetchActivities } = recentActivities.actions;
+export default recentActivities.reducer;
