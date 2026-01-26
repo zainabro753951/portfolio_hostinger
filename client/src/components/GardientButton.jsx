@@ -1,60 +1,94 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-import { useCursorHoverContext } from '../context/CursorHover'
+import React from "react";
+import { Link } from "react-router-dom";
+import { useCursorHoverContext } from "../context/CursorHover";
 
 const GradientButton = ({
-  text = 'Button',
-  link = '/',
-  sizeY = 'medium',
-  hoverShadow = false,
-  hoverOpacity = true,
-  type = 'button',
-  onClick, // optional for button
+  text = "Button",
+  link = "/",
+  size = "md", // sm | md | lg
+  variant = "primary", // primary | outline | ghost
+  type = "button",
+  onClick,
+  disabled = false,
 }) => {
-  const { onCursorEnter, onCursorLeave } = useCursorHoverContext()
+  const { onCursorEnter, onCursorLeave } = useCursorHoverContext();
 
-  const sizeClass =
-    sizeY.toLowerCase() === 'short'
-      ? 'md:py-[0.6vw] sm:py-[1.6vw] xs:py-[2.6vw]'
-      : 'md:py-[0.9vw] sm:py-[1.9vw] xs:py-[2.9vw]'
+  /* ---------------- sizes ---------------- */
+  const sizeStyles = {
+    sm: "px-[clamp(14px,3vw,20px)] py-[clamp(8px,1.8vw,12px)] text-[clamp(13px,2.8vw,14px)]",
+    md: "px-[clamp(18px,3.5vw,26px)] py-[clamp(10px,2vw,14px)] text-[clamp(14px,2.8vw,15px)]",
+    lg: "px-[clamp(22px,4vw,34px)] py-[clamp(12px,2.4vw,18px)] text-[clamp(15px,3vw,17px)]",
+  };
 
-  const classes = `
-    ${sizeClass}
-    md:px-[2vw] sm:px-[2.5vw] xs:px-[3vw]
-    gradient-button
-    md:rounded-[0.6vw] sm:rounded-[1.1vw] xs:rounded-[1.6vw]
-    transition-all duration-300
-    ${hoverOpacity ? 'hover:opacity-90' : ''}
-    ${hoverShadow ? 'gradient-button-shadow' : ''}
-    flex justify-center items-center
-  `
+  /* ---------------- variants ---------------- */
+  const variantStyles = {
+    primary: `
+      bg-gradient-to-r from-cyan-400 via-purple-500 to-fuchsia-500
+      text-white
+      shadow-[0_10px_30px_-10px_rgba(168,85,247,0.6)]
+      hover:shadow-[0_16px_40px_-12px_rgba(168,85,247,0.8)]
+    `,
+    outline: `
+      border border-white/20
+      text-white
+      backdrop-blur-md
+      hover:bg-white/10
+    `,
+    ghost: `
+      text-cyan-400
+      hover:bg-cyan-400/10
+    `,
+  };
 
-  if (type === 'submit') {
-    // Render button for form submission
+  const baseClasses = `
+    relative inline-flex items-center justify-center
+    font-medium tracking-wide
+    rounded-[clamp(10px,2vw,16px)]
+    transition-all duration-300 ease-out
+    will-change-transform
+    overflow-hidden
+    ${sizeStyles[size]}
+    ${variantStyles[variant]}
+    ${disabled ? "opacity-50 pointer-events-none" : ""}
+    hover:-translate-y-[2px]
+    active:translate-y-0
+    focus-visible:outline-none
+    focus-visible:ring-2 focus-visible:ring-cyan-400/60
+  `;
+
+  /* ---------------- content ---------------- */
+  const Content = () => (
+    <span className="relative z-10 whitespace-nowrap">{text}</span>
+  );
+
+  /* ---------------- button ---------------- */
+  if (type === "submit") {
     return (
       <button
         type="submit"
+        disabled={disabled}
+        onClick={onClick}
         onMouseEnter={onCursorEnter}
         onMouseLeave={onCursorLeave}
-        className={classes}
+        className={baseClasses}
       >
-        {text}
+        <Content />
       </button>
-    )
+    );
   }
 
-  // Render Link if type is "button"
+  /* ---------------- link ---------------- */
   return (
     <Link
       to={link}
       onClick={onClick}
       onMouseEnter={onCursorEnter}
       onMouseLeave={onCursorLeave}
-      className={classes}
+      className={baseClasses}
     >
-      {text}
+      <Content />
     </Link>
-  )
-}
+  );
+};
 
-export default GradientButton
+export default GradientButton;

@@ -1,115 +1,124 @@
-import React, { useRef, useMemo } from 'react'
-import { motion } from 'framer-motion'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { useGSAP } from '@gsap/react'
-import { useLocation } from 'react-router-dom'
-import { useSelector } from 'react-redux'
-import SkillSkeleton from './SkillSkeleton'
+import React, { useRef, useMemo } from "react";
+import { motion } from "motion/react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
+import { useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
+import SkillSkeleton from "./SkillSkeleton";
 
-gsap.registerPlugin(ScrollTrigger)
+gsap.registerPlugin(ScrollTrigger);
 
-const Skills = () => {
-  const { data: about, isLoading } = useSelector(state => state.about)
-  const { skills = [], isLoading: isSkillLoading } = useSelector(state => state.skills)
+/**
+ * SkillsModern.jsx
+ * - Drop-in replacement for your Skills section
+ * - Preserves all Redux data (about, skills, experiences)
+ * - Premium layout: left = intro/cards, right = visual panel
+ * - GSAP-driven progress bars + counters (runs after data ready)
+ * - Accessible: progressbar aria + keyboard-safe
+ */
+
+const SkillsModern = () => {
+  const { data: about, isLoading } = useSelector((s) => s.about || {});
+  const { skills = [], isLoading: isSkillLoading } = useSelector(
+    (s) => s.skills || {},
+  );
   const { experiences = [], isLoading: isExperienceLoading } = useSelector(
-    state => state.experience
-  )
+    (s) => s.experience || {},
+  );
 
-  const location = useLocation()
-  const containerRef = useRef(null)
+  const location = useLocation();
+  const containerRef = useRef(null);
 
-  // ✅ Check if page should show skeleton
-  const isPageLoading = isLoading || isSkillLoading || isExperienceLoading
+  const isPageLoading = isLoading || isSkillLoading || isExperienceLoading;
 
-  // ✅ Memoize data
   const data = useMemo(
     () => ({
-      name: about?.fullName || 'Zain Abro',
+      name: about?.fullName || "Zain Abro",
       desc:
         about?.shortDesc ||
-        "I'm a passionate Full Stack Developer specializing in the MERN stack. I love crafting smooth, high-performing, and scalable web experiences with clean UI and interactive animations.",
-      work_history: [
-        {
-          position: 'MERN Stack Developer',
-          company: 'Cybrix Company',
-          startedAt: '2024',
-          endDate: '2025',
-          desc: 'Led a team of developers to build a cloud-based SaaS platform using React and AWS.',
-        },
-        {
-          position: 'Full Stack Developer',
-          company: 'Tech Stack',
-          startedAt: '2023',
-          endDate: '2024',
-          desc: 'Developed e-commerce platforms using Node.js and MongoDB, improving client performance by 30%.',
-        },
-      ],
+        "I'm a Full Stack Developer building fast, scalable and beautiful products.",
       skills,
+      experiences,
     }),
-    [about, skills]
-  )
+    [about, skills, experiences],
+  );
 
-  // 🟢 GSAP Progress Animation (run only when page loaded)
+  // GSAP: animate each skill bar + numeric counter when in view
   useGSAP(
     () => {
-      if (isPageLoading) return // ⛔ Don't animate until loading done
+      if (isPageLoading) return;
 
-      const skillItems = gsap.utils.toArray('.skill-item')
+      const items = gsap.utils.toArray(".skill-item");
 
-      skillItems.forEach(skill => {
-        const bar = skill.querySelector('.progress-bar')
-        const percentText = skill.querySelector('.percent-text')
-        if (!bar || !percentText) return
+      items.forEach((el) => {
+        const bar = el.querySelector(".progress-bar");
+        const percentText = el.querySelector(".percent-text");
+        const shimmer = el.querySelector(".bar-shimmer");
+        if (!bar || !percentText) return;
 
-        const targetPercent = parseInt(bar.dataset.percent, 10)
-        const counter = { val: 0 }
+        const target = parseInt(bar.dataset.percent, 10) || 0;
+        const counter = { v: 0 };
 
-        gsap
-          .timeline({
-            scrollTrigger: {
-              trigger: skill,
-              start: 'top 85%',
-              once: true,
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: el,
+            start: "top 85%",
+            once: true,
+          },
+        });
+
+        // bar fill
+        tl.to(
+          bar,
+          { width: `${target}%`, duration: 1.1, ease: "power3.out" },
+          0,
+        );
+        // counter animation
+        tl.to(
+          counter,
+          {
+            v: target,
+            duration: 1.1,
+            ease: "power3.out",
+            onUpdate: () => {
+              percentText.textContent = `${Math.round(counter.v)}%`;
+              bar.setAttribute("aria-valuenow", Math.round(counter.v));
             },
-          })
-          .fromTo(
-            bar,
-            { width: '0%' },
-            { width: `${targetPercent}%`, duration: 1.2, ease: 'power3.out' }
-          )
-          .to(
-            counter,
-            {
-              val: targetPercent,
-              duration: 1.2,
-              ease: 'power3.out',
-              onUpdate: () => {
-                percentText.textContent = `${Math.round(counter.val)}%`
-              },
-            },
-            0
-          )
-      })
+          },
+          0,
+        );
+
+        // subtle shimmer sweep for premium feel
+        if (shimmer) {
+          tl.fromTo(
+            shimmer,
+            { xPercent: -120, opacity: 0.6 },
+            { xPercent: 120, opacity: 0, duration: 1.1, ease: "power3.out" },
+            0,
+          );
+        }
+      });
     },
-    [skills, isPageLoading] // ✅ Re-run only when data ready
-  )
+    {
+      scope: containerRef,
+      dependencies: [isPageLoading, JSON.stringify(skills)],
+    },
+  );
 
-  // 🎬 Framer Motion Variants
   const variants = {
-    container: { show: { transition: { staggerChildren: 0.25 } } },
+    container: { show: { transition: { staggerChildren: 0.14 } } },
     fadeUp: {
-      hidden: { y: 40, opacity: 0 },
-      show: { y: 0, opacity: 1, transition: { duration: 0.8, ease: 'easeOut' } },
+      hidden: { y: 28, opacity: 0 },
+      show: { y: 0, opacity: 1, transition: { duration: 0.6 } },
     },
     fadeRight: {
-      hidden: { x: 60, opacity: 0 },
-      show: { x: 0, opacity: 1, transition: { duration: 0.8, ease: 'easeOut' } },
+      hidden: { x: 40, opacity: 0 },
+      show: { x: 0, opacity: 1, transition: { duration: 0.6 } },
     },
-  }
+  };
 
-  // ⏳ Show skeleton while loading
-  if (isPageLoading) return <SkillSkeleton />
+  if (isPageLoading) return <SkillSkeleton />;
 
   return (
     <motion.section
@@ -117,109 +126,202 @@ const Skills = () => {
       key={location.pathname}
       variants={variants.container}
       initial="hidden"
-      {...(location.pathname === '/'
-        ? { whileInView: 'show', viewport: { once: true, amount: 0.3 } }
-        : { animate: 'show' })}
-      className="w-full min-h-screen bg-theme-dark text-white font-inter md:py-[10vw] sm:py-[15vw] xs:py-[20vw] md:px-[3vw] sm:px-[5vw] xs:px-[6vw] overflow-hidden"
+      {...(location.pathname === "/"
+        ? { whileInView: "show", viewport: { once: true, amount: 0.25 } }
+        : { animate: "show" })}
+      className="w-full bg-[#050617] text-white font-inter overflow-hidden px-6 py-16 md:py-24"
     >
-      <div className="grid md:grid-cols-2 items-center md:gap-[5vw] sm:gap-[6vw] xs:gap-[8vw]">
-        {/* 🧠 Left Section */}
+      <div className="mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+        {/* LEFT: Intro + experience */}
         <motion.div
-          variants={variants.container}
-          className="flex flex-col md:gap-[2vw] sm:gap-[3vw] xs:gap-[4vw]"
+          variants={variants.fadeUp}
+          className="lg:col-span-5 space-y-6"
         >
-          {/* 👤 Intro */}
-          <motion.div variants={variants.fadeUp}>
-            <h2 className="font-fira-code font-semibold md:text-[2.5vw] sm:text-[3.5vw] xs:text-[6vw] text-theme-cyan">
-              {data.name}
-            </h2>
-            <p className="md:text-[1.3vw] sm:text-[2.3vw] xs:text-[4.2vw] text-gray-300 mt-[1vw] leading-relaxed">
-              {data.desc}
-            </p>
-          </motion.div>
+          <div className="inline-flex items-center gap-3 rounded-full bg-white/3 px-4 py-2 text-xs font-medium tracking-wide">
+            <span className="w-2 h-2 rounded-full bg-linear-to-r from-indigo-400 to-cyan-400" />
+            Skills & Experience
+          </div>
 
-          {/* 💼 Work History */}
-          <motion.div variants={variants.fadeUp}>
-            <h3 className="font-fira-code font-semibold md:text-[1.7vw] sm:text-[2.7vw] xs:text-[4.7vw] mb-[1vw]">
-              Work History
-            </h3>
-            {experiences?.map((item, idx) => {
-              const startedAt = new Date(item?.startedAt).toLocaleDateString('en-PK', {
-                weekday: 'short',
-                day: 'numeric',
-                month: 'short',
-              })
+          <h2 className="sm:text-4xl xs:text-2xl font-semibold leading-tight">
+            {data.name}
+          </h2>
 
-              const endDate = item?.endDate
-                ? new Date(item?.endDate).toLocaleDateString('en-PK', {
-                    weekday: 'short',
-                    day: 'numeric',
-                    month: 'short',
-                  })
-                : item?.currentlyWorking
+          <p className="text-white/70 max-w-xl leading-relaxed">{data.desc}</p>
 
-              return (
-                <motion.div
-                  key={idx}
-                  variants={variants.fadeUp}
-                  className="text-gray-300 md:text-[1.3vw] sm:text-[2.3vw] xs:text-[4.3vw] mb-[1vw]"
-                >
-                  <p>
-                    <span className="text-theme-cyan font-medium">
-                      {item.position}, {item.company}
-                    </span>{' '}
-                    <span className="text-gray-400">
-                      ({startedAt} - {endDate})
-                    </span>
-                  </p>
-                  <p className="text-gray-400">{item.description}</p>
-                </motion.div>
-              )
-            })}
-          </motion.div>
-
-          {/* 🧩 Skills */}
-          <motion.div variants={variants.fadeUp}>
-            <h3 className="font-fira-code font-semibold md:text-[1.7vw] sm:text-[2.7vw] xs:text-[4.7vw] mb-[1vw]">
-              Skills
-            </h3>
-
-            <div className="flex flex-col md:gap-[1vw] sm:gap-[2vw] xs:gap-[3vw]">
-              {data.skills.map((item, idx) => (
-                <div key={idx} className="skill-item flex flex-col gap-1.5">
-                  <div className="flex justify-between items-center md:text-[1.2vw] sm:text-[2.3vw] xs:text-[4.3vw]">
-                    <p className="text-theme-cyan font-medium capitalize">{item.skillName}</p>
-                    <p className="percent-text text-gray-300">0%</p>
-                  </div>
-
-                  <div className="w-full bg-gray-700/40 rounded-full overflow-hidden relative md:h-[1vw] sm:h-[1.8vw] xs:h-[2.5vw] shadow-inner">
-                    <div
-                      className="progress-bar absolute top-0 left-0 h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 rounded-r-full"
-                      data-percent={item.proficiency}
-                    ></div>
+          <div className="grid md:grid-cols-2 xs:grid-cols-1 gap-4 mt-4">
+            {data.experiences.slice(0, 4).map((exp, i) => (
+              <div
+                key={i}
+                className="rounded-2xl bg-linear-to-br from-white/4 to-transparent p-4 backdrop-blur-md border border-white/6"
+              >
+                <div className="flex flex-wrap items-start gap-3">
+                  <div className="text-2xl">{exp.icon || "⚙️"}</div>
+                  <div>
+                    <div className="text-xl font-semibold">
+                      {exp.title || exp.position || exp.name}
+                    </div>
+                    <div className="text-sm text-white/60 mt-1">
+                      {exp.subTitle || exp.company}
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </motion.div>
+              </div>
+            ))}
+          </div>
         </motion.div>
 
-        {/* 🖼️ Right Section */}
+        {/* RIGHT: Skill lists + visual */}
         <motion.div
           variants={variants.fadeRight}
-          transition={{ type: 'spring', stiffness: 120, damping: 15 }}
-          className="w-full border border-theme-cyan/60 md:rounded-[1vw] sm:rounded-[1.5vw] xs:rounded-[2vw] overflow-hidden bg-gradient-to-br from-[#0a0a2a]/60 to-[#0b1a2a]/80"
+          className="lg:col-span-7 space-y-6"
         >
-          <img
-            src="/imgs/about.jpg"
-            alt="about"
-            className="w-full h-full object-cover scale-105 hover:scale-110 transition-transform duration-700 ease-out"
-            loading="lazy"
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Skills column */}
+            <div className="space-y-4">
+              <h3 className="text-sm text-white/60 uppercase tracking-wider">
+                Core Skills
+              </h3>
+
+              <div className="space-y-3">
+                {data.skills
+                  .slice(0, Math.ceil(data.skills.length / 2))
+                  .map((s, idx) => (
+                    <div
+                      key={s._id || s.skillName + idx}
+                      className="skill-item"
+                      role="group"
+                      aria-label={`${s.skillName} skill`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm font-medium text-white">
+                          {s.skillName}
+                        </div>
+                        <div className="percent-text text-sm text-white/70">
+                          0%
+                        </div>
+                      </div>
+
+                      <div
+                        className="relative w-full h-3 rounded-full bg-white/6 overflow-hidden"
+                        aria-hidden
+                      >
+                        <div
+                          className="progress-bar absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-cyan-400 via-indigo-500 to-purple-600"
+                          data-percent={s.proficiency}
+                          style={{ width: "0%" }}
+                          role="progressbar"
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-valuenow={0}
+                        />
+
+                        {/* shimmer */}
+                        <div className="bar-shimmer absolute left-0 top-0 h-full w-1/3 opacity-0 pointer-events-none bg-white/20 blur-sm" />
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+
+            {/* Skills column 2 */}
+            <div className="space-y-4">
+              <h3 className="text-sm text-white/60 uppercase tracking-wider">
+                More Skills
+              </h3>
+
+              <div className="space-y-3">
+                {data.skills
+                  .slice(Math.ceil(data.skills.length / 2))
+                  .map((s, idx) => (
+                    <div
+                      key={s._id || s.skillName + idx}
+                      className="skill-item"
+                      role="group"
+                      aria-label={`${s.skillName} skill`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm font-medium text-white">
+                          {s.skillName}
+                        </div>
+                        <div className="percent-text text-sm text-white/70">
+                          0%
+                        </div>
+                      </div>
+
+                      <div
+                        className="relative w-full h-3 rounded-full bg-white/6 overflow-hidden"
+                        aria-hidden
+                      >
+                        <div
+                          className="progress-bar absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-cyan-400 via-indigo-500 to-purple-600"
+                          data-percent={s.proficiency}
+                          style={{ width: "0%" }}
+                          role="progressbar"
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-valuenow={0}
+                        />
+
+                        <div className="bar-shimmer absolute left-0 top-0 h-full w-1/3 opacity-0 pointer-events-none bg-white/20 blur-sm" />
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Visual / CTA panel */}
+          <div className="rounded-2xl p-6 bg-gradient-to-br from-[#061026]/70 to-[#081424]/60 border border-white/6 backdrop-blur-md">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm text-white/60">Focused on</div>
+                <h4 className="text-2xl font-semibold mt-1">
+                  Performance · UX · Scalability
+                </h4>
+                <p className="text-white/70 mt-3 max-w-xl">
+                  {about?.shortDesc}
+                </p>
+              </div>
+
+              <div className="hidden md:flex flex-col items-center gap-3">
+                <div className="rounded-full bg-gradient-to-br from-cyan-400 to-indigo-500 p-4 shadow-lg">
+                  <svg
+                    width="56"
+                    height="56"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden
+                  >
+                    <path
+                      d="M12 2v6l4-2"
+                      stroke="#fff"
+                      strokeWidth="1.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="9"
+                      stroke="#fff"
+                      strokeWidth="1.2"
+                      opacity="0.14"
+                    />
+                  </svg>
+                </div>
+                <a
+                  href="/projects"
+                  className="rounded-full bg-white/5 px-4 py-2 text-sm font-medium hover:bg-white/8 transition"
+                >
+                  See Projects
+                </a>
+              </div>
+            </div>
+          </div>
         </motion.div>
       </div>
     </motion.section>
-  )
-}
+  );
+};
 
-export default Skills
+export default SkillsModern;

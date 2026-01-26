@@ -1,123 +1,190 @@
-import React from 'react'
-import GardientButton from '../../../components/GardientButton'
-import BorderedButton from '../../../components/BorderedButton'
-import CircularBadge from '../../../components/CircularBadge'
-import { HalfCyanCircles, HalfPurpleCircles } from '../../../components/HalfCircles'
-import { motion } from 'motion/react' // ✅ fix import
-import { useSelector } from 'react-redux'
-import HomeHeroSkeleton from './HomeHeroSkeleton'
+// HomeHeroBrandX.jsx
+// Ultra‑premium brand hero inspired by GSAP / Linear / Stripe
 
-const HomeHero = () => {
-  const { data: about, isLoading } = useSelector(state => state.about)
+import { motion, useMotionValue, useTransform } from "framer-motion";
+import { useEffect, useMemo } from "react";
+import { useSelector } from "react-redux";
+import CircularBadge from "../../../components/CircularBadge";
+import HeroSkeleton from "./HeroSkeleton";
 
-  // 🎯 Animation Variants (desktop + mobile friendly)
-  const animations = {
-    container: {
-      hidden: {},
-      show: {
-        transition: {
-          staggerChildren: 0.25, // smooth delay between h1, p, etc.
+/* ---------------- Animations (clean & premium) ---------------- */
+
+export default function HomeHeroBrandX() {
+  const { data: about, isLoading: isAboutLoading } = useSelector(
+    (state) => state.about,
+  );
+  const { site_info, isLoading: isSiteSettingLoading } = useSelector(
+    (state) => state.siteSettings,
+  );
+
+  const anim = useMemo(
+    () => ({
+      container: {
+        hidden: {},
+        show: { transition: { staggerChildren: 0.14 } },
+      },
+      fade: {
+        hidden: { opacity: 0 },
+        show: { opacity: 1, transition: { duration: 0.5 } },
+      },
+      slide: {
+        hidden: { opacity: 0, y: 24 },
+        show: {
+          opacity: 1,
+          y: 0,
+          transition: { duration: 0.6, ease: "easeOut" },
         },
       },
-    },
-    fadeUp: {
-      hidden: { y: 60, opacity: 0 },
-      show: {
-        y: 0,
-        opacity: 1,
-        transition: { duration: 0.8, ease: 'easeOut' },
+      scaleIn: {
+        hidden: { opacity: 0, scale: 0.92 },
+        show: {
+          opacity: 1,
+          scale: 1,
+          transition: { duration: 0.7, ease: "easeOut" },
+        },
       },
-    },
+      floatSlow: {
+        animate: { y: [0, -14, 0] },
+        transition: { duration: 7, repeat: Infinity, ease: "easeInOut" },
+      },
+    }),
+    [],
+  );
+
+  /* ---------------- Title logic ---------------- */
+  const title =
+    site_info?.tagline || "Crafting Digital Experiences For Modern Brands";
+  const words = title.split(" ");
+
+  // ---------------- Decide how many words to highlight ----------------
+  let highlightCount = 2; // default
+  if (words.length <= 4) {
+    highlightCount = 1; // short title → only 1 middle word
+  } else if (words.length >= 8) {
+    highlightCount = 3; // long title → highlight 3 middle words
+  } else {
+    highlightCount = 2; // medium → highlight 2 words
   }
 
+  // ---------------- Determine start index for middle highlight ----------------
+  const startIndex = Math.floor((words.length - highlightCount) / 2);
+
+  // ---------------- Slice ----------------
+  const highlight = words
+    .slice(startIndex, startIndex + highlightCount)
+    .join(" ");
+  const normalStart = words.slice(0, startIndex).join(" ");
+  const normalEnd = words.slice(startIndex + highlightCount).join(" ");
+
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  useEffect(() => {
+    const move = (e) => {
+      mouseX.set(e.clientX - window.innerWidth / 2);
+      mouseY.set(e.clientY - window.innerHeight / 2);
+    };
+    window.addEventListener("mousemove", move);
+    return () => window.removeEventListener("mousemove", move);
+  }, [mouseX, mouseY]);
+
+  const glowX = useTransform(mouseX, [-500, 500], [-60, 60]);
+  const glowY = useTransform(mouseY, [-500, 500], [-60, 60]);
+
+  if (isAboutLoading || isSiteSettingLoading) {
+    return <HeroSkeleton />;
+  }
+
+  console.log(title);
+
   return (
-    <div className="w-full h-full bg-theme-dark text-white relative bg-circut">
-      {isLoading ? (
-        <HomeHeroSkeleton />
-      ) : (
-        <div className="w-full h-full bg-theme-dark/80 relative">
-          {/* Purple Shadow Circle */}
-          <div className="purple-shadow-circle md:w-[20vw] md:h-[20vw] sm:w-[40vw] sm:h-[40vw] xs:w-[60vw] xs:h-[60vw] rounded-full bg-theme-purple/20 blur-3xl absolute md:-left-36 md:-top-20"></div>
+    <section className="relative min-h-screen overflow-hidden bg-[#0a0b10] text-white md:py-10 xs:py-20">
+      {/* Ambient gradient background */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(99,102,241,0.25),transparent_40%),radial-gradient(circle_at_70%_60%,rgba(34,211,238,0.18),transparent_45%)]" />
 
-          {/* Content Wrapper */}
-          <div className="w-full md:h-screen md:py-[4vw] sm:py-[7vw] xs:py-[16vw] md:mt-[3vw] sm:mt-[4vw] xs:mt-[5vw] grid xs:grid-cols-1 md:grid-cols-2 md:gap-[6vw] sm:gap-[10vw] xs:gap-[20vw] md:place-items-center items-center md:px-[2.5vw] sm:px-[3vw] xs:px-[3.5vw] overflow-hidden">
-            {/* Bio data container */}
-            <motion.div
-              variants={animations.container}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, amount: 0.3 }} // ✅ trigger once for better performance
-              className="flex flex-col md:gap-[1.5vw] sm:gap-[2vw] xs:gap-[2.5vw]"
-            >
-              <motion.h1
-                variants={animations.fadeUp}
-                className="md:text-[4.5vw] sm:text-[5.5vw] xs:text-[8.5vw] font-semibold font-fira-code md:leading-[5.5vw] sm:leading-[6.5vw] xs:leading-[10vw]"
-              >
-                {about?.shortRole ? (
-                  (() => {
-                    const words = about.shortRole.split(' ')
-                    const normalWords = words.slice(0, -2).join(' ')
-                    const lastTwoWords = words.slice(-2).join(' ')
+      {/* Cursor glow */}
+      <motion.div
+        style={{ x: glowX, y: glowY }}
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-500/20 blur-[140px]"
+      />
 
-                    return (
-                      <>
-                        {normalWords && `${normalWords} `}
-                        <span className="gradient-text">{lastTwoWords}</span>
-                      </>
-                    )
-                  })()
-                ) : (
-                  <>
-                    Building <span className="gradient-text">Digital Solutions</span>
-                  </>
-                )}
-              </motion.h1>
+      <div className="relative z-10 mx-auto grid min-h-screen max-w-7xl grid-cols-1 items-center gap-16 px-6 md:grid-cols-2">
+        {/* LEFT — Brand copy */}
+        <div className="space-y-8">
+          <motion.span
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+            className="inline-block rounded-full border border-white/10 bg-white/5 px-5 py-2 md:text-sm xs:text-xs uppercase tracking-widest text-white/70"
+          >
+            Creative Developer · Brand UI
+          </motion.span>
 
-              <motion.p
-                variants={animations.fadeUp}
-                className="md:text-[1.5vw] sm:text-[2.5vw] xs:text-[4.5vw] font-inter text-gray-300 md:w-[95%]"
-              >
-                {about?.shortDesc ||
-                  `Full-stack developer specializing in modern web technologies. I create scalable
-              applications with clean code and exceptional user experiences using React, Node.js,
-              and cloud platforms.`}
-              </motion.p>
+          <motion.h1
+            initial={{ opacity: 0, y: 60 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.2, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="md:text-5xl xs:text-3xl font-semibold"
+          >
+            {normalStart}
+            <br />
+            <span className="bg-linear-to-r from-indigo-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+              {highlight}
+            </span>
+            <br />
+            {normalEnd}
+          </motion.h1>
 
-              <motion.div
-                variants={animations.fadeUp}
-                className="grid md:grid-cols-2 items-center md:w-[70%] md:gap-[2vw] sm:gap-[2.5vw] xs:gap-[3vw] md:text-[1.3vw] sm:text-[2.3vw] xs:text-[4.3vw] font-inter"
-              >
-                <GardientButton
-                  text="View Projects"
-                  hoverOpacity={false}
-                  hoverShadow={true}
-                  link="/projects"
-                />
-                <BorderedButton text="Get In Touch" link={'/contact'} />
-              </motion.div>
-            </motion.div>
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="max-w-xl md:text-lg xs:text-md leading-relaxed text-white/65"
+          >
+            High‑end interfaces, cinematic motion and scalable systems — crafted
+            for modern brands who care about detail, performance and feel.
+          </motion.p>
 
-            {/* Circular badge container */}
-            <motion.div
-              variants={animations.fadeUp}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, amount: 0.3 }}
-              className="flex items-center justify-center relative"
-            >
-              <div className="flex items-center absolute">
-                <HalfPurpleCircles />
-                <HalfCyanCircles />
-              </div>
-              <div className="w-full h-full flex items-center justify-center">
-                <CircularBadge aboutImage={about?.aboutImage || null} />
-              </div>
-            </motion.div>
-          </div>
+          {/* CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="flex items-center gap-6"
+          >
+            <button className="group relative overflow-hidden rounded-full bg-white px-8 py-4 text-sm font-medium text-black">
+              <span className="relative z-10">View Work</span>
+              <span className="absolute inset-0 translate-y-full bg-linear-to-r from-indigo-400 to-cyan-400 transition-transform duration-500 group-hover:translate-y-0" />
+            </button>
+            <a className="text-sm tracking-wide text-white/60 hover:text-white transition">
+              Contact
+            </a>
+          </motion.div>
         </div>
-      )}
-    </div>
-  )
-}
 
-export default HomeHero
+        {/* ---------------- RIGHT / VISUAL ---------------- */}
+        <motion.div
+          variants={anim.scaleIn}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+          className="relative flex justify-center"
+        >
+          {/* Neon ring */}
+          <motion.div
+            {...anim.floatSlow}
+            className="absolute w-[420px] h-[420px] rounded-full border border-white/10"
+          />
+
+          {/* Glow */}
+          <div className="absolute w-[380px] h-[380px] rounded-full blur-[120px] bg-linear-to-tr from-cyan-500/25 to-fuchsia-500/30" />
+
+          {/* Image glass card */}
+          <div className="relative rounded-[28px] p-4 backdrop-blur-2xl bg-white/5 border border-white/10 shadow-[0_40px_120px_rgba(0,0,0,0.6)]">
+            <CircularBadge aboutImage={about?.aboutImage || null} />
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}

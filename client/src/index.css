@@ -1,16 +1,21 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @theme {
   --color-theme-purple: #9235ea;
   --color-theme-cyan: #06b6d4;
   --color-light-blue: #5161cf;
   --color-theme-dark: #0f0921;
-  --font-fira-code: 'Fira Code', monospace;
-  --font-inter: 'Inter', sans-serif;
+  --font-fira-code: "Fira Code", monospace;
+  --font-inter: "Inter", sans-serif;
   --breakpoint-xs: 300px;
 }
 .gradient-text {
-  background: linear-gradient(to right, #9235ea, #5161cf, #06b6d4); /* Gradient colors */
+  background: linear-gradient(
+    to right,
+    #9235ea,
+    #5161cf,
+    #06b6d4
+  ); /* Gradient colors */
   -webkit-background-clip: text; /* Safari, Chrome */
   -webkit-text-fill-color: transparent; /* Safari, Chrome */
   background-clip: text; /* Firefox */
@@ -53,12 +58,15 @@
 }
 
 .bg-circut {
-  background-image: url('/imgs/bg-circuit.png');
+  background-image: url("/imgs/bg-circuit.png");
   background-position: center center;
 }
 .purple-shadow-circle {
-  box-shadow: 0 0 40px 20px rgba(147, 53, 234, 0.171), 0 0 100px 40px rgba(147, 53, 234, 0.098),
-    0 0 250px 90px rgba(147, 53, 234, 0.057), 0 0 180px 60px rgba(147, 53, 234, 0.016);
+  box-shadow:
+    0 0 40px 20px rgba(147, 53, 234, 0.171),
+    0 0 100px 40px rgba(147, 53, 234, 0.098),
+    0 0 250px 90px rgba(147, 53, 234, 0.057),
+    0 0 180px 60px rgba(147, 53, 234, 0.016);
 }
 
 .half-cirle-left {
@@ -69,7 +77,10 @@
 }
 
 .badge:hover .black-circle {
-  box-shadow: 0 0 10px #06b6d4, 0 0 20px #06b6d4, 0 0 30px #06b6d4;
+  box-shadow:
+    0 0 10px #06b6d4,
+    0 0 20px #06b6d4,
+    0 0 30px #06b6d4;
 }
 
 .badge:hover {
@@ -77,17 +88,22 @@
   margin-bottom: 2px;
 }
 .exp-cards:hover {
-  box-shadow: 0 0 10px #06b5d46c, 0 0 20px #06b5d463, 0 0 30px #06b5d442;
+  box-shadow:
+    0 0 10px #06b5d46c,
+    0 0 20px #06b5d463,
+    0 0 30px #06b5d442;
   margin-top: -2px;
   margin-bottom: 2px;
 }
 
 .code-block {
-  box-shadow: 0 0 10px #06b5d46c, 0 0 20px #06b5d41f;
+  box-shadow:
+    0 0 10px #06b5d46c,
+    0 0 20px #06b5d41f;
 }
 
 .list-tick li::before {
-  content: '\2713';
+  content: "\2713";
   color: #06b6d4;
   font-weight: 900;
   position: absolute;
@@ -95,7 +111,10 @@
   top: 0;
 }
 .text-hover:hover {
-  text-shadow: 0 0 10px #06b6d4, 0 0 20px #06b6d4, 0 0 30px #06b6d4;
+  text-shadow:
+    0 0 10px #06b6d4,
+    0 0 20px #06b6d4,
+    0 0 30px #06b6d4;
   margin-top: -2px;
   margin-bottom: 2px;
   color: #06b6d4;
@@ -106,17 +125,22 @@
   margin-bottom: 2px;
 }
 .exp-cards:hover {
-  box-shadow: 0 0 10px #06b5d46c, 0 0 20px #06b5d463, 0 0 30px #06b5d442;
+  box-shadow:
+    0 0 10px #06b5d46c,
+    0 0 20px #06b5d463,
+    0 0 30px #06b5d442;
   margin-top: -2px;
   margin-bottom: 2px;
 }
 
 .code-block {
-  box-shadow: 0 0 10px #06b5d46c, 0 0 20px #06b5d41f;
+  box-shadow:
+    0 0 10px #06b5d46c,
+    0 0 20px #06b5d41f;
 }
 
 .list-tick li::before {
-  content: '\2713';
+  content: "\2713";
   color: #06b6d4;
   font-weight: 900;
   position: absolute;
@@ -124,7 +148,10 @@
   top: 0;
 }
 .text-hover:hover {
-  text-shadow: 0 0 10px #06b6d4, 0 0 20px #06b6d4, 0 0 30px #06b6d4;
+  text-shadow:
+    0 0 10px #06b6d4,
+    0 0 20px #06b6d4,
+    0 0 30px #06b6d4;
   margin-top: -2px;
   margin-bottom: 2px;
   color: #06b6d4;
@@ -143,7 +170,10 @@
   background: var(--color-theme-cyan); /* Thumb color */
   border-radius: 10px;
   border: 2px solid rgba(255, 255, 255, 0.1); /* Slight border for contrast */
-  transition: background 0.3s, border 0.3s, width 0.3s; /* Smooth hover effect */
+  transition:
+    background 0.3s,
+    border 0.3s,
+    width 0.3s; /* Smooth hover effect */
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
@@ -158,7 +188,11 @@
 
 /* 👇 Custom dropdown options background */
 .custom-select option {
-  background: linear-gradient(to right, rgba(6, 182, 212, 0.3), rgba(37, 99, 235, 0.2));
+  background: linear-gradient(
+    to right,
+    rgba(6, 182, 212, 0.3),
+    rgba(37, 99, 235, 0.2)
+  );
   color: #67e8f9; /* text-cyan-300 */
 }
 
@@ -174,4 +208,20 @@
 
 .glass-active {
   @apply bg-white/40 border-white/60 shadow-lg;
+}
+
+@keyframes skeleton-wave {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+  50% {
+    transform: translateX(150%);
+  }
+}
+
+.animate-skeleton-wave {
+  animation: skeleton-wave 1.6s linear infinite;
 }

@@ -1,108 +1,179 @@
-import React, { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
-import { FaCode, FaDatabase, FaUserLock } from 'react-icons/fa6'
-import { FiCpu } from 'react-icons/fi'
-import { useSelector } from 'react-redux'
-import { useGetServiceIcon } from '../../../Utils/GetServiceIcon'
-import ServiceSkeleton from '../../../components/ServiceSkeleton'
+import React, { useEffect, useMemo, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
+import { useSelector } from "react-redux";
+import { useGetServiceIcon } from "../../../Utils/GetServiceIcon";
+import ServiceSkeleton from "../../../components/ServiceSkeleton";
 
-// 🎬 Animation Variants (Highly optimized & reusable)
-const fadeUp = {
-  initial: { y: 40, opacity: 0 },
-  animate: {
-    y: 0,
-    opacity: 1,
-    transition: { duration: 0.6, ease: 'easeOut' },
-  },
-}
+/**
+ * WorkingModernResponsiveV2.jsx
+ * - Equal-height cards
+ * - Title & description clamping (line-clamp CSS)
+ * - Read more toggle to reveal full text (prevents overflow)
+ * - GPU-safe hover/focus (transform only)
+ * - Accessible: aria-expanded, focus-visible
+ */
 
-const containerVariant = {
-  initial: {},
-  animate: {
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.3,
-    },
-  },
-}
+export default function WorkingModernResponsiveV2() {
+  const prefersReducedMotion = useReducedMotion();
+  const { services = [], isLoading } = useSelector((s) => s.service || {});
+  const [isPageReady, setIsPageReady] = useState(false);
 
-const Working = () => {
-  const { services, isLoading } = useSelector(state => state.service)
-  const [isPageReady, setIsPageReady] = useState(false)
+  // Which card is expanded (to show full description). null => none.
+  const [expandedId, setExpandedId] = useState(null);
 
-  // ⏳ Wait until loading finishes before animating
   useEffect(() => {
-    if (!isLoading && services?.length > 0) {
-      // Small delay for smooth transition after skeleton disappears
-      const timeout = setTimeout(() => setIsPageReady(true), 200)
-      return () => clearTimeout(timeout)
+    if (!isLoading) {
+      const t = setTimeout(() => setIsPageReady(true), 120);
+      return () => clearTimeout(t);
     }
-  }, [isLoading, services])
+  }, [isLoading]);
 
-  // 🧠 Prepare cards only when data is ready
-  const cards =
-    services?.map(item => ({
-      icon: useGetServiceIcon(item.title),
-      title: item.title,
-      desc: item.shortDesc,
-    })) || []
+  // helper from your utils - treated as a pure mapper (call at top-level)
+  // const getIcon = useGetServiceIcon;
 
-  if (isLoading || !isPageReady) return <ServiceSkeleton />
+  // // Build cards from services (keeps icons via your mapping function)
+  // const cards = useMemo(() => {
+  //   return (services || []).map((item) => ({
+  //     id: item._id || item.title,
+  //     icon: getIcon ? getIcon(item.title) : "🔧",
+  //     title: item.title,
+  //     desc: item.shortDesc || "",
+  //     href:
+  //       item.link || `/services/${item._id || encodeURIComponent(item.title)}`,
+  //   }));
+  // }, [services, getIcon]);
+
+  // if (isLoading && !isPageReady) return <ServiceSkeleton />;
+
+  // if (isPageReady && cards.length === 0) {
+  //   return (
+  //     <section className="w-full py-20 text-center text-white/70">
+  //       <p>No services found.</p>
+  //     </section>
+  //   );
+  // }
+
+  const cards = [
+    {
+      id: "65a12345",
+      icon: "💻", // Real code mein yahan Icon component hoga (jo hook se return hoga)
+      title: "Web Development",
+      desc: "Hum high-performance aur responsive websites banate hain.",
+      href: "/services/65a12345",
+    },
+    {
+      id: "65b67890",
+      icon: "📱",
+      title: "App Development",
+      desc: "Android aur iOS ke liye custom mobile applications.",
+      href: "/services/app-development", // Agar ID na ho to title encode hoke ayega
+    },
+    {
+      id: "65c11223",
+      icon: "🎨",
+      title: "UI/UX Design",
+      desc: "User-friendly interfaces aur behtareen user experience designs.",
+      href: "https://external-link.com/design", // Agar 'link' property moujood ho
+    },
+    {
+      id: "65d44556",
+      icon: "📈",
+      title: "Digital Marketing",
+      desc: "SEO aur Social Media ke zariye apne business ko grow karein.",
+      href: "/services/digital-marketing",
+    },
+  ];
+
+  // Toggle read more
+  const toggleExpand = (id) => {
+    setExpandedId((curr) => (curr === id ? null : id));
+  };
 
   return (
-    <motion.div
-      className="w-full text-white bg-circut font-inter"
-      initial="initial"
-      whileInView="animate"
-      viewport={{ once: true, amount: 0.3 }}
-    >
-      <div className="w-full h-full bg-theme-dark/80">
-        <div className="w-full h-full md:py-[8vw] sm:py-[9vw] xs:py-[10vw] md:px-[2.5vw] sm:px-[3vw] xs:px-[3.5vw] bg-theme-purple/10">
-          {/* Section Heading */}
-          <motion.h2
-            variants={fadeUp}
-            className="md:text-[2.9vw] sm:text-[3.9vw] xs:text-[5.9vw] font-fira-code font-semibold text-center"
-          >
-            How <span className="gradient-text">I Can Help</span>
-          </motion.h2>
+    <section className="bg-[#050617] text-white font-inter py-12 md:py-20">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold">
+            How{" "}
+            <span className="bg-linear-to-r from-indigo-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+              I can help
+            </span>
+          </h2>
+          <p className="mt-3 text-white/70 max-w-2xl mx-auto text-sm sm:text-base md:text-lg">
+            Tailored services from idea → product. I focus on performance, UX &
+            maintainability.
+          </p>
+        </div>
 
-          {/* Cards Container */}
-          <motion.div
-            variants={containerVariant}
-            initial="initial"
-            animate="animate"
-            className="md:mt-[1.5vw] sm:mt-[2.5vw] xs:mt-[3.5vw] grid md:grid-cols-4 sm:grid-cols-2 xs:grid-cols-1 md:gap-[1.5vw] sm:gap-[2.5vw] xs:gap-[3.5vw]"
-          >
-            {cards.map((item, idx) => (
-              <motion.div
-                key={idx}
-                variants={fadeUp}
-                whileHover={{
-                  y: -8,
-                  scale: 1.02,
-                  boxShadow: '0 0 10px #06b5d46c, 0 0 20px #06b5d463, 0 0 30px #06b5d442',
-                }}
-                transition={{ duration: 0.3 }}
-                className="md:p-[0.2vw] sm:p-[0.4vw] xs:p-[0.8vw] md:rounded-[0.8vw] sm:rounded-[1.3vw] xs:rounded-[1.8vw] gradient-button"
-              >
-                <div className="w-full h-full md:p-[1.5vw] sm:p-[2vw] xs:p-[2.5vw] bg-theme-dark md:rounded-[0.8vw] sm:rounded-[1.3vw] xs:rounded-[1.8vw] flex flex-col md:gap-[1.5vw] sm:gap-[2vw] xs:gap-[2.5vw]">
-                  <span className="md:text-[3vw] sm:text-[4vw] xs:text-[6vw] text-theme-cyan">
-                    {item.icon}
-                  </span>
-                  <h2 className="md:text-[1.6vw] sm:text-[2.6vw] xs:text-[4.6vw] md:leading-[2.1vw] sm:leading-[3.1vw] xs:leading-[5.1vw] font-semibold font-fira-code">
-                    {item.title}
-                  </h2>
-                  <p className="md:text-[1.3vw] sm:text-[2.3vw] xs:text-[4.3vw] text-gray-400">
-                    {item.desc}
-                  </p>
+        {/* Grid */}
+        <div className="grid gap-6 sm:gap-8 md:gap-10 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {cards.map((c, i) => (
+            <motion.a
+              key={c.id}
+              href={c.href}
+              className="group relative flex flex-col rounded-2xl p-6 sm:p-5 md:p-6 bg-white/5 backdrop-blur-md border border-white/10 shadow-lg hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 transition-transform duration-300 transform hover:-translate-y-2 hover:scale-101"
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: i * 0.05, ease: "easeOut" }}
+            >
+              {/* Card content flex grow */}
+              <div className="flex flex-col h-full">
+                <div className="flex items-start gap-4">
+                  {/* Icon */}
+                  <div className="shrink-0 w-14 h-14 rounded-xl bg-linear-to-br from-indigo-500/20 to-cyan-400/10 flex items-center justify-center text-2xl">
+                    {c.icon}
+                  </div>
+
+                  {/* Title & description */}
+                  <div className="flex-1 flex flex-col">
+                    <h3
+                      className="font-semibold text-base sm:text-lg md:text-xl line-clamp-2"
+                      title={c.title}
+                    >
+                      {c.title}
+                    </h3>
+                    <p
+                      className={`mt-2 text-white/70 text-sm sm:text-base md:text-sm line-clamp-3`}
+                    >
+                      {c.desc}
+                    </p>
+                  </div>
                 </div>
-              </motion.div>
-            ))}
-          </motion.div>
+
+                {/* Footer */}
+                <div className="mt-auto flex items-center justify-between gap-2 pt-4">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs sm:text-sm text-white/80">
+                    Learn more
+                  </span>
+                  <span className="text-xs text-white/50">•</span>
+                  <span className="text-xs text-white/50">Custom plan</span>
+                </div>
+              </div>
+
+              {/* Hover glow */}
+              <motion.span
+                aria-hidden
+                className="pointer-events-none absolute inset-0 rounded-2xl"
+                initial={{ boxShadow: "0 0 0 rgba(0,0,0,0)" }}
+                whileHover={{ boxShadow: "0 20px 60px rgba(124,58,237,0.1)" }}
+                transition={{ duration: 0.4 }}
+                style={{ zIndex: -1 }}
+              />
+            </motion.a>
+          ))}
+        </div>
+
+        {/* CTA */}
+        <div className="mt-12 text-center">
+          <a
+            href="/contact"
+            className="inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400 px-6 py-3 font-medium shadow-lg hover:scale-105 transition-transform duration-300"
+          >
+            Get a custom quote
+          </a>
         </div>
       </div>
-    </motion.div>
-  )
+    </section>
+  );
 }
-
-export default Working

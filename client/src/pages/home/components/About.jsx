@@ -1,171 +1,296 @@
-import React, { useRef, useState } from 'react'
-import { IoCodeSlash } from 'react-icons/io5'
-import { TbFolderCheck } from 'react-icons/tb'
-import { HiUsers } from 'react-icons/hi2'
-import { PiBracketsCurlyBold } from 'react-icons/pi'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { useGSAP } from '@gsap/react'
-import { motion } from 'framer-motion'
-import CodeBlock from './CodeBlock'
-import { useSelector } from 'react-redux'
-import { backendSkillFilter, frontendSkillFilter } from '../../../Utils/Utils'
-import AboutSkeleton from './AboutSkeleton'
+import React, { useEffect, useMemo, useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
+import { motion } from "motion/react";
+import { useSelector } from "react-redux";
 
-gsap.registerPlugin(ScrollTrigger, useGSAP)
+import CodeBlock from "./CodeBlock";
+import AboutSkeleton from "./AboutSkeleton";
+import { backendSkillFilter, frontendSkillFilter } from "../../../Utils/Utils";
 
-const About = () => {
-  const { skills, isLoading: isSkillLoading } = useSelector(state => state.skills)
-  const { data: about, isLoading: isAboutLoading } = useSelector(state => state.about)
-  const { projects, isLoading: isProjectLoading } = useSelector(state => state.projects)
+gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-  const isPageLoading = isSkillLoading || isAboutLoading || isProjectLoading
+const AboutModern = () => {
+  const { skills, isLoading: isSkillLoading } = useSelector((s) => s.skills);
+  const { data: about, isLoading: isAboutLoading } = useSelector(
+    (s) => s.about,
+  );
+  const { projects, isLoading: isProjectLoading } = useSelector(
+    (s) => s.projects,
+  );
 
-  const skillNames = skills?.map(item => item.skillName)
-  const DoneProjects = projects?.filter(
-    i => i.visibility.toLowerCase() === 'public' && i.status.toLowerCase() === 'published'
-  ).length
+  const isPageLoading = isSkillLoading || isAboutLoading || isProjectLoading;
 
-  const frontendSkills = frontendSkillFilter(skillNames)
-  const backendSkills = backendSkillFilter(skillNames)
+  const skillNames = useMemo(
+    () => skills?.map((i) => i.skillName) || [],
+    [skills],
+  );
 
-  const experience = [
-    { icon: <IoCodeSlash />, title: 5, suffix: '+', subTitle: 'Years Coding' },
-    { icon: <TbFolderCheck />, title: DoneProjects, suffix: '+', subTitle: 'Projects Done' },
-    { icon: <HiUsers />, title: 135, suffix: '+', subTitle: 'Happy Clients' },
-    { icon: <PiBracketsCurlyBold />, title: 100, suffix: '%', subTitle: 'Code Quality' },
-  ]
+  const DoneProjects = useMemo(
+    () =>
+      projects?.filter(
+        (i) =>
+          i.visibility?.toLowerCase() === "public" &&
+          i.status?.toLowerCase() === "published",
+      ).length || 0,
+    [projects],
+  );
 
-  const containerRef = useRef(null)
-  const countersRef = useRef([])
+  const frontendSkills = useMemo(
+    () => frontendSkillFilter(skillNames) || [],
+    [skillNames],
+  );
+  const backendSkills = useMemo(
+    () => backendSkillFilter(skillNames) || [],
+    [skillNames],
+  );
 
-  // ✅ FIX: Run GSAP only after data is loaded
+  const experience = useMemo(
+    () => [
+      {
+        key: "years",
+        icon: "⚙️",
+        title: about?.experienceYears || 5,
+        suffix: "+",
+        subTitle: "Years Coding",
+      },
+      {
+        key: "projects",
+        icon: "📁",
+        title: DoneProjects,
+        suffix: "+",
+        subTitle: "Projects Done",
+      },
+      {
+        key: "clients",
+        icon: "👥",
+        title: about?.happyClients || 135,
+        suffix: "+",
+        subTitle: "Happy Clients",
+      },
+      {
+        key: "quality",
+        icon: "✅",
+        title: about?.codeQuality || 100,
+        suffix: "%",
+        subTitle: "Code Quality",
+      },
+    ],
+    [DoneProjects, about],
+  );
+
+  const containerRef = useRef(null);
+  const countersRef = useRef({});
+
+  // GSAP counters - run after data available
   useGSAP(
     () => {
-      if (isPageLoading) return // ⛔ Skip animation when loading
+      if (isPageLoading) return;
+
+      // kill previous ScrollTriggers in this scope
+      ScrollTrigger.getAll().forEach((st) => {
+        if (st.trigger === containerRef.current) st.kill();
+      });
 
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: containerRef.current,
-          start: 'top 80%',
-          toggleActions: 'play none none reset',
+          start: "top 85%",
+          toggleActions: "play none none reverse",
         },
-      })
+      });
 
       experience.forEach((item, i) => {
-        const el = countersRef.current[i]
-        if (!el) return
-        const obj = { val: 0 }
+        const el = countersRef.current[item.key];
+        if (!el) return;
 
+        const obj = { v: 0 };
         tl.to(
           obj,
           {
-            val: item.title,
-            duration: 1.5,
-            ease: 'power2.out',
+            v: item.title,
+            duration: 1.4,
+            delay: 0,
+            ease: "power2.out",
             onUpdate: () => {
-              el.innerText = Math.floor(obj.val).toLocaleString()
+              el.innerText = Math.floor(obj.v).toLocaleString();
             },
             onComplete: () => {
-              el.innerText = item.title.toLocaleString() + (item.suffix ?? '')
+              el.innerText = item.title.toLocaleString() + (item.suffix ?? "");
             },
           },
-          i * 0.2
-        )
-      })
-    },
-    { scope: containerRef, dependencies: [isPageLoading] } // ✅ Re-run when loading state changes
-  )
+          i * 0.18,
+        );
+      });
 
-  // ✅ Framer Motion Variants
-  const animations = {
-    container: {
-      hidden: {},
-      show: {
-        transition: { staggerChildren: 0.25 },
-      },
+      return () => {
+        try {
+          tl.kill();
+        } catch (e) {}
+      };
     },
+    {
+      scope: containerRef,
+      dependencies: [isPageLoading, JSON.stringify(experience)],
+    },
+  );
+
+  // Framer motion variants (simple, GPU safe)
+  const animations = {
+    container: { hidden: {}, show: { transition: { staggerChildren: 0.16 } } },
     fadeUp: {
-      hidden: { y: 60, opacity: 0 },
+      hidden: { y: 28, opacity: 0 },
       show: {
         y: 0,
         opacity: 1,
-        transition: { duration: 0.8, ease: 'easeOut' },
+        transition: { duration: 0.66, ease: "easeOut" },
       },
     },
-  }
+  };
 
-  const myCode = `
-class About {
-  name: "${about?.fullName}",
-  role: "${about?.shortRole}",
-  skills: {
-    frontend: [
-      ${frontendSkills?.map(skill => `"${skill}"`).join(',\n      ')}
-    ],
-    backend: [
-      ${backendSkills?.map(skill => `"${skill}"`).join(',\n      ')}
-    ]
-  }
-}
-`
+  const myCode = `class About {\n  name: "${about?.fullName || "Your Name"}",\n  role: "${about?.shortRole || "Short Role"}",\n  skills: {\n    frontend: [\n      ${frontendSkills?.map((s) => `"${s}"`).join(", ")}\n    ],\n    backend: [\n      ${backendSkills?.map((s) => `"${s}"`).join(", ")}\n    ]\n  }\n}`;
 
-  // ✅ Show skeleton until fully loaded
-  if (isPageLoading) return <AboutSkeleton />
+  if (isPageLoading) return <AboutSkeleton />;
 
-  // ✅ Only render this when fully ready (ensures motion + GSAP run correctly)
   return (
-    <motion.div
+    <motion.section
       ref={containerRef}
       variants={animations.container}
       initial="hidden"
       whileInView="show"
-      viewport={{ once: true, amount: 0.3 }}
-      className="md:py-[8vw] sm:py-[9vw] xs:py-[10vw] md:px-[2.5vw] sm:px-[3vw] xs:px-[3.5vw] bg-theme-dark w-full text-white font-inter overflow-hidden"
+      viewport={{ once: true, amount: 0.25 }}
+      className="relative w-full bg-[#050617] text-white overflow-hidden px-6 py-16 md:py-24"
     >
-      <div className="w-full h-full grid md:grid-cols-2 md:gap-[2.5vw] sm:gap-[3.5vw] xs:gap-[4.5vw] items-center">
-        {/* 🧩 Experience Cards */}
+      <div className="mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        {/* LEFT: Stats + Skill tags */}
         <motion.div
-          variants={animations.container}
-          className="grid md:grid-cols-2 md:gap-[2vw] sm:gap-[3vw] xs:gap-[4vw]"
+          variants={animations.fadeUp}
+          className="lg:col-span-5 space-y-6"
         >
-          {experience.map((item, idx) => (
-            <motion.div
-              key={idx}
-              variants={animations.fadeUp}
-              whileHover={{
-                y: -8,
-                scale: 1.02,
-                boxShadow: '0 0 10px #06b5d46c, 0 0 20px #06b5d463, 0 0 30px #06b5d442',
-              }}
-              transition={{ duration: 0.3 }}
-              className="md:p-[0.2vw] sm:p-[0.4vw] xs:p-[0.8vw] md:rounded-[0.8vw] sm:rounded-[1.3vw] xs:rounded-[1.8vw] gradient-button"
-            >
-              <div className="w-full h-full md:p-[1.5vw] sm:p-[2vw] xs:p-[2.5vw] bg-theme-dark md:rounded-[0.8vw] sm:rounded-[1.3vw] xs:rounded-[1.8vw] flex flex-col">
-                <span className="md:text-[4vw] sm:text-[5vw] xs:text-[7.5vw] text-theme-cyan">
-                  {item.icon}
-                </span>
-                <h3
-                  ref={el => (countersRef.current[idx] = el)}
-                  className="md:text-[2vw] sm:text-[3vw] xs:text-[5.5vw] font-semibold font-fira-code py-1"
-                >
-                  0
-                </h3>
-                <p className="md:text-[1.3vw] sm:text-[2.3vw] xs:text-[4.3vw] text-gray-400">
-                  {item.subTitle}
-                </p>
+          <div className="inline-flex items-center gap-3 rounded-full bg-white/3 px-4 py-2 text-xs font-medium tracking-wide">
+            <span className="w-2 h-2 rounded-full bg-linear-to-r from-indigo-400 to-cyan-400" />
+            About me
+          </div>
+
+          <h2 className="sm:text-4xl xs:text-2xl font-semibold leading-tight">
+            {about?.shortRole || "Building meaningful products"}
+          </h2>
+
+          <p className="text-white/70 max-w-xl leading-relaxed">
+            {about?.shortDesc}
+          </p>
+
+          {/* Experience cards */}
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            {experience.map((item) => (
+              <div
+                key={item.key}
+                className="rounded-2xl bg-linear-to-br from-white/3 to-transparent p-4 backdrop-blur-md border border-white/8"
+              >
+                <div className="flex flex-wrap items-start gap-4">
+                  <div className="text-2xl">{item.icon}</div>
+                  <div>
+                    <div
+                      className="text-2xl font-semibold"
+                      ref={(el) => (countersRef.current[item.key] = el)}
+                    >
+                      0
+                    </div>
+                    <div className="text-sm text-white/60">{item.subTitle}</div>
+                  </div>
+                </div>
               </div>
-            </motion.div>
-          ))}
+            ))}
+          </div>
+
+          {/* Skills lists */}
+          <div className="mt-6">
+            <h3 className="text-sm text-white/60 mb-3">Frontend</h3>
+            <div className="flex flex-wrap gap-2">
+              {frontendSkills.map((s) => (
+                <motion.span
+                  key={s}
+                  whileHover={{ y: -6, scale: 1.03 }}
+                  className="rounded-full bg-white/5 px-3 py-1 text-sm text-white/80"
+                >
+                  {s}
+                </motion.span>
+              ))}
+            </div>
+
+            <h3 className="text-sm text-white/60 mt-6 mb-3">Backend</h3>
+            <div className="flex flex-wrap gap-2">
+              {backendSkills.map((s) => (
+                <motion.span
+                  key={s}
+                  whileHover={{ y: -6, scale: 1.03 }}
+                  className="rounded-full bg-white/5 px-3 py-1 text-sm text-white/80"
+                >
+                  {s}
+                </motion.span>
+              ))}
+            </div>
+          </div>
         </motion.div>
 
-        {/* 🧠 Code Block Section */}
-        <motion.div variants={animations.fadeUp}>
-          <CodeBlock code={myCode} />
+        {/* RIGHT: Code & highlight */}
+        <motion.div
+          variants={animations.fadeUp}
+          className="lg:col-span-7 space-y-6 flex flex-col"
+        >
+          <div className="rounded-2xl bg-gradient-to-br from-[#06111c]/70 to-[#061026]/40 p-6 border border-white/6 shadow-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-2 w-2 rounded-full bg-red-400" />
+                <div className="h-2 w-2 rounded-full bg-yellow-400" />
+                <div className="h-2 w-2 rounded-full bg-green-400" />
+              </div>
+
+              <div className="text-sm text-white/60">{about?.fullName}</div>
+            </div>
+
+            <div className="mt-4">
+              {/* Code block component (keeps your existing implementation) */}
+              <CodeBlock code={myCode} language="js" showCopy />
+            </div>
+          </div>
+
+          {/* Project highlights */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Example project card - use first two public projects when available */}
+            {projects
+              ?.filter(
+                (p) =>
+                  p.visibility?.toLowerCase() === "public" &&
+                  p.status?.toLowerCase() === "published",
+              )
+              .slice(0, 2)
+              .map((p) => (
+                <motion.a
+                  key={p._id}
+                  href={`/projects/${p._id}`}
+                  whileHover={{ y: -6 }}
+                  className="group relative overflow-hidden rounded-2xl bg-white/3 p-4 backdrop-blur border border-white/8"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="flex-1">
+                      <h4 className="font-semibold">{p.title}</h4>
+                      <p className="text-sm text-white/60 mt-2 line-clamp-2">
+                        {p.shortDesc}
+                      </p>
+                    </div>
+                    <div className="flex-shrink-0 self-center text-sm text-white/50">
+                      {p.tech?.slice(0, 2).join(", ")}
+                    </div>
+                  </div>
+                </motion.a>
+              ))}
+          </div>
         </motion.div>
       </div>
-    </motion.div>
-  )
-}
+    </motion.section>
+  );
+};
 
-export default About
+export default AboutModern;
