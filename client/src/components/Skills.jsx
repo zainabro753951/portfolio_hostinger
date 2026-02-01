@@ -118,6 +118,13 @@ const SkillsModern = () => {
     },
   };
 
+  // background uses a translucent gradient so the card reads distinct from page background
+  const cardBackground = {
+    background: `linear-gradient(135deg, rgba(0,209,243,0.08), rgba(6,12,18,0.55))`,
+    border: `1px solid rgba(0,209,243,0.12)`,
+    backdropFilter: `blur(6px)`,
+  };
+
   if (isPageLoading) return <SkillSkeleton />;
 
   return (
@@ -150,10 +157,7 @@ const SkillsModern = () => {
 
           <div className="grid md:grid-cols-2 xs:grid-cols-1 gap-4 mt-4">
             {data.experiences.slice(0, 4).map((exp, i) => (
-              <div
-                key={i}
-                className="rounded-2xl bg-linear-to-br from-white/4 to-transparent p-4 backdrop-blur-md border border-white/6"
-              >
+              <div key={i} style={cardBackground} className="rounded-2xl p-4">
                 <div className="flex flex-wrap items-start gap-3">
                   <div className="text-2xl">{exp.icon || "⚙️"}</div>
                   <div>
@@ -206,7 +210,7 @@ const SkillsModern = () => {
                         aria-hidden
                       >
                         <div
-                          className="progress-bar absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-cyan-400 via-indigo-500 to-purple-600"
+                          className="progress-bar absolute left-0 top-0 h-full rounded-full bg-linear-to-r via-theme-cyan from-light-blue to-theme-purple"
                           data-percent={s.proficiency}
                           style={{ width: "0%" }}
                           role="progressbar"
@@ -253,7 +257,7 @@ const SkillsModern = () => {
                         aria-hidden
                       >
                         <div
-                          className="progress-bar absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-cyan-400 via-indigo-500 to-purple-600"
+                          className="progress-bar absolute left-0 top-0 h-full rounded-full bg-linear-to-r via-theme-cyan from-light-blue to-theme-purple"
                           data-percent={s.proficiency}
                           style={{ width: "0%" }}
                           role="progressbar"
@@ -271,7 +275,7 @@ const SkillsModern = () => {
           </div>
 
           {/* Visual / CTA panel */}
-          <div className="rounded-2xl p-6 bg-gradient-to-br from-[#061026]/70 to-[#081424]/60 border border-white/6 backdrop-blur-md">
+          <div style={cardBackground} className="rounded-2xl p-6 ">
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm text-white/60">Focused on</div>
@@ -284,7 +288,7 @@ const SkillsModern = () => {
               </div>
 
               <div className="hidden md:flex flex-col items-center gap-3">
-                <div className="rounded-full bg-gradient-to-br from-cyan-400 to-indigo-500 p-4 shadow-lg">
+                <div className="rounded-full bg-linear-to-br from-cyan-400 to-indigo-500 p-4 shadow-lg">
                   <svg
                     width="56"
                     height="56"

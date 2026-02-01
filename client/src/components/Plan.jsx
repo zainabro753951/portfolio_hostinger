@@ -1,77 +1,157 @@
-import React from 'react'
-import { motion } from 'motion/react'
-import GardientButton from './GardientButton'
+import React from "react";
+import { motion } from "motion/react";
+import { Check } from "lucide-react";
+import GardientButton from "./GardientButton";
+import { Link } from "react-router-dom";
 
-const Plan = ({ item, isInContact = false }) => {
-  const cardVariants = {
-    hidden: { opacity: 0, y: 50 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: { ease: 'easeOut', duration: 0.6 },
-    },
-  }
+const cardVariants = {
+  hidden: { opacity: 0, y: 24, scale: 0.98 },
+  show: (i = 0) => ({
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { delay: i * 0.08, duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+  }),
+};
 
-  const buttonVariants = {
-    hidden: { opacity: 0, scale: 0.9 },
-    show: {
-      opacity: 1,
-      scale: 1,
-      transition: { ease: 'easeOut', duration: 0.5 },
-    },
-  }
+const featureVariants = {
+  hidden: { opacity: 0, x: -12 },
+  show: { opacity: 1, x: 0, transition: { duration: 0.35 } },
+};
+
+const buttonVariants = {
+  hidden: { opacity: 0, scale: 0.96 },
+  show: { opacity: 1, scale: 1, transition: { duration: 0.4 } },
+};
+
+const Plan = ({
+  item = {},
+  isInContact = false,
+  index = 0,
+  highlighted = false,
+}) => {
+  const price = `${item?.price ?? ""}${item?.currency ? " " + item.currency : ""}/${item?.billingCycle ?? ""}`;
+
+  const accent = "#00D495"; // requested accent color
+  // background uses a translucent gradient so the card reads distinct from page background
+  const cardBackground = {
+    background: `linear-gradient(135deg, rgba(0,209,243,0.08), rgba(6,12,18,0.55))`,
+    border: `1px solid rgba(0,209,243,0.12)`,
+    backdropFilter: `blur(6px)`,
+  };
   return (
-    <motion.div
+    <motion.article
+      className={`relative rounded-2xl p-1 transform-gpu will-change-transform select-none`}
+      custom={index}
       variants={cardVariants}
-      initial={'hidden'}
-      animate={'show'}
-      whileHover={{
-        y: -8,
-        scale: 1.02,
-        boxShadow: '0 0 10px #06b5d46c, 0 0 20px #06b5d463, 0 0 30px #06b5d442',
-      }}
-      transition={{ duration: 0.3 }}
-      className="md:p-[0.2vw] sm:p-[0.4vw] xs:p-[0.8vw] md:rounded-[0.8vw] sm:rounded-[1.3vw] xs:rounded-[1.8vw] relative gradient-button"
+      initial="hidden"
+      animate="show"
+      whileHover={{ y: -10, scale: 1.02 }}
+      role="group"
+      aria-labelledby={`plan-${item?.id}-title`}
     >
-      <div className="w-full h-full md:p-[1.5vw] sm:p-[2vw] xs:p-[2.5vw] bg-theme-dark md:rounded-[0.8vw] sm:rounded-[1.3vw] xs:rounded-[1.8vw] flex flex-col md:gap-[0.5vw] sm:gap-[1vw] xs:gap-[1.5vw]">
-        <h2 className="md:text-[1.5vw] sm:text-[2.5vw] xs:text-[4.5vw] font-fira-code font-semibold capitalize">
-          {item?.planName}
-          {/* <span className="gradient-text">{item.tag}</span> */}
-        </h2>
-        <h3 className="md:text-[2.5vw] sm:text-[3.5vw] xs:text-[5.5vw] font-bold text-theme-cyan pb-1">
-          {item?.price}
-          {item?.currency}/{item?.billingCycle}
-        </h3>
-        <p className="md:text-[1.15vw] sm:text-[2.15vw] xs:text-[4.15vw] text-gray-400 md:pb-[1vw] sm:pb-[1.5vw] xs:pb-[2vw]">
-          {item?.shortDesc}
-        </p>
-
-        <div className="w-full h-full flex flex-col justify-between">
-          <ul className="w-full flex flex-col md:text-[1.2vw] sm:text-[2.2vw] xs:text-[4.2vw] text-gray-300 list-tick">
-            {item?.featurePoints?.map((pt, i) => (
-              <li
-                key={i}
-                className="relative md:pl-[2vw] sm:pl-[3vw] xs:pl-[4vw] md:mb-[1vw] sm:mb-[2vw] xs:mb-[3vw]"
+      {/* Outer subtle gradient border */}
+      <div
+        className={`rounded-2xl bg-linear-to-br from-[#0b1220] via-[#07111a] to-[#07121b] p-px`}
+      >
+        {/* Card content */}
+        <div
+          className={`rounded-2xl bg-theme-dark/80 backdrop-blur-md p-6 md:p-8 lg:p-10 flex flex-col justify-between gap-6 min-h-[220px] shadow-[0_8px_30px_rgba(2,6,23,0.6)]`}
+          style={cardBackground}
+        >
+          <header className="flex items-start justify-between gap-4">
+            <div>
+              <h3
+                id={`plan-${item?.id}-title`}
+                className={`text-xl md:text-2xl lg:text-3xl font-semibold tracking-tight text-white`}
               >
-                {pt?.name}
-              </li>
-            ))}
-          </ul>
+                {item?.planName}
+              </h3>
+              {item?.tag ? (
+                <p className="mt-1 text-sm text-theme-cyan/80 font-medium">
+                  {item.tag}
+                </p>
+              ) : null}
+            </div>
 
-          {!isInContact ? (
-            <motion.div
-              variants={buttonVariants}
-              className="md:text-[1.3vw] sm:text-[2.3vw] xs:text-[4.3vw] flex flex-col w-full"
-            >
-              <GardientButton text="Choose Plan" link={`/contact/${item?.id}`} />
-            </motion.div>
-          ) : (
-            ''
-          )}
+            <div className="text-right">
+              <div
+                className={`text-2xl md:text-3xl font-extrabold text-theme-cyan`}
+              >
+                {item?.price}
+              </div>
+              <div className="text-xs text-gray-400">
+                {item?.currency}/{item?.billingCycle}
+              </div>
+            </div>
+          </header>
+
+          <p className="text-sm md:text-base text-gray-300">
+            {item?.shortDesc}
+          </p>
+
+          {/* features list with clear affordance and optional detail */}
+          <motion.ul className="grid gap-2 mt-2 md:mt-4">
+            {Array.isArray(item?.featurePoints) &&
+              item.featurePoints.map((pt, i) => (
+                <motion.li
+                  key={i}
+                  className="flex items-start gap-3"
+                  variants={featureVariants}
+                  transition={{ delay: i * 0.04 }}
+                >
+                  <span
+                    className="shrink-0 mt-1 p-1 rounded-md"
+                    style={{
+                      background: `linear-gradient(180deg, ${accent}20, transparent)`,
+                    }}
+                    aria-hidden
+                  >
+                    <Check className="w-4 h-4 text-white/90" />
+                  </span>
+
+                  <div className="flex-1">
+                    <div className="text-sm text-gray-100">{pt?.name}</div>
+                    {pt?.meta ? (
+                      <div className="text-xs text-gray-400 mt-0.5">
+                        {pt.meta}
+                      </div>
+                    ) : null}
+                  </div>
+                </motion.li>
+              ))}
+          </motion.ul>
+
+          <div className="mt-4">
+            {!isInContact ? (
+              <motion.div
+                variants={buttonVariants}
+                initial="hidden"
+                animate="show"
+              >
+                {/* CTA */}
+                <Link
+                  to="/contact"
+                  className="inline-flex items-center gap-3 rounded-full bg-linear-to-r from-indigo-500 to-cyan-400 px-6 py-3 font-medium shadow-lg hover:scale-105 transition-transform duration-300"
+                >
+                  Choose Plan
+                </Link>
+              </motion.div>
+            ) : (
+              <div className="text-sm text-gray-400">Already in contact</div>
+            )}
+          </div>
+
+          {/* subtle ribbon for highlighted plan */}
+          {highlighted ? (
+            <div className="absolute -top-3 left-4 inline-flex items-center gap-2 rounded-full bg-linear-to-r from-theme-cyan/30 to-[#7c3aed]/20 px-3 py-1 text-xs text-white backdrop-blur">
+              Recommended
+            </div>
+          ) : null}
         </div>
       </div>
-    </motion.div>
-  )
-}
+    </motion.article>
+  );
+};
 
-export default Plan
+export default Plan;

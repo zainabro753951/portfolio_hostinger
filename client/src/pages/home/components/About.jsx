@@ -153,6 +153,13 @@ const AboutModern = () => {
 
   if (isPageLoading) return <AboutSkeleton />;
 
+  // background uses a translucent gradient so the card reads distinct from page background
+  const cardBackground = {
+    background: `linear-gradient(135deg, rgba(0,209,243,0.08), rgba(6,12,18,0.55))`,
+    border: `1px solid rgba(0,209,243,0.12)`,
+    backdropFilter: `blur(6px)`,
+  };
+
   return (
     <motion.section
       ref={containerRef}
@@ -186,7 +193,8 @@ const AboutModern = () => {
             {experience.map((item) => (
               <div
                 key={item.key}
-                className="rounded-2xl bg-linear-to-br from-white/3 to-transparent p-4 backdrop-blur-md border border-white/8"
+                style={cardBackground}
+                className="rounded-2xl p-4"
               >
                 <div className="flex flex-wrap items-start gap-4">
                   <div className="text-2xl">{item.icon}</div>
@@ -239,7 +247,7 @@ const AboutModern = () => {
           variants={animations.fadeUp}
           className="lg:col-span-7 space-y-6 flex flex-col"
         >
-          <div className="rounded-2xl bg-gradient-to-br from-[#06111c]/70 to-[#061026]/40 p-6 border border-white/6 shadow-xl">
+          <div style={cardBackground} className="rounded-2xl  p-6 shadow-xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="h-2 w-2 rounded-full bg-red-400" />

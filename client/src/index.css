@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --color-theme-purple: #9235ea;
-  --color-theme-cyan: #06b6d4;
-  --color-light-blue: #5161cf;
+  --color-theme-purple: #00d596;
+  --color-theme-cyan: #00d3ef;
+  --color-light-blue: #7a89ff;
   --color-theme-dark: #0f0921;
   --font-fira-code: "Fira Code", monospace;
   --font-inter: "Inter", sans-serif;
@@ -12,9 +12,9 @@
 .gradient-text {
   background: linear-gradient(
     to right,
-    #9235ea,
-    #5161cf,
-    #06b6d4
+    #00d596,
+    #7a89ff,
+    #00d3ef
   ); /* Gradient colors */
   -webkit-background-clip: text; /* Safari, Chrome */
   -webkit-text-fill-color: transparent; /* Safari, Chrome */

@@ -257,8 +257,8 @@ export const getSiteSettings = async (req, res) => {
         tagline: rows[0].tagline,
         footerText: rows[0].footerText,
         googleAnalytics: rows[0].googleAnalytics,
-        logoImage: rows[0].logoImage,
-        favicon: rows[0].favicon,
+        logoImage: JSON.parse(rows[0].logoImage),
+        favicon: JSON.parse(rows[0].favicon),
       },
       contactInfo: {
         linkedin: rows[0].linkedin,

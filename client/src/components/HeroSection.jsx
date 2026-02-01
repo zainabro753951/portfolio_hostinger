@@ -1,11 +1,11 @@
-import React from 'react'
-import { motion } from 'framer-motion'
+import React from "react";
+import { motion } from "framer-motion";
 
 const HeroSection = ({
-  title = 'Default Title',
+  title = "Default Title",
   title2 = null,
-  gardient_title = 'Default gardient_title',
-  desc = 'description',
+  gardient_title = "Default gardient_title",
+  desc = "description",
 }) => {
   // ✅ Unified and optimized animation variants
   const fadeUp = {
@@ -16,29 +16,29 @@ const HeroSection = ({
       transition: {
         delay: i * 0.1,
         duration: 0.6,
-        ease: 'easeOut',
+        ease: "easeOut",
       },
     }),
-  }
+  };
 
   const orbFade = (delay = 0) => ({
     hidden: { opacity: 0, scale: 0.9 },
     visible: {
       opacity: 1,
       scale: 1,
-      transition: { duration: 1, ease: 'easeOut', delay },
+      transition: { duration: 1, ease: "easeOut", delay },
     },
-  })
+  });
 
   return (
     <motion.section
       initial="hidden"
       animate="visible"
       viewport={{ once: true, amount: 0.3 }}
-      className="w-full h-full bg-theme-dark text-white relative bg-circut overflow-hidden font-inter will-change-transform"
+      className="w-full h-full bg-[#050617] text-white relative bg-circut overflow-hidden font-inter will-change-transform"
     >
       {/* ✅ Background with GPU-friendly smooth scaling */}
-      <div className="absolute inset-0 overflow-hidden bg-theme-dark/70">
+      <div className="absolute inset-0 overflow-hidden bg-[#050617]/70">
         <motion.div
           variants={orbFade(0)}
           className="md:w-[20vw] md:h-[20vw] sm:w-[40vw] sm:h-[40vw] xs:w-[60vw] xs:h-[60vw] rounded-full bg-theme-purple/25 blur-3xl absolute md:-left-20 md:-bottom-20 will-change-transform"
@@ -62,7 +62,8 @@ const HeroSection = ({
             custom={0}
             className="md:text-[3.5vw] sm:text-[4.5vw] xs:text-[6.5vw] font-fira-code font-semibold"
           >
-            {title} <span className="gradient-text">{gardient_title}</span> {title2 ?? ''}
+            {title} <span className="gradient-text">{gardient_title}</span>{" "}
+            {title2 ?? ""}
           </motion.h1>
 
           <motion.p
@@ -75,7 +76,7 @@ const HeroSection = ({
         </motion.div>
       </div>
     </motion.section>
-  )
-}
+  );
+};
 
-export default HeroSection
+export default HeroSection;

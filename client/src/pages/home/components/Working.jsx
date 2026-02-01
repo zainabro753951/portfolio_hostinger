@@ -96,7 +96,7 @@ export default function WorkingModernResponsiveV2() {
         <div className="text-center mb-12">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold">
             How{" "}
-            <span className="bg-linear-to-r from-indigo-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-light-blue via-theme-cyan to-theme-purple bg-clip-text text-transparent">
               I can help
             </span>
           </h2>
@@ -168,7 +168,7 @@ export default function WorkingModernResponsiveV2() {
         <div className="mt-12 text-center">
           <a
             href="/contact"
-            className="inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400 px-6 py-3 font-medium shadow-lg hover:scale-105 transition-transform duration-300"
+            className="inline-flex items-center gap-3 rounded-full bg-linear-to-r from-indigo-500 to-cyan-400 px-6 py-3 font-medium shadow-lg hover:scale-105 transition-transform duration-300"
           >
             Get a custom quote
           </a>

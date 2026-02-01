@@ -122,13 +122,7 @@ export default function FeaturedReposModern() {
             style={{ fontSize: "clamp(1.6rem, 3.2vw, 2.6rem)" }}
           >
             Featured{" "}
-            <span
-              style={{
-                background: "linear-gradient(90deg,#7c3aed,#06b6d4)",
-                WebkitBackgroundClip: "text",
-                color: "transparent",
-              }}
-            >
+            <span className="bg-linear-to-r from-light-blue via-theme-cyan to-theme-purple bg-clip-text text-transparent">
               Repositories
             </span>
           </h2>

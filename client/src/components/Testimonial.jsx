@@ -1,104 +1,263 @@
-import React from 'react'
-import { Swiper, SwiperSlide } from 'swiper/react'
+import React, { useRef } from "react";
+import { Swiper, SwiperSlide } from "swiper/react";
 
-// Import Swiper styles
-import 'swiper/css'
-import 'swiper/css/pagination'
-import 'swiper/css/navigation'
+// Swiper styles
+import "swiper/css";
+import "swiper/css/pagination";
+import "swiper/css/navigation";
+import "swiper/css/autoplay";
 
-// Import required modules
-import { Pagination, Navigation } from 'swiper/modules'
-import { FaChevronLeft, FaChevronRight } from 'react-icons/fa6'
-import { useSelector } from 'react-redux'
-import LoadingSkeletonTestimonials from './LoadingSkeletonTestimonial'
+// Swiper modules
+import {
+  Pagination,
+  Navigation,
+  A11y,
+  Autoplay,
+  Keyboard,
+} from "swiper/modules";
+import { FaChevronLeft, FaChevronRight, FaQuoteRight } from "react-icons/fa6";
+import { motion } from "motion/react";
+
+// Dummy testimonials
+const testimonials = [
+  {
+    message:
+      "Working with this developer was an absolute pleasure. The UI/UX quality, performance, and attention to detail exceeded our expectations. Highly recommended!",
+    clientName: "Ahmed Raza",
+    designation: "Founder, TechNova",
+    clientImage: { url: "https://randomuser.me/api/portraits/men/32.jpg" },
+  },
+  {
+    message:
+      "Modern design, smooth animations, and very professional communication. Our website looks premium and performs flawlessly across all devices.",
+    clientName: "Sarah Khan",
+    designation: "Product Manager, Softify",
+    clientImage: { url: "https://randomuser.me/api/portraits/women/44.jpg" },
+  },
+  {
+    message:
+      "The best part was understanding our vision and converting it into a clean, elegant UI. Everything feels fast, intuitive, and visually impressive.",
+    clientName: "Usman Ali",
+    designation: "CEO, Creative Labs",
+    clientImage: { url: "https://randomuser.me/api/portraits/men/75.jpg" },
+  },
+];
 
 const Testimonial = () => {
-  const { testimonials, isLoading } = useSelector(state => state.testimonial)
-
-  if (isLoading) return <LoadingSkeletonTestimonials />
+  const accent = "#00D1F3"; // your cyan accent
+  const primary = "#00d596";
+  const alt = "#7a89ff";
+  const swiperRef = useRef(null);
 
   return (
-    <div className="relative md:py-[8vw] sm:py-[9vw] xs:py-[10vw] md:px-[2.5vw] sm:px-[3vw] xs:px-[3.5vw] bg-theme-purple/10 w-full text-white font-inter">
-      <div className="md:max-w-[75%] mx-auto relative">
+    <section
+      aria-label="User testimonials"
+      className="relative md:py-[6rem] sm:py-[4.5rem] py-[3.5rem] px-4 bg-[#050617] w-full text-white font-inter"
+    >
+      <div className="max-w-6xl mx-auto relative">
+        <h2 className="text-center text-3xl md:text-4xl font-semibold mb-8">
+          What our users say
+        </h2>
+
         <Swiper
-          modules={[Pagination, Navigation]}
+          onSwiper={(s) => (swiperRef.current = s)}
+          modules={[Pagination, Navigation, A11y, Autoplay, Keyboard]}
           pagination={{
             clickable: true,
-            el: '.custom-pagination',
-            bulletClass: 'custom-bullet',
-            bulletActiveClass: 'custom-bullet-active',
+            el: ".custom-pagination",
+            bulletClass: "custom-bullet",
+            bulletActiveClass: "custom-bullet-active",
           }}
           navigation={{
-            nextEl: '.swiper-button-next-custom',
-            prevEl: '.swiper-button-prev-custom',
+            nextEl: ".swiper-button-next-custom",
+            prevEl: ".swiper-button-prev-custom",
           }}
-          spaceBetween={50}
+          spaceBetween={28}
           slidesPerView={1}
           loop={true}
-          className="w-[90%] md:w-[70%]"
+          grabCursor={true}
+          keyboard={{ enabled: true }}
+          autoplay={{
+            delay: 6000,
+            disableOnInteraction: false,
+            pauseOnMouseEnter: true,
+          }}
+          breakpoints={{
+            640: { slidesPerView: 1 },
+            768: { slidesPerView: 1.05 },
+            1024: { slidesPerView: 1.18 },
+            1280: { slidesPerView: 1.12 },
+          }}
+          className="w-full"
         >
-          {testimonials?.map((item, idx) => (
+          {testimonials.map((item, idx) => (
             <SwiperSlide key={idx}>
-              <div className="gradient-button md:p-[0.2vw] sm:p-[0.4vw] xs:p-[0.8vw] md:rounded-[0.8vw] sm:rounded-[1.3vw] xs:rounded-[1.8vw] ">
-                <div className="w-full h-full md:p-[1.5vw] sm:p-[2vw] xs:p-[2.5vw] bg-theme-dark md:rounded-[0.8vw] sm:rounded-[1.3vw] xs:rounded-[1.8vw] flex flex-col md:gap-[1.5vw] sm:gap-[2vw] xs:gap-[2.5vw]">
-                  <p className="md:text-[1.3vw] sm:text-[2.3vw] xs:text-[4.3vw] text-gray-400">
-                    {item?.message}
-                  </p>
-                  <div className="flex items-center md:gap-[1.5vw] sm:gap-[2.5vw] xs:gap-[3.5vw]">
-                    <img
-                      src={item?.clientImage?.url}
-                      alt={item?.clientName}
-                      className="md:w-[3.5vw] md:h-[3.5vw] sm:w-[5.5vw] sm:h-[5.5vw] xs:w-[7.5vw] xs:h-[7.5vw] rounded-full object-cover"
-                    />
-                    <div>
-                      <h3 className="md:text-[1.2vw] sm:text-[2vw] xs:text-[4vw] font-semibold text-white">
-                        {item?.clientName}
-                      </h3>
-                      <p className="text-gray-500 md:text-[0.9vw] sm:text-[1.8vw] xs:text-[3.5vw]">
-                        {item?.designation}
-                      </p>
+              <motion.div
+                whileHover={{
+                  y: -6,
+                  boxShadow: "0 18px 40px rgba(2,6,23,0.55)",
+                }}
+                transition={{ duration: 0.28 }}
+                className="mx-4 md:mx-8"
+              >
+                {/* card */}
+                <article
+                  style={{
+                    background: `linear-gradient(135deg, rgba(0,209,243,0.06), rgba(8,12,18,0.6))`,
+                    border: `1px solid rgba(0,209,243,0.08)`,
+                    backdropFilter: "blur(8px)",
+                  }}
+                  className="rounded-2xl p-6 md:p-8 border-[rgba(255,255,255,0.02)] shadow-[0_8px_40px_rgba(2,6,23,0.6)]"
+                >
+                  <div className="flex flex-col md:flex-row md:items-center gap-6">
+                    {/* quote + message */}
+                    <div className="flex-1">
+                      <div className="flex items-start gap-4">
+                        <span
+                          className="p-3 rounded-lg shrink-0 flex items-center justify-center"
+                          style={{
+                            background: `linear-gradient(180deg, ${accent}22, transparent)`,
+                            border: `1px solid rgba(255,255,255,0.02)`,
+                          }}
+                        >
+                          <FaQuoteRight className="w-5 h-5 text-white/90" />
+                        </span>
+
+                        <p className="text-gray-200 text-base md:text-lg leading-relaxed">
+                          “{item.message}”
+                        </p>
+                      </div>
+
+                      {/* meta */}
+                      <div className="mt-5 flex items-center gap-3">
+                        <img
+                          src={
+                            item.clientImage?.url ||
+                            "/images/avatar-fallback.png"
+                          }
+                          alt={item.clientName || "Client"}
+                          loading="lazy"
+                          decoding="async"
+                          onError={(e) =>
+                            (e.currentTarget.src =
+                              "/images/avatar-fallback.png")
+                          }
+                          className="w-12 h-12 md:w-14 md:h-14 rounded-full object-cover border border-[rgba(255,255,255,0.04)]"
+                        />
+
+                        <div>
+                          <div className="text-white font-semibold">
+                            {item.clientName}
+                          </div>
+                          <div className="text-gray-400 text-xs md:text-sm">
+                            {item.designation}
+                          </div>
+                        </div>
+                      </div>
                     </div>
+
+                    {/* optional right column: rating or badges */}
+                    <aside className="mt-4 md:mt-0 md:ml-6 w-full md:w-40 flex-shrink-0">
+                      {/* example: rating or CTA */}
+                      <div className="flex items-center justify-center md:flex-col md:items-end gap-3">
+                        <div className="text-sm md:text-base text-gray-300">
+                          Trusted
+                        </div>
+                        <div
+                          className="rounded-full px-3 py-1 text-xs font-semibold"
+                          style={{ background: primary, color: "#022" }}
+                        >
+                          Verified client
+                        </div>
+                      </div>
+                    </aside>
                   </div>
-                </div>
-              </div>
+                </article>
+              </motion.div>
             </SwiperSlide>
           ))}
         </Swiper>
 
-        {/* Custom Navigation Buttons */}
-        <div className="absolute left-[3%] top-1/2 -translate-y-1/2 z-10">
-          <button className="swiper-button-prev-custom bg-gradient-to-r from-purple-600 to-blue-500 hover:opacity-80 text-white md:p-[1vw] sm:p-[2vw] xs:p-[4vw] rounded-full shadow-lg">
-            <FaChevronLeft />
+        {/* Navigation buttons */}
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+          <button
+            aria-label="Previous testimonial"
+            className="swiper-button-prev-custom flex items-center justify-center text-white p-3 md:p-4 rounded-full transition-transform duration-300 ease-out focus-visible:outline-none"
+            style={{
+              background: `linear-gradient(135deg, ${primary}, ${accent})`,
+              boxShadow: "0 10px 30px rgba(0,209,243,0.28)",
+              backdropFilter: "blur(6px)",
+            }}
+          >
+            <FaChevronLeft className="text-[1rem] md:text-[1.2rem]" />
           </button>
         </div>
 
-        <div className="absolute right-[3%] top-1/2 -translate-y-1/2 z-10">
-          <button className="swiper-button-next-custom bg-gradient-to-r from-purple-600 to-blue-500 hover:opacity-80 text-white md:p-[1vw] sm:p-[2vw] xs:p-[4vw] rounded-full shadow-lg">
-            <FaChevronRight />
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10">
+          <button
+            aria-label="Next testimonial"
+            className="swiper-button-next-custom flex items-center justify-center text-white p-3 md:p-4 rounded-full transition-transform duration-300 ease-out focus-visible:outline-none"
+            style={{
+              background: `linear-gradient(135deg, ${accent}, ${alt})`,
+              boxShadow: "0 10px 30px rgba(122,137,255,0.28)",
+              backdropFilter: "blur(6px)",
+            }}
+          >
+            <FaChevronRight className="text-[1rem] md:text-[1.2rem]" />
           </button>
         </div>
 
-        {/* Custom Pagination */}
-        <div className="custom-pagination flex justify-center md:gap-[1vw] sm:gap-[1.5vw] xs:gap-[2vw] md:mt-[3vw] sm:mt-[4vw] xs:mt-[5vw]"></div>
+        {/* Pagination bullets */}
+        <div className="custom-pagination flex justify-center gap-3 md:gap-4 mt-6"></div>
 
-        {/* Pagination styles */}
+        {/* local styles for bullets + focus rings */}
         <style jsx global>{`
           .custom-bullet {
             width: 10px;
             height: 10px;
-            background: #555;
-            border-radius: 50%;
-            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 999px;
+            transform-origin: center;
+            transition:
+              transform 0.28s ease,
+              background 0.28s ease,
+              box-shadow 0.28s ease,
+              opacity 0.28s ease;
+            opacity: 0.8;
           }
+
+          .custom-bullet:hover {
+            transform: scale(1.12);
+            opacity: 1;
+          }
+
           .custom-bullet-active {
-            background: linear-gradient(90deg, #6a11cb, #2575fc);
-            width: 12px;
-            height: 12px;
+            background: ${accent};
+            transform: scale(1.35);
+            box-shadow:
+              0 10px 28px ${accent}33,
+              0 6px 18px ${accent}40;
+            opacity: 1;
+          }
+
+          .swiper-button-prev-custom:focus-visible,
+          .swiper-button-next-custom:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 6px rgba(0, 209, 243, 0.12);
+            transform: translateY(-1px) scale(1.02);
+          }
+
+          /* small responsive tweak for bullets on mobile */
+          @media (max-width: 640px) {
+            .custom-bullet {
+              width: 9px;
+              height: 9px;
+            }
           }
         `}</style>
       </div>
-    </div>
-  )
-}
+    </section>
+  );
+};
 
-export default Testimonial
+export default Testimonial;

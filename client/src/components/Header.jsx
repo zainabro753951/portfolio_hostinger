@@ -7,7 +7,10 @@ import Nav from "./Nav";
 const HeaderModern = () => {
   const { site_info } = useSelector((s) => s.siteSettings || {});
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
   const menuRef = useRef(null);
+
+  console.log(site_info);
 
   // Close menu on Escape and trap focus when open
   useEffect(() => {
@@ -79,14 +82,14 @@ const HeaderModern = () => {
       <header className="fixed left-0 right-0 top-0 z-50 text-white">
         <div className="backdrop-blur-md/60 sticky top-0 mx-auto w-full bg-linear-to-b from-white/2 to-transparent backdrop-blur-xl border-b border-white/6 shadow-lg">
           <div className="mx-auto max-w-7xl px-6 md:px-12">
-            <div className="flex h-16 items-center justify-between gap-4 py-3">
+            <div className="flex md:h-16 items-center justify-between gap-4 md:py-3 xs:py-1">
               {/* Logo area */}
               <div className="flex items-center gap-4">
-                {site_info?.logoImage ? (
+                {site_info?.logoImage?.url ? (
                   <img
-                    src={site_info.logoImage.url}
+                    src={`https://zaincode.io${site_info?.logoImage?.url}`}
                     alt={site_info?.siteName || "logo"}
-                    className="h-9 w-auto rounded-sm object-contain"
+                    className="md:h-12 xs:h-8 w-auto rounded-sm object-contain"
                   />
                 ) : (
                   <div className="rounded-md bg-clip-text text-transparent bg-linear-to-r from-indigo-400 via-cyan-400 to-emerald-400 font-semibold text-lg">
@@ -155,7 +158,7 @@ const HeaderModern = () => {
       <AnimatePresence>
         {isMobileOpen && (
           <motion.div
-            className="fixed inset-0 z-40 md:hidden"
+            className="fixed inset-0 z-40 md:hidden "
             initial="hidden"
             animate="show"
             exit="exit"
@@ -173,7 +176,7 @@ const HeaderModern = () => {
               variants={panelVariants}
               className="relative z-50 mx-auto mt-2 w-[94%] rounded-2xl
           bg-linear-to-b from-[#071022]/95 via-[#061022]/95 to-[#030408]/98
-          p-6 pt-6 shadow-2xl will-change-transform text-white"
+          p-6 pt-12 shadow-2xl will-change-transform text-white "
             >
               {/* Header */}
               <div className="flex items-center justify-between">
@@ -190,14 +193,6 @@ const HeaderModern = () => {
                     </div>
                   )}
                 </div>
-
-                <button
-                  onClick={() => setIsMobileOpen(false)}
-                  className="rounded-md p-2 hover:bg-white/5 transition"
-                  aria-label="Close"
-                >
-                  <IoMdClose className="text-2xl" />
-                </button>
               </div>
 
               {/* Nav */}
@@ -209,7 +204,7 @@ const HeaderModern = () => {
               <div className="mt-6 border-t border-white/6 pt-6 flex flex-col gap-3">
                 <a
                   href="/projects"
-                  className="rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400 px-4 py-3 text-center font-medium"
+                  className="rounded-full bg-linear-to-r from-indigo-500 to-cyan-400 px-4 py-3 text-center font-medium"
                 >
                   View Projects
                 </a>
