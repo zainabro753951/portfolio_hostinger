@@ -31,7 +31,7 @@ const Nav = ({ flex = false, isMobile = false }) => {
     <nav
       className={`${isMobile ? "xs:flex md:hidden" : "md:flex xs:hidden"} ${
         flex ? "flex-col" : "items-center"
-      }  md:gap-[1vw] sm:gap-[2vw] xs:gap-[3vw] md:text-[1.25vw] sm:text-[2.3vw] xs:text-[4.3vw]`}
+      }  md:text-md xs:text-sm`}
     >
       {links.map((link, idx) => {
         return (

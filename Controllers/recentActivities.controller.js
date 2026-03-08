@@ -3,7 +3,7 @@ import pool from "../db.config.js";
 const getActivities = async (req, res) => {
   try {
     const [activities] = await pool.query(
-      "SELECT * FROM recent_activities ORDER BY created_at DESC",
+      "SELECT * FROM recent_activities ORDER BY created_at DESC LIMIT 50",
     );
 
     if (activities.length === 0) {

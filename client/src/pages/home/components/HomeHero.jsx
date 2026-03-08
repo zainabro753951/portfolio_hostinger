@@ -13,6 +13,7 @@ export default function HomeHeroBrandX() {
   const { data: about, isLoading: isAboutLoading } = useSelector(
     (state) => state.about,
   );
+
   const { site_info, isLoading: isSiteSettingLoading } = useSelector(
     (state) => state.siteSettings,
   );
@@ -95,8 +96,6 @@ export default function HomeHeroBrandX() {
     return <HeroSkeleton />;
   }
 
-  console.log(title);
-
   return (
     <section className="relative min-h-screen overflow-hidden bg-[#0a0b10] text-white md:py-10 xs:py-20">
       {/* Ambient gradient background */}
@@ -115,7 +114,7 @@ export default function HomeHeroBrandX() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="inline-block rounded-full border border-white/10 bg-white/5 px-5 py-2 md:text-sm xs:text-xs uppercase tracking-widest text-white/70"
+            className="inline-block rounded-full border border-white/10 bg-white/5 px-5 py-2 md:text-sm xs:text-[11px] uppercase tracking-widest text-white/70"
           >
             Creative Developer · Brand UI
           </motion.span>
@@ -124,7 +123,7 @@ export default function HomeHeroBrandX() {
             initial={{ opacity: 0, y: 60 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-            className="md:text-5xl xs:text-3xl font-semibold"
+            className="md:text-5xl xs:text-3xl font-semibold md:leading-13 xs:leading-8"
           >
             {normalStart}
             <br />
@@ -141,8 +140,7 @@ export default function HomeHeroBrandX() {
             transition={{ duration: 1, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
             className="max-w-xl md:text-lg xs:text-md leading-relaxed text-white/65"
           >
-            High‑end interfaces, cinematic motion and scalable systems — crafted
-            for modern brands who care about detail, performance and feel.
+            {about?.shortDesc}
           </motion.p>
 
           {/* CTA */}

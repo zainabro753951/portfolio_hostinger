@@ -89,6 +89,12 @@ export default function WorkingModernResponsiveV2() {
     setExpandedId((curr) => (curr === id ? null : id));
   };
 
+  const cardBackground = {
+    background: `linear-gradient(135deg, rgba(0,209,243,0.08), rgba(6,12,18,0.55))`,
+    border: `1px solid rgba(0,209,243,0.12)`,
+    backdropFilter: `blur(6px)`,
+  };
+
   return (
     <section className="bg-[#050617] text-white font-inter py-12 md:py-20">
       <div className="max-w-7xl mx-auto px-5 sm:px-8">
@@ -112,10 +118,11 @@ export default function WorkingModernResponsiveV2() {
             <motion.a
               key={c.id}
               href={c.href}
-              className="group relative flex flex-col rounded-2xl p-6 sm:p-5 md:p-6 bg-white/5 backdrop-blur-md border border-white/10 shadow-lg hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 transition-transform duration-300 transform hover:-translate-y-2 hover:scale-101"
+              className="group relative flex flex-col rounded-2xl p-6 sm:p-5 md:p-6 shadow-lg hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 transition-transform duration-300 transform hover:-translate-y-2 hover:scale-101"
               initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: i * 0.05, ease: "easeOut" }}
+              style={cardBackground}
             >
               {/* Card content flex grow */}
               <div className="flex flex-col h-full">

@@ -1,27 +1,28 @@
-// src/Queries/useDeleteEntry.js
-import { useMutation } from '@tanstack/react-query'
-import api from '../api/axios'
-import { queryClient } from '../queryClient'
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 
 const deleteEntry = async ({ route, ids }) => {
-  if (!route) throw new Error('Route is required for delete request')
+  const { data } = await axios.delete(route, {
+    data: { ids }, // DELETE requests mein body aise bhejte hain
+  });
+  return data;
+};
 
-  if (Array.isArray(ids) && ids.length > 0) {
-    // 🔥 multiple delete
-    const res = await api.post(`${route}`, { ids })
-    return res.data
-  } else {
-    // 🧩 single delete
-    const res = await api.delete(route)
-    return res.data
-  }
-}
+export const useDeleteEntry = (queryKey) => {
+  const queryClient = useQueryClient();
 
-export const useDeleteEntry = (...queryKey) => {
   return useMutation({
     mutationFn: deleteEntry,
     onSuccess: () => {
-      if (queryKey?.length) queryClient.invalidateQueries({ queryKey })
+      // Invalidate queries
+      if (queryKey) {
+        queryClient.invalidateQueries({ queryKey: [queryKey] });
+      }
+      // Generic messages bhi refresh karein
+      queryClient.invalidateQueries({ queryKey: ["contactMessages"] });
     },
-  })
-}
+    onError: (error) => {
+      console.error("Delete mutation error:", error);
+    },
+  });
+};

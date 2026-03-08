@@ -13,9 +13,8 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  // Timezone set karne ka naya aur sahi tareeka:
-  timezone: "+05:00", // Asia/Karachi (UTC+5)
+  connectTimeout: 10000, // 10 sec
+  timezone: "+05:00",
 });
 
-// Top-level await yahan bilkul mat likhein
 export default pool;

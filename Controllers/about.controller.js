@@ -28,12 +28,16 @@ export const AddAbout = async (req, res) => {
     let {
       fullName,
       shortRole,
+      successNote,
+      experience,
       shortDesc,
       longDesc,
       isUpdate,
       aboutImageOBJ,
       isAboutImageRemoved,
     } = req.body;
+
+    console.log(experience);
 
     // Type conversions
     isUpdate = isUpdate === "true" || isUpdate === true;
@@ -90,10 +94,12 @@ export const AddAbout = async (req, res) => {
 
       // 🔹 4. Update DB
       const [updateResult] = await pool.query(
-        "UPDATE about SET fullName=?, shortRole=?, shortDesc=?, longDesc=?, aboutImage=? WHERE id=?",
+        "UPDATE about SET fullName=?, shortRole=?, successNote=?, experience=?, shortDesc=?, longDesc=?, aboutImage=? WHERE id=?",
         [
           fullName,
           shortRole,
+          successNote,
+          experience,
           shortDesc,
           longDesc,
           finalImageOBJ.key ? JSON.stringify(finalImageOBJ) : null,
@@ -117,10 +123,12 @@ export const AddAbout = async (req, res) => {
     } else {
       // 🔹 5. Insert new record
       const [results] = await pool.query(
-        "INSERT INTO about (fullName, shortRole, shortDesc, longDesc, aboutImage) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO about (fullName, shortRole, successNote=?, experience=?, shortDesc, longDesc, aboutImage) VALUES (?, ?, ?, ?, ?)",
         [
           fullName,
           shortRole,
+          successNote,
+          experience,
           shortDesc,
           longDesc,
           finalImageOBJ.key ? JSON.stringify(finalImageOBJ) : null,

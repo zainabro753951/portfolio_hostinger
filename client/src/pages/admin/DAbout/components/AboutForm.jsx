@@ -10,7 +10,7 @@ import { useSelector } from "react-redux";
 import { useState } from "react";
 
 // const fieldBase =
-//   'w-full bg-gradient-to-r from-white/6 to-white/3 border border-cyan-400/20 focus:border-cyan-300/70 md:rounded-[0.7vw] sm:rounded-[1.2vw] xs:rounded-[1.7vw] outline-none text-white placeholder:text-gray-400 backdrop-blur-xl md:px-[1vw] sm:px-[2vw] xs:px-[3vw] md:py-[1vw] sm:py-[1.5vw] xs:py-[2vw] transition-shadow duration-200 md:text-[1.1vw] sm:text-[2.1vw] xs:text-[3.1vw] focus:ring-theme-cyan/30 focus:ring-3'
+//   'w-full bg-linear-to-r from-white/6 to-white/3 border border-cyan-400/20 focus:border-cyan-300/70 md:rounded-[0.7vw] sm:rounded-[1.2vw] xs:rounded-[1.7vw] outline-none text-white placeholder:text-gray-400 backdrop-blur-xl md:px-[1vw] sm:px-[2vw] xs:px-[3vw] md:py-[1vw] sm:py-[1.5vw] xs:py-[2vw] transition-shadow duration-200 md:text-[1.1vw] sm:text-[2.1vw] xs:text-[3.1vw] focus:ring-theme-cyan/30 focus:ring-3'
 
 const AboutForm = () => {
   const { data: about } = useSelector((state) => state.about);
@@ -29,6 +29,8 @@ const AboutForm = () => {
     defaultValues: {
       fullName: "",
       shortRole: "",
+      successNote: "",
+      experience: "",
       shortDesc: "",
       longDesc: "",
       aboutImage: null,
@@ -44,6 +46,8 @@ const AboutForm = () => {
       reset({
         fullName: about?.fullName || "",
         shortRole: about?.shortRole || "",
+        successNote: about?.successNote || "",
+        experience: about?.experience || "",
         shortDesc: about?.shortDesc || "",
         longDesc: about?.longDesc || "",
       });
@@ -72,6 +76,8 @@ const AboutForm = () => {
     fd.append("isUpdate", isUpdate ? "true" : "false");
     fd.append("fullName", formData.fullName);
     fd.append("shortRole", formData.shortRole);
+    fd.append("successNote", formData.successNote);
+    fd.append("experience", formData.experience);
     fd.append("shortDesc", formData.shortDesc);
     fd.append("longDesc", formData.longDesc);
     fd.append("isAboutImageRemoved", JSON.stringify(isAboutImageRemoved));
@@ -128,7 +134,7 @@ const AboutForm = () => {
               ease: "anticipate",
             }}
             className="flex flex-col items-center md:gap-[1.5vw] sm:gap-[2.5vw] xs:gap-[3.5vw] md:p-[2.5vw] sm:p-[3vw] xs:p-[3.5vw] md:rounded-[1.5vw] sm:rounded-[2vw] xs:rounded-[2.5vw]
-      bg-gradient-to-br from-[#0a0a2a]/60 to-[#101040]/30
+      bg-linear-to-br from-[#0a0a2a]/60 to-[#101040]/30
                  border border-white/20 backdrop-blur-2xl shadow-[0_0_20px_rgba(34,211,238,0.2)]
        w-full "
           >
@@ -197,7 +203,7 @@ const AboutForm = () => {
               ease: "anticipate",
             }}
             className="md:p-[2.5vw] sm:p-[3vw] xs:p-[3.5vw] md:rounded-[1.5vw] sm:rounded-[2vw] xs:rounded-[2.5vw]
-      bg-gradient-to-br from-[#0a0a2a]/60 to-[#101040]/30
+      bg-linear-to-br from-[#0a0a2a]/60 to-[#101040]/30
                  border border-white/20 backdrop-blur-2xl shadow-[0_0_20px_rgba(34,211,238,0.2)]
        w-full  flex flex-col md:gap-[1.5vw] sm:gap-[2.5vw] xs:gap-[3.5vw]"
           >
@@ -216,6 +222,27 @@ const AboutForm = () => {
                 register={register}
                 errors={errors}
                 placeholder="Short title / role"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 md:gap-[1vw] sm:gap-[2vw] xs:gap-[3vw]">
+              <FormField
+                label={"Success Note"}
+                name={"successNote"}
+                register={register}
+                errors={errors}
+                required={false}
+                placeholder="Short success note"
+              />
+
+              <FormField
+                label={"Experience (years)"}
+                name={"experience"}
+                type="number"
+                register={register}
+                errors={errors}
+                required={false}
+                placeholder="How many experience in years"
               />
             </div>
 
@@ -241,7 +268,7 @@ const AboutForm = () => {
                 whileHover={{ scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 200 }}
                 whileTap={{ scale: 0.98 }}
-                className="md:py-[0.7vw] sm:py-[1.2vw] xs:py-[1.7vw] md:px-[2.5vw] sm:px-[3.5vw] xs:px-[4.5vw] bg-gradient-to-r from-cyan-500 to-blue-500 text-cyan-100 border border-cyan-500 shadow-[0_0_15px_rgba(34,211,238,0.25)] md:rounded-[0.7vw] sm:rounded-[1.2vw] xs:rounded-[1.7vw] md:text-[1vw] sm:text-[2vw] xs:text-[4vw] flex items-center justify-center"
+                className="md:py-[0.7vw] sm:py-[1.2vw] xs:py-[1.7vw] md:px-[2.5vw] sm:px-[3.5vw] xs:px-[4.5vw] bg-linear-to-r from-cyan-500 to-blue-500 text-cyan-100 border border-cyan-500 shadow-[0_0_15px_rgba(34,211,238,0.25)] md:rounded-[0.7vw] sm:rounded-[1.2vw] xs:rounded-[1.7vw] md:text-[1vw] sm:text-[2vw] xs:text-[4vw] flex items-center justify-center"
                 title={isPending ? "Loading..." : ""}
                 type={isPending ? "button" : "submit"}
               >

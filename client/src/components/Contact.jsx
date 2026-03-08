@@ -354,11 +354,10 @@ const Contact = () => {
                     <div className="text-sm text-gray-400">
                       I'll usually respond within 24–48 hours.
                     </div>
-                    <div className="flex items-center gap-3">
-                      <GardientButton
-                        text={isPending ? "Sending..." : "Send message"}
-                        type="submit"
-                      />
+                    <div className="text-center">
+                      <button className="inline-flex items-center gap-3 rounded-full bg-linear-to-r from-indigo-500 to-cyan-400 px-6 py-3 font-medium shadow-lg hover:scale-105 transition-transform duration-300">
+                        {isPending ? "Sending..." : "Send message"}
+                      </button>
                     </div>
                   </div>
                 </div>

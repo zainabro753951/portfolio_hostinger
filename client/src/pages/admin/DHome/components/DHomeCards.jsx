@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { motion } from 'framer-motion'
+import React, { useState } from "react";
+import { motion } from "framer-motion";
 import {
   FaTasks,
   FaChartLine,
@@ -8,16 +8,19 @@ import {
   FaTools,
   FaEnvelope,
   FaUser,
-} from 'react-icons/fa'
-import RecentActivity from './RecentActivity'
-import UserMessages from './UserMessages'
-import { useSelector } from 'react-redux'
+} from "react-icons/fa";
+import RecentActivity from "./RecentActivity";
+import UserMessages from "./UserMessages";
+import { useSelector } from "react-redux";
 
 const DHomeCards = () => {
-  const { projectCounts, isLoading } = useSelector(state => state.projects)
-  const { educations } = useSelector(state => state.education)
-  const { skills } = useSelector(state => state.skills)
-  const { activeUsersCount } = useSelector(state => state.siteSettings)
+  const { projectCounts, isLoading } = useSelector((state) => state.projects);
+  const { educations } = useSelector((state) => state.education);
+  const { skills } = useSelector((state) => state.skills);
+  const { activeUsersCount } = useSelector((state) => state.siteSettings);
+  const { visitorsCount } = useSelector((state) => state.visitorsCount);
+
+  console.log();
 
   // -------------------------
   // Sample Data
@@ -25,46 +28,54 @@ const DHomeCards = () => {
   const dataCards = [
     {
       icon: <FaTasks />,
-      title: 'Total Projects',
+      title: "Total Projects",
       quantity: projectCounts?.allProjects,
       caption: `${projectCounts?.publishedProjects} Published • ${projectCounts?.draftProjects} Drafts`,
     },
     {
       icon: <FaChartLine />,
-      title: 'Site Visitors (30d)',
-      quantity: '4.2k',
-      caption: 'Top page: /projects/e-commerce-ui',
+      title: "Site Visitors (30d)",
+      quantity: visitorsCount,
+      caption: "Top page: /projects/e-commerce-ui",
     },
     {
       icon: <FaPhotoVideo />,
-      title: 'Media Files',
-      quantity: '128',
-      caption: 'Storage used: 860MB',
+      title: "Media Files",
+      quantity: "128",
+      caption: "Storage used: 860MB",
     },
     {
       icon: <FaGraduationCap />,
-      title: 'Education',
+      title: "Education",
       quantity: educations.length,
-      caption: 'Courses & Degrees',
+      caption: "Courses & Degrees",
     },
-    { icon: <FaTools />, title: 'Skills', quantity: skills.length, caption: 'Top skills listed' },
+    {
+      icon: <FaTools />,
+      title: "Skills",
+      quantity: skills.length,
+      caption: "Top skills listed",
+    },
     {
       icon: <FaUser />,
-      title: 'Active Users',
+      title: "Active Users",
       quantity: activeUsersCount,
       caption: `Currently online: ${activeUsersCount}`,
     },
-  ]
+  ];
 
   const container = {
     hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.15, delayChildren: 0.2 } },
-  }
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.15, delayChildren: 0.2 },
+    },
+  };
 
   const fadeUp = {
     hidden: { opacity: 0, y: 40 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
-  }
+    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+  };
 
   return (
     <section className="md:px-[1.5vw] sm:px-[2.5vw] xs:px-[3.5vw] md:my-[2vw] sm:my-[3vw] xs:my-[5vw] flex flex-col md:gap-[1.5vw] sm:gap-[2.5vw] xs:gap-[3.5vw]">
@@ -82,11 +93,12 @@ const DHomeCards = () => {
             whileHover={{
               y: -8,
               scale: 1.02,
-              boxShadow: '0 0 10px #06b5d46c,0 0 20px #06b5d463,0 0 30px #06b5d442',
+              boxShadow:
+                "0 0 10px #06b5d46c,0 0 20px #06b5d463,0 0 30px #06b5d442",
             }}
             transition={{ duration: 0.3 }}
             className="md:w-full md:p-[1.5vw] sm:p-[2.5vw] xs:p-[3.5vw] md:rounded-[1vw] sm:rounded-[1.5vw] xs:rounded-[2vw]
-                       bg-gradient-to-br from-[#0a0a2a]/60 to-[#101040]/30 border border-white/20 backdrop-blur-2xl"
+                       bg-linear-to-br from-[#0a0a2a]/60 to-[#101040]/30 border border-white/20 backdrop-blur-2xl"
           >
             <div className="w-full flex items-center justify-between">
               <div>
@@ -99,7 +111,7 @@ const DHomeCards = () => {
               </div>
               <motion.div
                 whileHover={{ rotate: 10, scale: 1.1 }}
-                transition={{ type: 'spring', stiffness: 250 }}
+                transition={{ type: "spring", stiffness: 250 }}
                 className="md:w-[3.5vw] md:h-[3.5vw] sm:w-[5vw] sm:h-[5vw] xs:w-[7vw] xs:h-[7vw] md:rounded-[0.7vw] sm:rounded-[1.2vw] xs:rounded-[1.7vw]
                            bg-cyan-500/20 text-cyan-300 flex items-center justify-center md:text-[1.5vw] sm:text-[2.5vw] xs:text-[4.5vw]"
               >
@@ -122,7 +134,7 @@ const DHomeCards = () => {
         <UserMessages />
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default DHomeCards
+export default DHomeCards;

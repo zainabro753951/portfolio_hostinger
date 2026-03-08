@@ -185,7 +185,7 @@ const AboutModern = () => {
           </h2>
 
           <p className="text-white/70 max-w-xl leading-relaxed">
-            {about?.shortDesc}
+            {about?.longDesc}
           </p>
 
           {/* Experience cards */}

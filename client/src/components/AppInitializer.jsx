@@ -14,6 +14,7 @@ import { useGetMessage } from "../Queries/GetMessage";
 import { useGetExp } from "../Queries/GetExp";
 import { useGetService } from "../Queries/GetServices";
 import { useGetFAQ } from "../Queries/GetFAQ";
+import { useGetVisitorsCount } from "../Queries/GetVisitorsCount";
 
 // 🧩 Slices
 import { addProjects } from "../features/projectSlice";
@@ -27,6 +28,7 @@ import { addContactMessages } from "../features/messageSlice";
 import { addExp } from "../features/experienceSlice";
 import { addServices } from "../features/serviceSlice";
 import { addFAQs } from "../features/FAQSlice";
+import { addVisitorsCount } from "../features/visitorsSlice";
 
 // 🧩 Components
 import ErrorFallback from "./ErrorFallBack";
@@ -46,6 +48,7 @@ const AppInitializer = ({ children }) => {
   const messages = useGetMessage();
   const services = useGetService();
   const faqs = useGetFAQ();
+  const visitorsCount = useGetVisitorsCount();
 
   // ✅ Memoized Data
   const memo = useMemo(
@@ -65,6 +68,7 @@ const AppInitializer = ({ children }) => {
       msgCurrentPage: messages.data?.currentPage || 1,
       msgTotalPages: messages.data?.totalPages || 1,
       msgAllEntries: messages.data?.total || 0,
+      visitorsCount: visitorsCount?.data?.visitorsCount || 0,
     }),
     [
       projects?.data,
@@ -78,6 +82,7 @@ const AppInitializer = ({ children }) => {
       messages?.data,
       services?.data,
       faqs?.data,
+      visitorsCount?.data,
     ],
   );
 
@@ -220,6 +225,21 @@ const AppInitializer = ({ children }) => {
       isLoading,
     );
   }, [memo.faqs, faqs.isFetching, faqs.isPending, dispatch]);
+
+  // 🔹 Commit 12 — Visitors Count
+  useEffect(() => {
+    const isLoading = visitorsCount.isFetching || visitorsCount.isPending;
+    updateReducer(
+      addVisitorsCount,
+      { visitorsCount: memo.visitorsCount },
+      isLoading,
+    );
+  }, [
+    memo.visitorsCount,
+    visitorsCount.isFetching,
+    visitorsCount.isPending,
+    dispatch,
+  ]);
 
   // ✅ Global Loading/Error
   const isLoading = [

@@ -1,0 +1,79 @@
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(34, 211, 238, 0.1);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(34, 211, 238, 0.3);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(34, 211, 238, 0.5);
+}
+
+/* Editor Content Styles */
+.prose {
+  color: #e2e8f0;
+}
+
+.prose p {
+  margin-bottom: 0.75em;
+}
+
+.prose blockquote {
+  border-left: 4px solid rgba(34, 211, 238, 0.5);
+  padding-left: 1rem;
+  font-style: italic;
+  color: #94a3b8;
+}
+
+.prose pre {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.5rem;
+  margin-bottom: 0.75em;
+}
+
+.prose a {
+  color: #22d3ee;
+  text-decoration: underline;
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: linear-gradient(
+    135deg,
+    rgba(10, 10, 42, 0.6),
+    rgba(16, 16, 64, 0.3)
+  );
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Animation Utilities */
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(34, 211, 238, 0.5);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}

@@ -235,7 +235,7 @@ export default function ModernFooter() {
                 />
                 <button
                   type="submit"
-                  className="px-3 py-1 rounded-md bg-gradient-to-br from-cyan-400 to-violet-500 text-black text-sm font-semibold hover:brightness-95"
+                  className="px-3 py-1 rounded-md bg-linear-to-br from-cyan-400 to-violet-500 text-black text-sm font-semibold hover:brightness-95"
                 >
                   Join
                 </button>

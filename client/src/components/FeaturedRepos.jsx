@@ -107,6 +107,12 @@ export default function FeaturedReposModern() {
     },
   ];
 
+  const cardBackground = {
+    background: `linear-gradient(135deg, rgba(0,209,243,0.08), rgba(6,12,18,0.55))`,
+    border: `1px solid rgba(0,209,243,0.12)`,
+    backdropFilter: `blur(6px)`,
+  };
+
   return (
     <section className="w-full bg-[#050617] text-white font-inter py-16 md:py-20">
       {/* local helper CSS (line-clamp fallback if tailwind plugin missing) */}
@@ -130,7 +136,7 @@ export default function FeaturedReposModern() {
             className="text-white/70 mt-3 max-w-2xl mx-auto"
             style={{ fontSize: "clamp(0.92rem,1.6vw,1rem)" }}
           >
-            A curated selection of projects — production-ready apps, clean
+            A curated selection of projects production-ready apps, clean
             architecture and polished UI.
           </p>
         </div>
@@ -154,9 +160,10 @@ export default function FeaturedReposModern() {
                   delay: idx * 0.06,
                   ease: "easeOut",
                 }}
-                className="relative rounded-2xl overflow-hidden bg-white/3 backdrop-blur-md border border-white/8 shadow-sm"
+                className="relative rounded-2xl overflow-hidden shadow-sm transition-transform duration-300 transform hover:-translate-y-2 hover:scale-101"
                 tabIndex={-1}
                 aria-labelledby={`proj-${idx}-title`}
+                style={cardBackground}
               >
                 {/* Image area */}
                 <Link
@@ -241,8 +248,13 @@ export default function FeaturedReposModern() {
         </div>
 
         {/* CTA */}
-        <div className="mt-8 md:mt-12 text-center">
-          <GardientButton text="See All Projects" link="/projects" />
+        <div className="mt-12 text-center">
+          <a
+            href="/contact"
+            className="inline-flex items-center gap-3 rounded-full bg-linear-to-r from-indigo-500 to-cyan-400 px-6 py-3 font-medium shadow-lg hover:scale-105 transition-transform duration-300"
+          >
+            See All Projects
+          </a>
         </div>
       </div>
     </section>

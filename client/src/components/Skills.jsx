@@ -150,10 +150,17 @@ const SkillsModern = () => {
           </div>
 
           <h2 className="sm:text-4xl xs:text-2xl font-semibold leading-tight">
-            {data.name}
+            Technical Skills & Real-World MERN Stack Experience
           </h2>
 
-          <p className="text-white/70 max-w-xl leading-relaxed">{data.desc}</p>
+          <p className="text-white/70 max-w-xl leading-relaxed">
+            With proven expertise in modern web development, SEO optimization,
+            and performance-driven digital solutions, I transform ideas into
+            powerful online experiences. My skills and hands-on experience
+            ensure scalable, user-focused, and results-oriented solutions that
+            help businesses grow and stand out in today’s competitive digital
+            world.
+          </p>
 
           <div className="grid md:grid-cols-2 xs:grid-cols-1 gap-4 mt-4">
             {data.experiences.slice(0, 4).map((exp, i) => (
@@ -276,18 +283,16 @@ const SkillsModern = () => {
 
           {/* Visual / CTA panel */}
           <div style={cardBackground} className="rounded-2xl p-6 ">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-8">
               <div>
                 <div className="text-sm text-white/60">Focused on</div>
                 <h4 className="text-2xl font-semibold mt-1">
                   Performance · UX · Scalability
                 </h4>
-                <p className="text-white/70 mt-3 max-w-xl">
-                  {about?.shortDesc}
-                </p>
+                <p className="text-white/70 mt-3 ">{about?.shortDesc}</p>
               </div>
 
-              <div className="hidden md:flex flex-col items-center gap-3">
+              <div className="hidden md:flex flex-col items-center gap-3 shrink-0">
                 <div className="rounded-full bg-linear-to-br from-cyan-400 to-indigo-500 p-4 shadow-lg">
                   <svg
                     width="56"
@@ -315,7 +320,7 @@ const SkillsModern = () => {
                 </div>
                 <a
                   href="/projects"
-                  className="rounded-full bg-white/5 px-4 py-2 text-sm font-medium hover:bg-white/8 transition"
+                  className="rounded-full bg-white/5 px-4 py-2 text-sm font-medium hover:bg-white/8 transition "
                 >
                   See Projects
                 </a>

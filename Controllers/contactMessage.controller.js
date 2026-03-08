@@ -1,77 +1,81 @@
-import { body, validationResult } from 'express-validator'
-import pool from '../db.config.js'
-import { hashIp } from '../Utils/hashIp.js'
-import { getGeoLocation } from '../Utils/geoLookup.js'
+import { body, validationResult } from "express-validator";
+import pool from "../db.config.js";
+import { hashIp } from "../Utils/hashIp.js";
+import { getGeoLocation } from "../Utils/geoLookup.js";
+import nodemailer from "nodemailer";
 
 export const contactMessageValidation = [
-  body('fullName')
+  body("fullName")
     .trim()
     .notEmpty()
-    .withMessage('Full name is required')
+    .withMessage("Full name is required")
     .isLength({ min: 3 })
-    .withMessage('Full name must be at least 3 characters long'),
+    .withMessage("Full name must be at least 3 characters long"),
 
-  body('email')
+  body("email")
     .trim()
     .notEmpty()
-    .withMessage('Email is required')
+    .withMessage("Email is required")
     .isEmail()
-    .withMessage('Enter a valid email address'),
+    .withMessage("Enter a valid email address"),
 
-  body('subject')
+  body("subject")
     .trim()
     .notEmpty()
-    .withMessage('Subject is required')
+    .withMessage("Subject is required")
     .isLength({ min: 3, max: 200 })
-    .withMessage('Subject must be between 3 and 200 characters'),
+    .withMessage("Subject must be between 3 and 200 characters"),
 
-  body('message')
+  body("message")
     .trim()
     .notEmpty()
-    .withMessage('Message is required')
+    .withMessage("Message is required")
     .isLength({ min: 10 })
-    .withMessage('Message should be at least 10 characters long'),
-]
+    .withMessage("Message should be at least 10 characters long"),
+];
 
 export const sendMessage = async (req, res) => {
-  const errors = validationResult(req)
+  const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({
       success: false,
-      errorCode: 'VALIDATION_ERROR',
+      errorCode: "VALIDATION_ERROR",
       errors: errors.array(),
-    })
+    });
   }
 
   try {
     // Extract request data
-    const { fullName, email, subject, message, planId } = req.body
+    const { fullName, email, subject, message, planId } = req.body;
 
     // Validate planId if provided
-    let resolvedPlanId = null
+    let resolvedPlanId = null;
     if (planId) {
-      const [rows] = await pool.query(`SELECT id FROM plans WHERE id = ?`, [planId])
+      const [rows] = await pool.query(`SELECT id FROM plans WHERE id = ?`, [
+        planId,
+      ]);
       if (rows.length === 0) {
         return res.status(400).json({
           success: false,
-          errorCode: 'INVALID_PLAN_ID',
-          message: 'The selected plan does not exist.',
-        })
+          errorCode: "INVALID_PLAN_ID",
+          message: "The selected plan does not exist.",
+        });
       }
-      resolvedPlanId = planId
+      resolvedPlanId = planId;
     }
 
     // Get IP + User Agent
-    const rawIp = req.ip || req.headers['x-forwarded-for']?.split(',')[0] || null
-    const user_agent = req.headers['user-agent'] || null
+    const rawIp =
+      req.ip || req.headers["x-forwarded-for"]?.split(",")[0] || null;
+    const user_agent = req.headers["user-agent"] || null;
 
     // Hash IP for privacy
-    const hashedIp = rawIp ? await hashIp(rawIp) : null
+    const hashedIp = rawIp ? await hashIp(rawIp) : null;
 
     // Geo lookup (example using some geo service)
     // Assume getGeoLocation returns an object like:
     // { country, region, city, latitude, longitude, isp }
-    const geo = rawIp ? getGeoLocation(rawIp) : {}
+    const geo = rawIp ? getGeoLocation(rawIp) : {};
     const {
       country = null,
       region = null,
@@ -79,9 +83,9 @@ export const sendMessage = async (req, res) => {
       latitude = null,
       longitude = null,
       isp = null,
-    } = geo
+    } = geo;
 
-    console.log(`User raw IP: ${rawIp}, Geo:`, geo)
+    console.log(`User raw IP: ${rawIp}, Geo:`, geo);
 
     // Insert into contact_messages
     const sql = `
@@ -91,7 +95,7 @@ export const sendMessage = async (req, res) => {
         country, region, city, latitude, longitude, isp
       )
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `
+    `;
 
     const [result] = await pool.query(sql, [
       resolvedPlanId,
@@ -107,57 +111,57 @@ export const sendMessage = async (req, res) => {
       latitude,
       longitude,
       isp,
-    ])
+    ]);
 
-    const contactMessageId = result.insertId
+    const contactMessageId = result.insertId;
 
     // Insert notification
     const sqlNotification = `
       INSERT INTO notifications (type, title, message, reference_id)
       VALUES (?, ?, ?, ?)
-    `
+    `;
 
     const notificationMsg = resolvedPlanId
       ? `${fullName} selected plan #${resolvedPlanId} and sent a message.`
-      : `${fullName} sent you a new contact message.`
+      : `${fullName} sent you a new contact message.`;
 
     await pool.query(sqlNotification, [
-      'contact_message',
-      'New Contact Message',
+      "contact_message",
+      "New Contact Message",
       notificationMsg,
       contactMessageId,
-    ])
+    ]);
 
     // Success response
     return res.status(200).json({
       success: true,
-      message: 'Message sent successfully!',
+      message: "Message sent successfully!",
       location: { country, region, city, latitude, longitude, isp },
       referenceId: contactMessageId,
       planId: resolvedPlanId,
-    })
+    });
   } catch (error) {
-    console.error('SEND_MESSAGE_ERROR:', error)
+    console.error("SEND_MESSAGE_ERROR:", error);
     return res.status(500).json({
       success: false,
-      errorCode: 'SERVER_ERROR',
-      message: 'Internal Server Error!',
-    })
+      errorCode: "SERVER_ERROR",
+      message: "Internal Server Error!",
+    });
   }
-}
+};
 
 export const getMessage = async (req, res) => {
   try {
     // 📄 Pagination + optional filters
-    const page = parseInt(req.query.page) || 1
-    const limit = parseInt(req.query.limit) || 10
-    const offset = (page - 1) * limit
-    const search = req.query.search ? `%${req.query.search}%` : null
-    const status = req.query.status || null
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+    const search = req.query.search ? `%${req.query.search}%` : null;
+    const status = req.query.status || null;
 
     // 🧠 Dynamic filters
-    let whereClause = 'WHERE 1=1'
-    const params = []
+    let whereClause = "WHERE 1=1";
+    const params = [];
 
     if (search) {
       whereClause += `
@@ -166,13 +170,13 @@ export const getMessage = async (req, res) => {
           email LIKE ? OR
           subject LIKE ? OR
           message LIKE ?
-        )`
-      params.push(search, search, search, search)
+        )`;
+      params.push(search, search, search, search);
     }
 
     if (status) {
-      whereClause += ' AND status = ?'
-      params.push(status)
+      whereClause += " AND status = ?";
+      params.push(status);
     }
 
     // 📦 Query to fetch messages with geo info
@@ -201,20 +205,20 @@ export const getMessage = async (req, res) => {
       ORDER BY created_at DESC
       LIMIT ? OFFSET ?
       `,
-      [...params, limit, offset]
-    )
+      [...params, limit, offset],
+    );
 
     // 🧮 Count total results (for pagination)
     const [[{ total }]] = await pool.query(
       `SELECT COUNT(*) AS total FROM contact_messages ${whereClause}`,
-      params
-    )
+      params,
+    );
 
     // 🧱 Add "selected" flag for frontend
-    const messagesWithSelected = messages.map(msg => ({
+    const messagesWithSelected = messages.map((msg) => ({
       ...msg,
       selected: false,
-    }))
+    }));
 
     // ✅ Response
     return res.status(200).json({
@@ -225,68 +229,68 @@ export const getMessage = async (req, res) => {
       count: messages.length,
       filters: { search: req.query.search || null, status },
       data: messagesWithSelected,
-    })
+    });
   } catch (error) {
-    console.error('GET_MESSAGES_ERROR:', error)
+    console.error("GET_MESSAGES_ERROR:", error);
     return res.status(500).json({
       success: false,
-      errorCode: 'SERVER_ERROR',
-      message: 'Failed to fetch contact messages!',
-    })
+      errorCode: "SERVER_ERROR",
+      message: "Failed to fetch contact messages!",
+    });
   }
-}
+};
 
 export const deleteContactMessages = async (req, res) => {
   try {
-    const { ids } = req.body
+    const { ids } = req.body;
 
     // ✅ 1. Validate input
     if (!Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({
         success: false,
-        errorCode: 'INVALID_INPUT',
-        message: 'Please provide at least one valid message ID to delete.',
-      })
+        errorCode: "INVALID_INPUT",
+        message: "Please provide at least one valid message ID to delete.",
+      });
     }
 
     // ✅ 2. Validate IDs are numbers
-    const invalidIds = ids.filter(id => isNaN(Number(id)))
+    const invalidIds = ids.filter((id) => isNaN(Number(id)));
     if (invalidIds.length > 0) {
       return res.status(400).json({
         success: false,
-        errorCode: 'INVALID_ID_TYPE',
-        message: 'All IDs must be numeric values.',
-      })
+        errorCode: "INVALID_ID_TYPE",
+        message: "All IDs must be numeric values.",
+      });
     }
 
     // ✅ 3. Check if messages exist
     const [existingMessages] = await pool.query(
       `SELECT id, full_name, email FROM contact_messages WHERE id IN (${ids
-        .map(() => '?')
-        .join(',')})`,
-      ids
-    )
+        .map(() => "?")
+        .join(",")})`,
+      ids,
+    );
 
     if (existingMessages.length === 0) {
       return res.status(404).json({
         success: false,
-        errorCode: 'NOT_FOUND',
-        message: 'No matching contact messages found to delete.',
-      })
+        errorCode: "NOT_FOUND",
+        message: "No matching contact messages found to delete.",
+      });
     }
 
     // ✅ 4. Delete messages safely
     const [deleteResult] = await pool.query(
-      `DELETE FROM contact_messages WHERE id IN (${ids.map(() => '?').join(',')})`,
-      ids
-    )
+      `DELETE FROM contact_messages WHERE id IN (${ids.map(() => "?").join(",")})`,
+      ids,
+    );
 
     if (deleteResult.affectedRows === 0) {
       return res.status(404).json({
         success: false,
-        errorCode: 'DELETE_FAILED',
-        message: 'Failed to delete contact messages (may already be removed).',
-      })
+        errorCode: "DELETE_FAILED",
+        message: "Failed to delete contact messages (may already be removed).",
+      });
     }
 
     // ✅ 5. Optional — Log notification for admin dashboard
@@ -294,57 +298,57 @@ export const deleteContactMessages = async (req, res) => {
       `INSERT INTO notifications (title, message, type, created_at)
        VALUES (?, ?, ?, NOW())`,
       [
-        'Contact Messages Deleted',
+        "Contact Messages Deleted",
         `${existingMessages.length} contact message${
-          existingMessages.length > 1 ? 's' : ''
+          existingMessages.length > 1 ? "s" : ""
         } deleted successfully.`,
-        'info',
-      ]
-    )
+        "info",
+      ],
+    );
 
     // ✅ 6. Success Response
     return res.status(200).json({
       success: true,
       message: `${existingMessages.length} contact message${
-        existingMessages.length > 1 ? 's' : ''
+        existingMessages.length > 1 ? "s" : ""
       } deleted successfully.`,
       deletedIds: ids,
-    })
+    });
   } catch (error) {
-    console.error('❌ DELETE_CONTACT_MESSAGES_ERROR:', error)
+    console.error("❌ DELETE_CONTACT_MESSAGES_ERROR:", error);
 
-    if (error?.code === 'ER_ROW_IS_REFERENCED_2') {
+    if (error?.code === "ER_ROW_IS_REFERENCED_2") {
       return res.status(409).json({
         success: false,
-        errorCode: 'SQL_FOREIGN_KEY_CONSTRAINT',
+        errorCode: "SQL_FOREIGN_KEY_CONSTRAINT",
         message:
-          'Cannot delete because of a foreign key constraint. Try removing related records first.',
-      })
+          "Cannot delete because of a foreign key constraint. Try removing related records first.",
+      });
     }
 
     return res.status(500).json({
       success: false,
-      errorCode: 'SERVER_ERROR',
-      message: 'Internal Server Error — please try again later.',
-    })
+      errorCode: "SERVER_ERROR",
+      message: "Internal Server Error — please try again later.",
+    });
   }
-}
+};
 
 export const toggleReadStatus = async (req, res) => {
   try {
-    const { ids } = req.body
+    const { ids } = req.body;
 
     // ✅ Validate input
     if (!Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({
         success: false,
-        errorCode: 'INVALID_INPUT',
-        message: 'At least one message ID is required!',
-      })
+        errorCode: "INVALID_INPUT",
+        message: "At least one message ID is required!",
+      });
     }
 
-    let query = ''
-    let params = []
+    let query = "";
+    let params = [];
 
     if (ids.length === 1) {
       // 🎯 Single message → toggle between read/unread
@@ -356,41 +360,110 @@ export const toggleReadStatus = async (req, res) => {
           ELSE status
         END
         WHERE id = ?
-      `
-      params = [ids[0]]
+      `;
+      params = [ids[0]];
     } else {
       // 📩 Multiple messages → mark all as read
       query = `
         UPDATE contact_messages
         SET status = 'read'
         WHERE id IN (?)
-      `
-      params = [ids]
+      `;
+      params = [ids];
     }
 
-    const [result] = await pool.query(query, params)
+    const [result] = await pool.query(query, params);
 
     // ✅ Handle no updates
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
-        errorCode: 'NOT_FOUND',
-        message: 'No matching messages found for the provided IDs!',
-      })
+        errorCode: "NOT_FOUND",
+        message: "No matching messages found for the provided IDs!",
+      });
     }
 
     // ✅ Success Response
-    const mode = ids.length === 1 ? 'toggled' : 'marked as read'
+    const mode = ids.length === 1 ? "toggled" : "marked as read";
     res.status(200).json({
       success: true,
       message: `${result.affectedRows} message(s) ${mode} successfully.`,
-    })
+    });
   } catch (error) {
-    console.error('TOGGLE_READ_STATUS_ERROR:', error)
+    console.error("TOGGLE_READ_STATUS_ERROR:", error);
     res.status(500).json({
       success: false,
-      errorCode: 'SERVER_ERROR',
-      message: 'Internal Server Error!',
-    })
+      errorCode: "SERVER_ERROR",
+      message: "Internal Server Error!",
+    });
   }
-}
+};
+
+export const replyMessage = async (req, res) => {
+  try {
+    const { to, subject, body, originalMessageId } = req.body;
+
+    const transporter = nodemailer.createTransport({
+      host: "smtp.hostinger.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    // 1️⃣ Send email first
+    const info = await transporter.sendMail({
+      from: `"Support Team" <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html: body,
+    });
+
+    // 2️⃣ Then DB queries
+
+    await pool.query(
+      `INSERT INTO email_history 
+        (message_id, type, recipient, subject, body, status, sent_at) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [originalMessageId, "sent", to, subject, body, "delivered", new Date()],
+    );
+
+    await pool.query(`UPDATE contact_messages SET status = ? WHERE id = ?`, [
+      "replied",
+      originalMessageId,
+    ]);
+
+    res.json({
+      success: true,
+      message: "Reply sent successfully",
+      messageId: info.messageId,
+    });
+  } catch (error) {
+    console.error("Reply Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to send email",
+      error: error.message,
+    });
+  }
+};
+
+export const emailHistory = async (req, res) => {
+  try {
+    const messageId = req.params.id;
+
+    const [rows] = await pool.query(
+      `SELECT * FROM email_history 
+       WHERE message_id = ? 
+       ORDER BY sent_at DESC`,
+      [messageId],
+    );
+
+    res.json(rows);
+  } catch (error) {
+    console.error("Email History Error:", error);
+    res.status(500).json({ error: error.message });
+  }
+};

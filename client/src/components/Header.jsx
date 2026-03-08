@@ -10,8 +10,6 @@ const HeaderModern = () => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
   const menuRef = useRef(null);
 
-  console.log(site_info);
-
   // Close menu on Escape and trap focus when open
   useEffect(() => {
     const onKey = (e) => {
@@ -87,7 +85,7 @@ const HeaderModern = () => {
               <div className="flex items-center gap-4">
                 {site_info?.logoImage?.url ? (
                   <img
-                    src={`https://zaincode.io${site_info?.logoImage?.url}`}
+                    src={`${backendUrl}${site_info?.logoImage?.url}`}
                     alt={site_info?.siteName || "logo"}
                     className="md:h-12 xs:h-8 w-auto rounded-sm object-contain"
                   />
@@ -109,7 +107,7 @@ const HeaderModern = () => {
                 <div className="hidden md:flex md:items-center md:gap-3">
                   <a
                     href="/projects"
-                    className="rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400 px-4 py-2 text-sm font-medium shadow-md hover:translate-y-[-2px] transition-transform"
+                    className="rounded-full bg-linear-to-r from-indigo-500 to-cyan-400 px-4 py-2 text-sm font-medium shadow-md hover:-translate-y-0.5 transition-transform"
                   >
                     Projects
                   </a>
