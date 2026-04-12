@@ -1,53 +1,69 @@
-import { motion } from 'motion/react'
-import React from 'react'
-import { ThreeCircles } from 'react-loader-spinner'
+import React, { memo } from "react";
+import { motion } from "motion/react";
+import { Settings, RotateCcw, Save, Loader2 } from "lucide-react";
 
 const DSiteSettingsHeader = ({ handleReset, isPending }) => {
   return (
-    <div className="w-full flex items-center justify-between flex-wrap md:gap-0 sm:gap-[2vw] xs:gap-[3vw]">
-      {/* Project Info */}
-      <div>
-        <h3 className="md:text-[1.5vw] sm:text-[2.5vw] xs:text-[4.5vw] font-semibold">
-          Site Settings
-        </h3>
-        <p className="md:text-[1vw] sm:text-[2vw] xs:text-[4vw] text-gray-400">
-          Manage all your site settings
-        </p>
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+      className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6"
+    >
+      {/* Header Info */}
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/20">
+          <Settings className="w-6 h-6" />
+        </div>
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            Site Settings
+          </h1>
+          <p className="text-slate-400 text-sm mt-0.5">
+            Manage all your site settings
+          </p>
+        </div>
       </div>
-      {/* Project Sorting */}
-      <div className="flex md:gap-[1vw] sm:gap-[2vw] xs:gap-[3vw] items-center">
+
+      {/* Action Buttons */}
+      <div className="flex items-center gap-3">
+        {/* Reset Button */}
         <motion.button
-          whileTap={{ scale: 0.98 }}
-          whileHover={{ scale: 1.05 }}
-          transition={{ type: 'spring', stiffness: 200 }}
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.02 }}
+          transition={{ type: "spring", stiffness: 400, damping: 15 }}
           onClick={handleReset}
-          className="md:py-[0.7vw] sm:py-[1.2vw] xs:py-[1.7vw] md:px-[2.5vw] sm:px-[3.5vw] xs:px-[4.5vw] md:rounded-[0.7vw] sm:rounded-[1.2vw] xs:rounded-[1.7vw] bg-white/6 border border-white/8 text-white hover:bg-white/8  md:text-[1vw] sm:text-[2vw] xs:text-[4vw]"
+          disabled={isPending}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800/50 border border-white/10 text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-300 text-sm font-medium disabled:opacity-50"
         >
-          Reset
+          <RotateCcw className="w-4 h-4" />
+          <span className="hidden sm:inline">Reset</span>
         </motion.button>
+
+        {/* Save Button */}
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          transition={{ type: 'spring', stiffness: 200 }}
-          whileTap={{ scale: 0.98 }}
-          className="md:py-[0.7vw] sm:py-[1.2vw] xs:py-[1.7vw] md:px-[2.5vw] sm:px-[3.5vw] xs:px-[4.5vw] bg-gradient-to-r from-cyan-500 to-blue-500 text-cyan-100 border border-cyan-500 shadow-[0_0_15px_rgba(34,211,238,0.25)] md:rounded-[0.7vw] sm:rounded-[1.2vw] xs:rounded-[1.7vw] md:text-[1vw] sm:text-[2vw] xs:text-[4vw] flex items-center justify-center"
-          title={isPending ? 'Loading...' : ''}
-          type={isPending ? 'button' : 'submit'}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 400, damping: 15 }}
+          disabled={isPending}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300 text-sm"
+          type={isPending ? "button" : "submit"}
         >
           {isPending ? (
-            <ThreeCircles
-              visible={true}
-              color="#ff657c"
-              width={20}
-              height={20}
-              ariaLabel="three-circles-loading"
-            />
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Saving...</span>
+            </>
           ) : (
-            'Save Changes'
+            <>
+              <Save className="w-4 h-4" />
+              <span>Save Changes</span>
+            </>
           )}
         </motion.button>
       </div>
-    </div>
-  )
-}
+    </motion.div>
+  );
+};
 
-export default DSiteSettingsHeader
+export default memo(DSiteSettingsHeader);

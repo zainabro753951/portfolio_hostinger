@@ -1,103 +1,159 @@
-import React from 'react'
-import { motion, AnimatePresence } from 'motion/react'
-import { useDeleteEntryContext } from '../../../context/DeleteEntry'
+import React, { memo, useCallback } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
+import { AlertTriangle, X, Trash2, Loader2 } from "lucide-react";
+import { useDeleteEntryContext } from "../../../context/DeleteEntry";
 
 const DeleteConfirm = () => {
-  const { isOpen, onDelete, onClose, isPending, route, ids } = useDeleteEntryContext()
+  const { isOpen, onDelete, onClose, isPending, route, ids } =
+    useDeleteEntryContext();
+  const prefersReducedMotion = useReducedMotion();
 
   // Dynamic heading & text
-  const getTitle = () => {
-    if (ids?.length > 1) return `Delete ${ids.length} Items?`
-    if (route?.includes('contact')) return 'Delete Message?'
-    if (route?.includes('project')) return 'Delete Project?'
-    if (route?.includes('blog')) return 'Delete Blog Post?'
-    return 'Confirm Deletion'
-  }
+  const getTitle = useCallback(() => {
+    if (ids?.length > 1) return `Delete ${ids.length} Items?`;
+    if (route?.includes("contact")) return "Delete Message?";
+    if (route?.includes("project")) return "Delete Project?";
+    if (route?.includes("blog")) return "Delete Blog Post?";
+    return "Confirm Deletion";
+  }, [ids, route]);
 
-  const getMessage = () => {
-    if (ids?.length > 1)
-      return `Are you sure you want to delete ${ids.length} selected items? This action cannot be undone.`
-    return 'Are you sure you want to delete this item? This action cannot be undone.'
-  }
+  const getMessage = useCallback(() => {
+    if (ids?.length > 1) {
+      return `Are you sure you want to delete ${ids.length} selected items? This action cannot be undone.`;
+    }
+    return "Are you sure you want to delete this item? This action cannot be undone.";
+  }, [ids]);
+
+  // Animation variants
+  const overlayVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { duration: 0.3, ease: "easeOut" },
+    },
+    exit: {
+      opacity: 0,
+      transition: { duration: 0.2 },
+    },
+  };
+
+  const modalVariants = {
+    hidden: { opacity: 0, scale: 0.9, y: 20 },
+    show: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: {
+        duration: 0.3,
+        ease: [0.25, 0.46, 0.45, 0.94],
+      },
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.9,
+      y: 20,
+      transition: { duration: 0.2 },
+    },
+  };
+
+  const handleDelete = useCallback(() => {
+    if (!isPending) onDelete();
+  }, [isPending, onDelete]);
+
+  const handleClose = useCallback(() => {
+    if (!isPending) onClose();
+  }, [isPending, onClose]);
 
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
           key="overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="fixed inset-0 h-screen bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999]"
+          variants={overlayVariants}
+          initial="hidden"
+          animate="show"
+          exit="exit"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
+          onClick={handleClose}
         >
           <motion.div
             key="modal"
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ duration: 0.25, type: 'spring', stiffness: 180 }}
-            className="bg-gradient-to-br from-[#0a0a2a] to-[#171753] border border-cyan-400/30
-              md:rounded-[1.5vw] sm:rounded-[2vw] xs:rounded-[3.5vw]
-              md:p-[3vw] sm:p-[4vw] xs:p-[5vw]
-              shadow-[0_0_25px_rgba(34,211,238,0.25)]
-              text-center max-w-md w-[90%]"
+            variants={modalVariants}
+            initial="hidden"
+            animate="show"
+            exit="exit"
+            className="relative w-full max-w-md rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 border border-white/10 shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* 🔹 Title */}
-            <h2 className="text-cyan-300 md:text-[1.7vw] sm:text-[2.7vw] xs:text-[4.7vw] font-semibold md:mb-[1vw] sm:mb-[2vw] xs:mb-[3vw]">
-              {getTitle()}
-            </h2>
+            {/* Header with icon */}
+            <div className="flex flex-col items-center pt-8 pb-6 px-6 bg-gradient-to-b from-rose-500/10 to-transparent">
+              <div className="w-16 h-16 rounded-2xl bg-rose-500/20 flex items-center justify-center mb-4 border border-rose-500/30">
+                <AlertTriangle className="w-8 h-8 text-rose-400" />
+              </div>
 
-            {/* 🔹 Message */}
-            <p className="text-cyan-100/80 md:mb-[1.6vw] sm:mb-[2.6vw] xs:mb-[3.6vw] md:text-[1.2vw] sm:text-[2.2vw] xs:text-[4.2vw]">
-              {getMessage()}
-            </p>
+              <h2 className="text-xl sm:text-2xl font-bold text-white text-center">
+                {getTitle()}
+              </h2>
+            </div>
 
-            {/* 🔹 Buttons */}
-            <div className="flex justify-center md:gap-[1.6vw] sm:gap-[2.6vw] xs:gap-[3.6vw]">
+            {/* Message */}
+            <div className="px-6 pb-6">
+              <p className="text-slate-400 text-sm sm:text-base text-center leading-relaxed">
+                {getMessage()}
+              </p>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3 p-6 pt-0">
               <motion.button
                 disabled={isPending}
-                onClick={onDelete}
-                whileHover={!isPending ? { scale: 1.05 } : {}}
-                transition={{ type: 'spring', stiffness: 200 }}
-                className={`md:py-[0.5vw] sm:py-[1vw] xs:py-[1.5vw]
-                  md:px-[1.5vw] sm:px-[2.5vw] xs:px-[4.5vw]
-                  border shadow-[0_0_15px_rgba(34,211,238,0.25)]
-                  md:text-[1vw] sm:text-[2vw] xs:text-[4vw]
-                  md:rounded-[0.7vw] sm:rounded-[1.2vw] xs:rounded-[1.7vw]
-                  ${
-                    isPending
-                      ? 'bg-gray-500/30 border-gray-400 cursor-not-allowed text-gray-300'
-                      : 'bg-gradient-to-r from-red-500/30 to-orange-500/20 border-red-400 text-red-200 hover:from-red-500/50 hover:to-orange-500/30'
-                  }`}
+                onClick={handleClose}
+                whileHover={
+                  !isPending && !prefersReducedMotion ? { scale: 1.02 } : {}
+                }
+                whileTap={!isPending ? { scale: 0.98 } : {}}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-800/50 border border-white/10 text-slate-300 font-medium text-sm hover:bg-slate-700/50 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isPending ? 'Deleting...' : 'Confirm'}
-              </motion.button>
-
-              <motion.button
-                disabled={isPending}
-                whileHover={!isPending ? { scale: 1.05 } : {}}
-                onClick={onClose}
-                transition={{ type: 'spring', stiffness: 200 }}
-                className={`md:py-[0.5vw] sm:py-[1vw] xs:py-[1.5vw]
-                  md:px-[1.5vw] sm:px-[2.5vw] xs:px-[4.5vw]
-                  border shadow-[0_0_15px_rgba(34,211,238,0.25)]
-                  md:text-[1vw] sm:text-[2vw] xs:text-[4vw]
-                  md:rounded-[0.7vw] sm:rounded-[1.2vw] xs:rounded-[1.7vw]
-                  ${
-                    isPending
-                      ? 'bg-gray-500/30 border-gray-400 cursor-not-allowed text-gray-300'
-                      : 'bg-gradient-to-r from-cyan-500/30 to-blue-500/20 border-cyan-400 text-cyan-200 hover:from-cyan-500/50 hover:to-blue-500/30'
-                  }`}
-              >
+                <X className="w-4 h-4" />
                 Cancel
               </motion.button>
+
+              <motion.button
+                disabled={isPending}
+                onClick={handleDelete}
+                whileHover={
+                  !isPending && !prefersReducedMotion ? { scale: 1.02 } : {}
+                }
+                whileTap={!isPending ? { scale: 0.98 } : {}}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-rose-500 to-orange-500 text-white font-medium text-sm shadow-lg shadow-rose-500/25 hover:shadow-rose-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </>
+                )}
+              </motion.button>
             </div>
+
+            {/* Close button (top right) */}
+            <button
+              onClick={handleClose}
+              disabled={isPending}
+              className="absolute top-4 right-4 p-2 rounded-lg text-slate-500 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-50"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
-  )
-}
+  );
+};
 
-export default DeleteConfirm
+export default memo(DeleteConfirm);

@@ -1,16 +1,24 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useCallback, memo } from "react";
 import { useForm } from "react-hook-form";
 import { motion } from "motion/react";
+import {
+  User,
+  Briefcase,
+  Award,
+  Clock,
+  FileText,
+  AlignLeft,
+  ImageIcon,
+  Loader2,
+  Save,
+  X,
+  Camera,
+} from "lucide-react";
+import { useSelector } from "react-redux";
 import FormField from "../../Components/FormField";
+import TextareaField from "../../Components/TextAreaField";
 import { useAddAbout } from "../../../../Queries/AddAbout";
 import { glassToast } from "../../Components/ToastMessage";
-import { ThreeCircles } from "react-loader-spinner";
-import TextareaField from "../../Components/TextAreaField";
-import { useSelector } from "react-redux";
-import { useState } from "react";
-
-// const fieldBase =
-//   'w-full bg-linear-to-r from-white/6 to-white/3 border border-cyan-400/20 focus:border-cyan-300/70 md:rounded-[0.7vw] sm:rounded-[1.2vw] xs:rounded-[1.7vw] outline-none text-white placeholder:text-gray-400 backdrop-blur-xl md:px-[1vw] sm:px-[2vw] xs:px-[3vw] md:py-[1vw] sm:py-[1.5vw] xs:py-[2vw] transition-shadow duration-200 md:text-[1.1vw] sm:text-[2.1vw] xs:text-[3.1vw] focus:ring-theme-cyan/30 focus:ring-3'
 
 const AboutForm = () => {
   const { data: about } = useSelector((state) => state.about);
@@ -38,9 +46,8 @@ const AboutForm = () => {
   });
 
   const aboutImage = watch("aboutImage");
-  const SHORT_DESC_LIMIT = 200;
 
-  // 🧠 Prefill when data comes from Redux
+  // Prefill when data comes from Redux
   useEffect(() => {
     if (about && Object.keys(about).length > 0) {
       reset({
@@ -64,232 +71,294 @@ const AboutForm = () => {
   useEffect(() => {
     if (aboutImage && aboutImage?.[0]) {
       setAboutPreview(URL.createObjectURL(aboutImage[0]));
+      setIsAboutImageRemoved(false);
     }
   }, [aboutImage]);
 
   const { mutate, isPending, isError, isSuccess, data, error } = useAddAbout();
 
-  // ✅ Safe Form Submit
-  const onSubmit = (formData) => {
-    const fd = new FormData();
+  // Form Submit
+  const onSubmit = useCallback(
+    (formData) => {
+      const fd = new FormData();
 
-    fd.append("isUpdate", isUpdate ? "true" : "false");
-    fd.append("fullName", formData.fullName);
-    fd.append("shortRole", formData.shortRole);
-    fd.append("successNote", formData.successNote);
-    fd.append("experience", formData.experience);
-    fd.append("shortDesc", formData.shortDesc);
-    fd.append("longDesc", formData.longDesc);
-    fd.append("isAboutImageRemoved", JSON.stringify(isAboutImageRemoved));
+      fd.append("isUpdate", isUpdate ? "true" : "false");
+      fd.append("fullName", formData.fullName);
+      fd.append("shortRole", formData.shortRole);
+      fd.append("successNote", formData.successNote);
+      fd.append("experience", formData.experience);
+      fd.append("shortDesc", formData.shortDesc);
+      fd.append("longDesc", formData.longDesc);
+      fd.append("isAboutImageRemoved", JSON.stringify(isAboutImageRemoved));
 
-    // 🖼 Handle image safely
-    if (formData.aboutImage && formData.aboutImage[0]) {
-      fd.append("aboutImage", formData.aboutImage[0]);
-    }
+      // Handle image
+      if (formData.aboutImage && formData.aboutImage[0]) {
+        fd.append("aboutImage", formData.aboutImage[0]);
+      }
 
-    // 🧩 Safe stringify existing image object (if any)
-    fd.append(
-      "aboutImageOBJ",
-      about?.aboutImage ? JSON.stringify(about.aboutImage) : "null",
-    );
+      fd.append(
+        "aboutImageOBJ",
+        about?.aboutImage ? JSON.stringify(about.aboutImage) : "null",
+      );
 
-    mutate(fd);
-  };
+      mutate(fd);
+    },
+    [isUpdate, isAboutImageRemoved, about, mutate],
+  );
 
-  // 🧃 Toast Feedback
+  // Toast Feedback
   useEffect(() => {
-    if (isSuccess) {
-      glassToast(data?.message, "success");
+    if (isSuccess && data) {
+      glassToast.success(data?.message || "About info saved successfully!");
     }
-    if (isError) {
-      glassToast(
+    if (isError && error) {
+      glassToast.error(
         error?.response?.data?.message || "Something went wrong",
-        "error",
       );
     }
-  }, [isSuccess, isError]);
+  }, [isSuccess, isError, data, error]);
 
-  const fadeIn = {
-    hidden: { y: 20, opacity: 0 },
-    show: { y: 0, opacity: 1, transition: { duration: 0.45 } },
+  // Remove image handler
+  const handleRemoveImage = useCallback(() => {
+    setValue("aboutImage", null);
+    setAboutPreview(null);
+    setIsAboutImageRemoved(true);
+  }, [setValue]);
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.1,
+      },
+    },
   };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: [0.25, 0.46, 0.45, 0.94],
+      },
+    },
+  };
+
   return (
-    <div>
-      <h3 className="md:text-[1.4vw] sm:text-[2.4vw] xs:text-[4.4vw] font-semibold">
-        About / Profile
-      </h3>
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12"
+    >
+      {/* Header */}
+      <motion.div variants={itemVariants} className="mb-8">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/20 shadow-lg shadow-cyan-500/10">
+            <User className="w-7 h-7" />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              About / Profile
+            </h1>
+            <p className="text-slate-400 text-sm sm:text-base mt-1">
+              {isUpdate
+                ? "Update your profile information"
+                : "Create your profile"}
+            </p>
+          </div>
+        </div>
+      </motion.div>
+
       <form
         onSubmit={handleSubmit(onSubmit)}
         encType="multipart/form-data"
-        className="grid md:grid-cols-3 md:gap-[1.5vw] sm:gap-[2.5vw] xs:gap-[3.5vw] md:mt-[1.5vw] sm:mt-[2.5vw] xs:mt-[3.5vw]"
+        className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8"
       >
-        {/* About Image */}
-        <div className="w-full flex flex-col md:gap-[1.5vw] sm:gap-[2.5vw] xs:gap-[3.5vw]">
-          <motion.div
-            variants={fadeIn}
-            initial="hidden"
-            animate="show"
-            transition={{
-              duration: 0.9,
-              ease: "anticipate",
-            }}
-            className="flex flex-col items-center md:gap-[1.5vw] sm:gap-[2.5vw] xs:gap-[3.5vw] md:p-[2.5vw] sm:p-[3vw] xs:p-[3.5vw] md:rounded-[1.5vw] sm:rounded-[2vw] xs:rounded-[2.5vw]
-      bg-linear-to-br from-[#0a0a2a]/60 to-[#101040]/30
-                 border border-white/20 backdrop-blur-2xl shadow-[0_0_20px_rgba(34,211,238,0.2)]
-       w-full "
-          >
-            <div className="md:w-[15vw] md:h-[15vw] sm:w-[30vw] sm:h-[30vw] xs:w-[45vw] xs:h-[45vw] rounded-full border-2 border-theme-cyan overflow-hidden flex items-center justify-center md:text-[1.1vw] sm:text-[2.1vw] xs:text-[4.1vw] text-gray-400">
-              {aboutPreview ? (
-                <img
-                  src={aboutPreview}
-                  className="w-full h-full object-cover"
-                  alt=""
-                />
-              ) : (
-                <p className="md:w-[80%] text-center">
-                  No Profile Image Uploaded
+        {/* Profile Image Section */}
+        <motion.div variants={itemVariants} className="lg:col-span-1">
+          <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 shadow-xl">
+            <div className="flex items-center gap-2 mb-6">
+              <ImageIcon className="w-5 h-5 text-cyan-400" />
+              <h2 className="text-lg font-semibold text-white">
+                Profile Image
+              </h2>
+            </div>
+
+            {/* Image Preview */}
+            <div className="flex flex-col items-center gap-6">
+              <div className="relative w-48 h-48 sm:w-56 sm:h-56 rounded-full border-4 border-cyan-400/30 overflow-hidden bg-slate-800/50 flex items-center justify-center group">
+                {aboutPreview ? (
+                  <>
+                    <img
+                      src={aboutPreview}
+                      className="w-full h-full object-cover"
+                      alt="Profile"
+                    />
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Camera className="w-8 h-8 text-white" />
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center p-4">
+                    <User className="w-16 h-16 text-slate-600 mx-auto mb-2" />
+                    <p className="text-sm text-slate-500">No image uploaded</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3">
+                <div>
+                  <label
+                    htmlFor="aboutImage"
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium cursor-pointer hover:shadow-lg hover:shadow-cyan-500/25 transition-all text-sm"
+                  >
+                    <Camera className="w-4 h-4" />
+                    Upload
+                  </label>
+                  <input
+                    type="file"
+                    id="aboutImage"
+                    name="aboutImage"
+                    accept="image/*"
+                    onClick={() => setIsAboutImageRemoved(false)}
+                    {...register("aboutImage")}
+                    hidden
+                  />
+                </div>
+
+                {aboutPreview && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800/50 border border-white/10 text-slate-300 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/30 transition-all text-sm"
+                  >
+                    <X className="w-4 h-4" />
+                    Remove
+                  </button>
+                )}
+              </div>
+
+              {errors.aboutImage && (
+                <p className="text-rose-400 text-sm text-center">
+                  {errors.aboutImage.message}
                 </p>
               )}
             </div>
-            <div className="flex items-center md:gap-[1.5vw] sm:gap-[2.5vw] xs:gap-[3.5vw]">
-              <div>
-                <label
-                  type="button"
-                  htmlFor="aboutImage"
-                  className="md:py-[0.7vw] sm:py-[1.2vw] xs:py-[1.7vw] md:px-[1.5vw] sm:px-[2.5vw] xs:px-[3.5vw] md:rounded-[0.7vw] sm:rounded-[1.2vw] xs:rounded-[1.7vw] bg-cyan-500 text-black font-semibold hover:brightness-110 transition md:text-[1vw] sm:text-[2vw] xs:text-[4vw] "
-                >
-                  Upload
-                </label>
-                <input
-                  type="file"
-                  id="aboutImage"
-                  name="aboutImage"
-                  accept="image/*"
-                  onClick={() => setIsAboutImageRemoved(false)}
-                  {...register("aboutImage")}
-                  hidden
+          </div>
+        </motion.div>
+
+        {/* Form Details Section */}
+        <motion.div variants={itemVariants} className="lg:col-span-2">
+          <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 sm:p-8 shadow-xl">
+            <div className="flex items-center gap-2 mb-6">
+              <FileText className="w-5 h-5 text-cyan-400" />
+              <h2 className="text-lg font-semibold text-white">
+                Profile Details
+              </h2>
+            </div>
+
+            <div className="space-y-5">
+              {/* Row 1: Name & Role */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  label="Full Name"
+                  name="fullName"
+                  register={register}
+                  errors={errors}
+                  placeholder="John Doe"
+                  icon={User}
                 />
-                {/* Validation Error */}
-                {errors.aboutImage && (
-                  <p className="text-red-400 md:text-[0.9vw] sm:text-[1.8vw] xs:text-[3.6vw] mt-[0.6vw]">
-                    {errors.aboutImage.message}
-                  </p>
-                )}
+                <FormField
+                  label="Short Title / Role"
+                  name="shortRole"
+                  register={register}
+                  errors={errors}
+                  placeholder="Full Stack Developer"
+                  icon={Briefcase}
+                />
               </div>
-              <button
-                onClick={() => {
-                  setValue("aboutImage", null);
-                  setAboutPreview(null);
-                  setIsAboutImageRemoved(true);
-                }}
-                type="button"
-                className="md:py-[0.7vw] sm:py-[1.2vw] xs:py-[1.7vw] md:px-[1.5vw] sm:px-[2.5vw] xs:px-[3.5vw] md:rounded-[0.7vw] sm:rounded-[1.2vw] xs:rounded-[1.7vw] bg-white/6 border border-white/8 text-white hover:bg-white/8 transition md:text-[1vw] sm:text-[2vw] xs:text-[4vw]"
-              >
-                Remove
-              </button>
-            </div>
-          </motion.div>
-        </div>
-        {/* About Details */}
-        <div className="md:col-span-2 w-full flex flex-col">
-          {/* About Form */}
-          <motion.div
-            variants={fadeIn}
-            initial="hidden"
-            animate="show"
-            transition={{
-              delay: "0.9",
-              duration: 0.9,
-              ease: "anticipate",
-            }}
-            className="md:p-[2.5vw] sm:p-[3vw] xs:p-[3.5vw] md:rounded-[1.5vw] sm:rounded-[2vw] xs:rounded-[2.5vw]
-      bg-linear-to-br from-[#0a0a2a]/60 to-[#101040]/30
-                 border border-white/20 backdrop-blur-2xl shadow-[0_0_20px_rgba(34,211,238,0.2)]
-       w-full  flex flex-col md:gap-[1.5vw] sm:gap-[2.5vw] xs:gap-[3.5vw]"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 md:gap-[1vw] sm:gap-[2vw] xs:gap-[3vw]">
-              <FormField
-                label={"Full Name"}
-                name={"fullName"}
+
+              {/* Row 2: Success Note & Experience */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  label="Success Note"
+                  name="successNote"
+                  register={register}
+                  errors={errors}
+                  required={false}
+                  placeholder="e.g., 100+ Projects Completed"
+                  icon={Award}
+                />
+                <FormField
+                  label="Experience (years)"
+                  name="experience"
+                  type="number"
+                  register={register}
+                  errors={errors}
+                  required={false}
+                  placeholder="5"
+                  icon={Clock}
+                />
+              </div>
+
+              {/* Short Description */}
+              <TextareaField
+                label="Short Description"
+                name="shortDesc"
                 register={register}
                 errors={errors}
-                placeholder="Full name"
+                rows={4}
+                placeholder="Brief introduction about yourself (max 200 characters)..."
+                icon={AlignLeft}
               />
 
-              <FormField
-                label={"Short Title"}
-                name={"shortRole"}
+              {/* Long Description */}
+              <TextareaField
+                label="Long Description"
+                name="longDesc"
                 register={register}
                 errors={errors}
-                placeholder="Short title / role"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 md:gap-[1vw] sm:gap-[2vw] xs:gap-[3vw]">
-              <FormField
-                label={"Success Note"}
-                name={"successNote"}
-                register={register}
-                errors={errors}
-                required={false}
-                placeholder="Short success note"
+                rows={8}
+                placeholder="Detailed description of your background, skills, and achievements..."
+                icon={FileText}
               />
 
-              <FormField
-                label={"Experience (years)"}
-                name={"experience"}
-                type="number"
-                register={register}
-                errors={errors}
-                required={false}
-                placeholder="How many experience in years"
-              />
+              {/* Submit Button */}
+              <div className="pt-4">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  disabled={isPending}
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+                  type="submit"
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-5 h-5" />
+                      {isUpdate ? "Update Profile" : "Save Profile"}
+                    </>
+                  )}
+                </motion.button>
+              </div>
             </div>
-
-            <TextareaField
-              label="Short Description"
-              name={`shortDesc`}
-              register={register}
-              errors={errors}
-              placeholder="Describe your coursework, achievements, or focus areas..."
-            />
-
-            <TextareaField
-              label="Long Description"
-              name={`longDesc`}
-              register={register}
-              errors={errors}
-              rows={10}
-              placeholder="Describe your coursework, achievements, or focus areas..."
-            />
-
-            <div className="w-full flex flex-col">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                transition={{ type: "spring", stiffness: 200 }}
-                whileTap={{ scale: 0.98 }}
-                className="md:py-[0.7vw] sm:py-[1.2vw] xs:py-[1.7vw] md:px-[2.5vw] sm:px-[3.5vw] xs:px-[4.5vw] bg-linear-to-r from-cyan-500 to-blue-500 text-cyan-100 border border-cyan-500 shadow-[0_0_15px_rgba(34,211,238,0.25)] md:rounded-[0.7vw] sm:rounded-[1.2vw] xs:rounded-[1.7vw] md:text-[1vw] sm:text-[2vw] xs:text-[4vw] flex items-center justify-center"
-                title={isPending ? "Loading..." : ""}
-                type={isPending ? "button" : "submit"}
-              >
-                {isPending ? (
-                  <ThreeCircles
-                    visible={true}
-                    color="#ff657c"
-                    width={20}
-                    height={20}
-                    ariaLabel="three-circles-loading"
-                  />
-                ) : (
-                  "Save"
-                )}
-              </motion.button>
-            </div>
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
       </form>
-    </div>
+    </motion.div>
   );
 };
 
-export default AboutForm;
+export default memo(AboutForm);

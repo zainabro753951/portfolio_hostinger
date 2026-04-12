@@ -1,104 +1,218 @@
-import { AnimatePresence, motion } from 'motion/react'
-import React, { useState } from 'react'
-import { FaEdit, FaTrashAlt } from 'react-icons/fa'
-import { useDeleteEntryContext } from '../../../../context/DeleteEntry'
-import { Link } from 'react-router-dom'
-import { useEffect } from 'react'
+import { AnimatePresence, motion } from "motion/react";
+import React, { useState, memo, useCallback } from "react";
+import { FaEdit, FaTrashAlt } from "react-icons/fa";
+import { useDeleteEntryContext } from "../../../../context/DeleteEntry";
+import { Link } from "react-router-dom";
+import { useEffect } from "react";
 
-const actionButtonClass = `md:w-[2vw] md:h-[2vw] sm:w-[4.5vw] sm:h-[4.5vw] xs:w-[7vw] xs:h-[7vw] md:rounded-[0.5vw] sm:rounded-[1vw] xs:rounded-[1.5vw] flex items-center justify-center bg-gradient-to-r border  transition-all duration-300`
+// Memoized action button component for better performance
+const ActionButton = memo(
+  ({
+    to,
+    onClick,
+    icon: Icon,
+    gradientFrom,
+    gradientTo,
+    borderColor,
+    textColor,
+    hoverFrom,
+    hoverTo,
+    shadowColor,
+  }) => {
+    const baseClasses = `
+    w-9 h-9 sm:w-10 sm:h-10 md:w-10 md:h-10 
+    rounded-lg 
+    flex items-center justify-center 
+    bg-gradient-to-r border 
+    transition-all duration-300 ease-out
+    will-change-transform transform-gpu
+    hover:scale-110 active:scale-95
+  `;
+
+    const content = (
+      <>
+        <Icon className="text-sm sm:text-base md:text-lg" />
+      </>
+    );
+
+    const className = `
+    ${baseClasses}
+    ${gradientFrom} ${gradientTo} ${borderColor} ${textColor}
+    ${hoverFrom} ${hoverTo} ${shadowColor}
+  `;
+
+    if (to) {
+      return (
+        <Link to={to} className={className}>
+          {content}
+        </Link>
+      );
+    }
+
+    return (
+      <button onClick={onClick} className={className}>
+        {content}
+      </button>
+    );
+  },
+);
+
+ActionButton.displayName = "ActionButton";
 
 const FAQ = ({ faq, idx }) => {
-  const [activeIndex, setActiveIndex] = useState(null)
-  const { setRoute, setIsOpen, setQueryKey } = useDeleteEntryContext()
+  const [isOpen, setIsOpen] = useState(false);
+  const {
+    setRoute,
+    setIsOpen: setDeleteOpen,
+    setQueryKey,
+  } = useDeleteEntryContext();
 
-  // ✅ Whenever something deletes successfully, call refetch()
   useEffect(() => {
-    setQueryKey('FAQs') // used for DeleteConfirm context
-  }, [setQueryKey])
+    setQueryKey("FAQs");
+  }, [setQueryKey]);
 
-  const toggleFAQ = index => {
-    setActiveIndex(activeIndex === index ? null : index)
-  }
+  // Memoized toggle function
+  const toggleFAQ = useCallback(() => {
+    setIsOpen((prev) => !prev);
+  }, []);
+
+  // Memoized delete handler
+  const handleDelete = useCallback(() => {
+    setDeleteOpen(true);
+    setRoute(`/faq/delete/${faq?.id}`);
+    setQueryKey("FAQs");
+  }, [setDeleteOpen, setRoute, setQueryKey, faq?.id]);
+
   return (
-    <>
-      <div
-        className="md:rounded-[1.5vw] sm:rounded-[2vw] xs:rounded-[2.5vw]
-        border border-cyan-400/20 bg-gradient-to-br from-[#0a0a2a]/60 to-[#101040]/30
-        backdrop-blur-2xl shadow-[0_0_20px_rgba(34,211,238,0.2)]
-        md:mt-[2vw] sm:mt-[3vw] xs:mt-[4vw] w-full flex flex-col"
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        delay: idx * 0.08,
+        duration: 0.4,
+        ease: [0.25, 0.46, 0.45, 0.94],
+      }}
+      className="
+        rounded-2xl sm:rounded-3xl
+        border border-cyan-400/20 
+        bg-gradient-to-br from-slate-900/60 to-slate-800/30
+        backdrop-blur-xl 
+        shadow-[0_4px_30px_rgba(34,211,238,0.15),inset_0_1px_0_rgba(255,255,255,0.05)]
+        mt-4 sm:mt-5 md:mt-6 
+        w-full flex flex-col overflow-hidden
+        will-change-transform transform-gpu
+        hover:shadow-[0_8px_40px_rgba(34,211,238,0.25)]
+        transition-shadow duration-500
+      "
+    >
+      {/* Question Header */}
+      <button
+        onClick={toggleFAQ}
+        className="
+          w-full px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-5 
+          flex items-center justify-between 
+          bg-transparent hover:bg-white/[0.02]
+          transition-colors duration-300
+          cursor-pointer
+          group
+        "
       >
-        {/* Question Div */}
-        <div
-          onClick={() => toggleFAQ(idx)}
-          className="w-full md:p-[1.5vw] sm:p-[2vw] xs:p-[2.5vw] flex items-center justify-between"
+        <h3
+          className="
+          text-sm sm:text-base md:text-lg 
+          font-semibold text-slate-100 
+          pr-4 text-left
+          group-hover:text-cyan-50
+          transition-colors duration-300
+          line-clamp-2
+        "
         >
-          <p className="md:text-[1.3vw] sm:text-[2.3vw] xs:text-[4.3vw] font-semibold">
-            {faq?.question}
-          </p>
+          {faq?.question}
+        </h3>
+
+        {/* Right Section: Status + Actions */}
+        <div className="flex items-center gap-3 sm:gap-4 md:gap-5 flex-shrink-0">
+          {/* Status Badge */}
+          <span
+            className={`
+              px-3 py-1 sm:px-4 sm:py-1.5 
+              rounded-full text-xs sm:text-sm font-medium
+              border backdrop-blur-sm
+              transition-all duration-300
+              ${
+                faq.status.toLowerCase() === "published"
+                  ? "bg-cyan-500/15 text-cyan-300 border-cyan-400/30 shadow-[0_0_10px_rgba(34,211,238,0.2)]"
+                  : "bg-amber-500/15 text-amber-300 border-amber-400/30 shadow-[0_0_10px_rgba(251,191,36,0.2)]"
+              }
+            `}
+          >
+            {faq.status}
+          </span>
 
           {/* Action Buttons */}
-          <div className="flex items-center md:gap-[3vw] sm:gap-[4vw] xs:gap-[5vw]">
-            <div className=" text-center">
-              <span
-                className={`md:px-[1vw] sm:px-[2vw] xs:px-[3vw] md:py-[0.3vw] sm:py-[0.8vw] xs:py-[1.3vw] rounded-full md:text-[1vw] sm:text-[2vw] xs:text-[4vw]
-                    ${
-                      faq.status.toLowerCase() === 'published'
-                        ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40'
-                        : 'bg-yellow-500/20 text-yellow-300 border border-yellow-400/40'
-                    }`}
-              >
-                {faq.status}
-              </span>
-            </div>
-            <div className=" flex justify-center md:gap-[1vw] sm:gap-[2vw] xs:gap-[3vw]">
-              <Link
-                to={`/admin/faqs/${faq?.id}`}
-                className={
-                  actionButtonClass +
-                  'from-purple-600/30 to-indigo-600/30 border border-purple-500/40 text-purple-200 hover:from-purple-500/50 hover:to-indigo-500/40 shadow-[0_0_10px_rgba(147,51,234,0.3)]'
-                }
-              >
-                <FaEdit className="md:text-[0.9vw] sm:text-[1.9vw] xs:text-[3.9vw]" />
-              </Link>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <ActionButton
+              to={`/admin/faqs/${faq?.id}`}
+              icon={FaEdit}
+              gradientFrom="from-violet-600/25"
+              gradientTo="to-indigo-600/25"
+              borderColor="border-violet-500/40"
+              textColor="text-violet-200"
+              hoverFrom="hover:from-violet-500/45"
+              hoverTo="hover:to-indigo-500/35"
+              shadowColor="shadow-[0_0_15px_rgba(139,92,246,0.3)] hover:shadow-[0_0_20px_rgba(139,92,246,0.5)]"
+            />
 
-              <button
-                onClick={() => {
-                  setIsOpen(true)
-                  setRoute(`/faq/delete/${faq?.id}`)
-                  setQueryKey('FAQs')
-                }}
-                className={
-                  actionButtonClass +
-                  'from-cyan-600/30 to-blue-600/30 border border-cyan-500/40 text-cyan-200 hover:from-cyan-500/50 hover:to-blue-500/40 shadow-[0_0_10px_rgba(34,211,238,0.3)]'
-                }
-              >
-                <FaTrashAlt className="md:text-[0.9vw] sm:text-[1.9vw] xs:text-[3.9vw]" />
-              </button>
-            </div>
+            <ActionButton
+              onClick={handleDelete}
+              icon={FaTrashAlt}
+              gradientFrom="from-cyan-600/25"
+              gradientTo="to-blue-600/25"
+              borderColor="border-cyan-500/40"
+              textColor="text-cyan-200"
+              hoverFrom="hover:from-cyan-500/45"
+              hoverTo="hover:to-blue-500/35"
+              shadowColor="shadow-[0_0_15px_rgba(34,211,238,0.3)] hover:shadow-[0_0_20px_rgba(34,211,238,0.5)]"
+            />
           </div>
         </div>
+      </button>
 
-        {/* Answer Div */}
-        <AnimatePresence mode="wait">
-          {activeIndex === idx && (
-            <motion.div
-              key="content"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.4, ease: 'easeInOut' }}
+      {/* Answer Section with AnimatePresence */}
+      <AnimatePresence initial={false} mode="wait">
+        {isOpen && (
+          <motion.div
+            key="answer"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{
+              duration: 0.35,
+              ease: [0.4, 0, 0.2, 1], // Smooth cubic-bezier
+            }}
+            className="overflow-hidden will-change-[height,opacity]"
+          >
+            <div
+              className="
+              px-4 pb-4 sm:px-5 sm:pb-5 md:px-6 md:pb-5 
+              border-t border-white/5
+            "
             >
-              <div className="w-full md:p-[1.5vw] sm:p-[2vw] xs:p-[2.5vw]">
-                <p className="md:text-[1.2vw] sm:text-[2.2vw] xs:text-[4.2vw] text-gray-400 ">
-                  {faq?.answer}
-                </p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </>
-  )
-}
+              <p
+                className="
+                text-sm sm:text-base md:text-base 
+                text-slate-400 leading-relaxed
+                pt-4
+              "
+              >
+                {faq?.answer}
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
 
-export default FAQ
+export default memo(FAQ);

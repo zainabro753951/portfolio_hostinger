@@ -1,158 +1,281 @@
-import React, { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { motion } from 'motion/react'
-import { Link } from 'react-router-dom'
-import { FaEdit, FaTrashAlt } from 'react-icons/fa'
-import { useDeleteEntryContext } from '../../../../context/DeleteEntry'
+import React, { memo, useEffect, useCallback, useMemo } from "react";
+import { useSelector } from "react-redux";
+import { motion, useReducedMotion } from "motion/react";
+import { Link } from "react-router-dom";
+import {
+  Pencil,
+  Trash2,
+  Briefcase,
+  Building2,
+  Calendar,
+  Clock,
+  CheckCircle2,
+  Wrench,
+  FileText,
+  Image as ImageIcon,
+} from "lucide-react";
+import { useDeleteEntryContext } from "../../../../context/DeleteEntry";
 
-const glassClass = `md:p-[1.5vw] sm:p-[2vw] xs:p-[2.5vw] md:rounded-[1.5vw] sm:rounded-[2vw] xs:rounded-[2.5vw]
-      bg-gradient-to-br from-[#0a0a2a]/60 to-[#101040]/30
-                 border border-white/20 backdrop-blur-2xl shadow-[0_0_20px_rgba(34,211,238,0.2)]
-       w-full`
+// Table row component
+const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
+  const rowVariants = useMemo(
+    () => ({
+      hidden: { opacity: 0, x: -20 },
+      show: {
+        opacity: 1,
+        x: 0,
+        transition: {
+          duration: 0.4,
+          ease: [0.25, 0.46, 0.45, 0.94],
+          delay: index * 0.05,
+        },
+      },
+    }),
+    [index],
+  );
 
-const actionButtonClass = `md:w-[2vw] md:h-[2vw] sm:w-[4.5vw] sm:h-[4.5vw] xs:w-[7vw] xs:h-[7vw] md:rounded-[0.5vw] sm:rounded-[1vw] xs:rounded-[1.5vw] flex items-center justify-center bg-gradient-to-r border  transition-all duration-300`
+  const formatDate = (date) => {
+    if (!date) return "N/A";
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
 
-const ExpTable = () => {
-  const { experiences } = useSelector(state => state.experience)
-  const { setRoute, setIsOpen, setQueryKey } = useDeleteEntryContext()
-
-  // ✅ Whenever something deletes successfully, call refetch()
-  useEffect(() => {
-    setQueryKey('experiences') // used for DeleteConfirm context
-  }, [setQueryKey])
+  const isCurrentlyWorking = item?.currentlyWorking === 1 || !item?.endDate;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
-      className={glassClass}
+      variants={rowVariants}
+      initial="hidden"
+      animate="show"
+      className="group flex items-center text-sm border-b border-white/5 hover:bg-white/[0.03] transition-colors duration-300 min-w-[1200px]"
     >
-      <h3 className="md:text-[1.3vw] sm:text-[2.3vw] xs:text-[4.3vw] font-semibold">
-        All Education
-      </h3>
+      {/* ID */}
+      <div className="py-4 px-3 text-center text-slate-400 font-medium w-16 flex-shrink-0">
+        #{item?.id}
+      </div>
 
-      <div
-        className="w-full md:rounded-[1.5vw] sm:rounded-[2vw] xs:rounded-[2.5vw]
-        border border-cyan-400/20 bg-gradient-to-br from-[#0a0a2a]/60 to-[#101040]/30
-        backdrop-blur-2xl shadow-[0_0_20px_rgba(34,211,238,0.2)]
-        md:mt-[2vw] sm:mt-[3vw] xs:mt-[4vw]"
-      >
-        {/* ✅ Scrollable Wrapper for Mobile */}
-        <div className="overflow-x-auto custom-scrollbar ">
-          <div className="md:min-w-[200vw] sm:min-w-[300vw] xs:min-w-[500vw]">
-            {' '}
-            {/* 👈 Force width so scrollbar appears on small screens */}
-            {/* Header */}
-            <div className="w-full grid grid-cols-12 items-center text-[1vw] font-semibold text-cyan-300 border-b border-cyan-400/30 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 backdrop-blur-lg">
-              {[
-                { title: 'ID', span: 1 },
-                { title: 'Position / Role', span: 2 },
-                { title: 'Company Name', span: 2 },
-                { title: 'Employment Type', span: 2 },
-                { title: 'Started At', span: 1 },
-                { title: 'End Date', span: 1 },
-                { title: 'Technologies', span: 2 },
-                { title: 'Description', span: 3 },
-                { title: 'Company Logo', span: 1 },
-                { title: 'Created At', span: 1 },
-                { title: 'Updated At', span: 1 },
-                { title: 'Action', span: 1 },
-              ].map((head, i) => (
-                <div key={i} className={`py-[1vw] text-center tracking-wide uppercase truncate`}>
-                  {head.title}
+      {/* Position */}
+      <div className="py-4 px-3 w-48 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <Briefcase className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+          <span className="font-medium text-white truncate">
+            {item?.position}
+          </span>
+        </div>
+      </div>
+
+      {/* Company */}
+      <div className="py-4 px-3 w-40 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <Building2 className="w-4 h-4 text-slate-500 flex-shrink-0" />
+          <span className="text-slate-300 truncate">{item?.company}</span>
+        </div>
+      </div>
+
+      {/* Employment Type */}
+      <div className="py-4 px-3 text-center w-28 flex-shrink-0">
+        <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-400 text-xs border border-cyan-500/20">
+          {item?.employmentType}
+        </span>
+      </div>
+
+      {/* Started At */}
+      <div className="py-4 px-3 text-center text-slate-400 text-xs w-28 flex-shrink-0">
+        <div className="flex items-center justify-center gap-1">
+          <Calendar className="w-3 h-3 flex-shrink-0" />
+          <span className="truncate">{formatDate(item?.startedAt)}</span>
+        </div>
+      </div>
+
+      {/* End Date */}
+      <div className="py-4 px-3 text-center w-28 flex-shrink-0">
+        {isCurrentlyWorking ? (
+          <span className="inline-flex items-center gap-1 text-emerald-400 text-xs">
+            <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+            Present
+          </span>
+        ) : (
+          <span className="text-slate-400 text-xs flex items-center justify-center gap-1">
+            <Clock className="w-3 h-3 flex-shrink-0" />
+            <span className="truncate">{formatDate(item?.endDate)}</span>
+          </span>
+        )}
+      </div>
+
+      {/* Technologies */}
+      <div className="py-4 px-3 w-48 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <Wrench className="w-4 h-4 text-slate-500 flex-shrink-0" />
+          <span className="text-slate-400 text-xs truncate">
+            {item?.technologies || "N/A"}
+          </span>
+        </div>
+      </div>
+
+      {/* Description */}
+      <div className="py-4 px-3 flex-1 min-w-[200px]">
+        <div className="flex items-start gap-2">
+          <FileText className="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" />
+          <p className="text-slate-400 text-xs line-clamp-2 break-words">
+            {item?.description || "No description"}
+          </p>
+        </div>
+      </div>
+
+      {/* Company Logo */}
+      <div className="py-4 px-3 flex justify-center w-16 flex-shrink-0">
+        {item?.companyLogo?.url ? (
+          <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-800/50 border border-white/10 flex-shrink-0">
+            <img
+              src={item.companyLogo.url}
+              alt={item.company}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="w-10 h-10 rounded-lg bg-slate-800/50 flex items-center justify-center border border-white/10 flex-shrink-0">
+            <ImageIcon className="w-5 h-5 text-slate-600" />
+          </div>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="py-4 px-3 flex justify-center gap-2 w-24 flex-shrink-0">
+        <Link
+          to={`/admin/experience/${item?.id}`}
+          className="p-2 rounded-lg bg-slate-800/50 text-slate-400 hover:text-violet-400 hover:bg-violet-500/10 border border-white/5 hover:border-violet-500/30 transition-all duration-300 flex-shrink-0"
+          title="Edit Experience"
+        >
+          <Pencil className="w-4 h-4" />
+        </Link>
+
+        <button
+          onClick={() => onDelete(item.id)}
+          className="p-2 rounded-lg bg-slate-800/50 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-white/5 hover:border-rose-500/30 transition-all duration-300 flex-shrink-0"
+          title="Delete Experience"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+    </motion.div>
+  );
+});
+
+ExpRow.displayName = "ExpRow";
+
+const ExpTable = () => {
+  const { experiences } = useSelector((state) => state.experience);
+  const { setRoute, setIsOpen, setQueryKey } = useDeleteEntryContext();
+  const prefersReducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    setQueryKey("experiences");
+  }, [setQueryKey]);
+
+  const handleDelete = useCallback(
+    (id) => {
+      setRoute(`/experience/delete/${id}`);
+      setIsOpen(true);
+      setQueryKey("experiences");
+    },
+    [setRoute, setIsOpen, setQueryKey],
+  );
+
+  const containerVariants = useMemo(
+    () => ({
+      hidden: { opacity: 0, y: 20 },
+      show: {
+        opacity: 1,
+        y: 0,
+        transition: {
+          duration: 0.5,
+          ease: [0.25, 0.46, 0.45, 0.94],
+          staggerChildren: 0.05,
+          delayChildren: 0.1,
+        },
+      },
+    }),
+    [],
+  );
+
+  return (
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="w-full rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-800/80 backdrop-blur-xl shadow-2xl overflow-hidden"
+    >
+      {/* Header */}
+      <div className="flex items-center gap-3 p-6 border-b border-white/5 bg-white/[0.02]">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/20">
+          <Briefcase className="w-5 h-5" />
+        </div>
+        <div>
+          <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+            All Experience
+          </h3>
+          <p className="text-slate-500 text-xs sm:text-sm">
+            {experiences?.length || 0} entries
+          </p>
+        </div>
+      </div>
+
+      {/* Table Container with Horizontal Scroll */}
+      <div className="overflow-x-auto custom-scrollbar">
+        <div className="min-w-[1400px]">
+          {/* Table Header - Fixed Layout */}
+          <div className="flex items-center bg-white/[0.02] border-b border-white/10 text-xs font-semibold text-slate-400 uppercase tracking-wider sticky top-0 z-10">
+            <div className="py-3 px-3 text-center w-16 flex-shrink-0">ID</div>
+            <div className="py-3 px-3 w-48 flex-shrink-0">Position</div>
+            <div className="py-3 px-3 w-40 flex-shrink-0">Company</div>
+            <div className="py-3 px-3 text-center w-28 flex-shrink-0">Type</div>
+            <div className="py-3 px-3 text-center w-28 flex-shrink-0">
+              Started
+            </div>
+            <div className="py-3 px-3 text-center w-28 flex-shrink-0">
+              Ended
+            </div>
+            <div className="py-3 px-3 w-48 flex-shrink-0">Technologies</div>
+            <div className="py-3 px-3 flex-1 min-w-[200px]">Description</div>
+            <div className="py-3 px-3 text-center w-16 flex-shrink-0">Logo</div>
+            <div className="py-3 px-3 text-center w-24 flex-shrink-0">
+              Actions
+            </div>
+          </div>
+
+          {/* Table Body */}
+          <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+            {experiences?.length > 0 ? (
+              experiences.map((item, index) => (
+                <ExpRow
+                  key={item.id}
+                  item={item}
+                  index={index}
+                  onDelete={handleDelete}
+                  prefersReducedMotion={prefersReducedMotion}
+                />
+              ))
+            ) : (
+              <div className="py-12 text-center min-w-[1200px]">
+                <div className="w-16 h-16 rounded-2xl bg-slate-800/50 flex items-center justify-center mx-auto mb-4">
+                  <Briefcase className="w-8 h-8 text-slate-600" />
                 </div>
-              ))}
-            </div>
-            {/* Scrollable Table Body */}
-            <div className="md:max-h-[25vw] sm:max-h-[55vw] xs:max-h-[75vw] overflow-y-auto custom-scrollbar divide-y divide-cyan-400/20 ">
-              {experiences?.map((item, index) => {
-                const startedAt = new Date(item?.startedAt).toLocaleDateString()
-                const endDate =
-                  item?.endDate === null && item?.currentlyWorking
-                    ? false
-                    : new Date(item.endDate).toLocaleDateString()
-
-                const createdAt = new Date(item?.createdAt).toLocaleDateString()
-                const updatedAt = new Date(item?.updatedAt).toLocaleDateString()
-                return (
-                  <div
-                    key={index}
-                    className="grid grid-cols-12 items-center place-items-center text-cyan-100 md:text-[0.95vw] sm:text-[1.9vw] xs:text-[3.5vw]
-                          hover:bg-gradient-to-r hover:from-cyan-500/10 hover:to-blue-500/10
-                          transition-all duration-300 ease-in-out"
-                  >
-                    <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                      {item?.id}
-                    </div>
-                    <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                      {item?.position}
-                    </div>
-                    <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                      {item?.company}
-                    </div>
-                    <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                      {item?.employmentType}
-                    </div>
-                    <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                      {startedAt}
-                    </div>
-                    <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                      {endDate ? endDate : 'Currently working here'}
-                    </div>
-                    <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                      {item?.technologies}
-                    </div>
-                    <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                      {item?.description}
-                    </div>
-                    <div
-                      className={`md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium`}
-                    >
-                      <div className="md:w-[3vw] md:h-[3vw] sm:w-[5vw] sm:h-[5vw] xs:w-[7vw] xs:h-[7vw] rounded-full overflow-hidden">
-                        <img src={item?.companyLogo?.url} alt="" />
-                      </div>
-                    </div>
-                    <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                      {createdAt}
-                    </div>
-                    <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                      {updatedAt}
-                    </div>
-                    <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] flex justify-center md:gap-[1vw] sm:gap-[2vw] xs:gap-[3vw]">
-                      <Link
-                        to={`/admin/experience/${item?.id}`}
-                        className={
-                          actionButtonClass +
-                          'from-purple-600/30 to-indigo-600/30 border border-purple-500/40 text-purple-200 hover:from-purple-500/50 hover:to-indigo-500/40 shadow-[0_0_10px_rgba(147,51,234,0.3)]'
-                        }
-                      >
-                        <FaEdit className="md:text-[0.9vw] sm:text-[1.9vw] xs:text-[3.9vw]" />
-                      </Link>
-
-                      <button
-                        onClick={() => {
-                          setIsOpen(true)
-                          setRoute(`/experience/delete/${item?.id}`)
-                          setQueryKey('experiences')
-                        }}
-                        className={
-                          actionButtonClass +
-                          'from-cyan-600/30 to-blue-600/30 border border-cyan-500/40 text-cyan-200 hover:from-cyan-500/50 hover:to-blue-500/40 shadow-[0_0_10px_rgba(34,211,238,0.3)]'
-                        }
-                      >
-                        <FaTrashAlt className="md:text-[0.9vw] sm:text-[1.9vw] xs:text-[3.9vw]" />
-                      </button>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+                <p className="text-slate-500 text-sm">
+                  No experience entries found
+                </p>
+                <p className="text-slate-600 text-xs mt-1">
+                  Add your first work experience
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
     </motion.div>
-  )
-}
+  );
+};
 
-export default ExpTable
+export default memo(ExpTable);

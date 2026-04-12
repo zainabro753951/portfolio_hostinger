@@ -1,56 +1,47 @@
-import React from 'react'
-import { useEffect } from 'react'
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { useDispatch, useSelector } from 'react-redux'
-import { useParams } from 'react-router-dom'
-import { useAddExperience } from '../../../../Queries/AddExperience'
-import { glassToast } from '../../Components/ToastMessage'
-import { motion } from 'motion/react'
-import FormField from '../../Components/FormField'
-import FileInputField from '../../Components/FileInputField'
-import SelectField from '../../Components/OptionField'
-import TextareaField from '../../Components/TextAreaField'
-import { ThreeCircles } from 'react-loader-spinner'
-import { clearExp, expFindById } from '../../../../features/experienceSlice'
-
-const glassClass = `
-  w-full bg-gradient-to-br from-[#0a0a2a]/70 to-[#101040]/40
-  border border-white/20 backdrop-blur-2xl
-  shadow-[0_0_30px_rgba(34,211,238,0.25)]
-  md:p-[2vw] sm:p-[3vw] xs:p-[4vw]
-  md:rounded-[1.5vw] sm:rounded-[2.5vw] xs:rounded-[3.5vw]
-`
-
-const fieldBase = `
-  w-full bg-gradient-to-r from-white/5 to-white/10
-  border border-cyan-400/20 focus:border-cyan-300/60
-  md:rounded-[0.8vw] sm:rounded-[1.3vw] xs:rounded-[1.8vw]
-  outline-none text-white placeholder:text-gray-400
-  backdrop-blur-xl md:px-[1vw] sm:px-[2vw] xs:px-[3vw]
-  md:py-[1vw] sm:py-[1.5vw] xs:py-[2vw]
-  transition-all duration-200 ease-in-out
-  focus:ring-2 focus:ring-cyan-400/30 focus:shadow-[0_0_10px_rgba(34,211,238,0.2)]
-  md:placeholder:text-[1vw] xs:placeholder:text-[2vw] xs:placeholder:text-[4vw] md:text-[1vw] sm:text-[2vw] xs:text-[3vw]
-`
+import React, { memo, useEffect, useState, useCallback } from "react";
+import { useForm } from "react-hook-form";
+import { useDispatch, useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
+import { motion, useReducedMotion } from "motion/react";
+import {
+  Briefcase,
+  Building2,
+  Calendar,
+  Clock,
+  CheckCircle2,
+  FileText,
+  Image as ImageIcon,
+  Loader2,
+  Save,
+  Wrench,
+} from "lucide-react";
+import FormField from "../../Components/FormField";
+import FileInputField from "../../Components/FileInputField";
+import SelectField from "../../Components/SelectField";
+import TextareaField from "../../Components/TextAreaField";
+import { useAddExperience } from "../../../../Queries/AddExperience";
+import { glassToast } from "../../Components/ToastMessage";
+import { clearExp, expFindById } from "../../../../features/experienceSlice";
 
 const ExpForm = () => {
-  const { id } = useParams()
-  const dispatch = useDispatch()
-  const { experiences, experience } = useSelector(state => state.experience)
-  const [isUpdate, setIsUpdate] = useState(false)
+  const { id } = useParams();
+  const dispatch = useDispatch();
+  const prefersReducedMotion = useReducedMotion();
+  const { experiences, experience } = useSelector((state) => state.experience);
+  const [isUpdate, setIsUpdate] = useState(false);
 
   const defaultValues = {
-    position: '',
-    company: '',
-    employmentType: '',
-    startedAt: '',
-    endDate: '',
+    position: "",
+    company: "",
+    employmentType: "",
+    startedAt: "",
+    endDate: "",
     currentlyWorking: false,
-    description: '',
-    technologies: '',
+    description: "",
+    technologies: "",
     companyLogo: null,
-  }
+  };
+
   const {
     register,
     handleSubmit,
@@ -60,246 +51,302 @@ const ExpForm = () => {
     formState: { errors },
   } = useForm({
     defaultValues,
-  })
+  });
 
-  const currentlyWorking = watch('currentlyWorking', false)
+  const currentlyWorking = watch("currentlyWorking", false);
+
+  // Fetch experience for edit
   useEffect(() => {
     if (id && experiences?.length > 0) {
-      dispatch(expFindById(Number(id)))
+      dispatch(expFindById(Number(id)));
     } else {
-      dispatch(clearExp())
-      reset(defaultValues)
+      dispatch(clearExp());
+      reset(defaultValues);
+      setIsUpdate(false);
     }
-  }, [id, experiences, reset])
+  }, [id, experiences, dispatch, reset]);
 
-  // Education Form Fields update
+  // Populate form
   useEffect(() => {
     if (id && experience && experience?.id === Number(id)) {
       const formattedStartedAt = experience?.startedAt
-        ? new Date(experience.startedAt).toISOString().split('T')[0]
-        : ''
+        ? new Date(experience.startedAt).toISOString().split("T")[0]
+        : "";
 
       const formattedEndDate = experience?.endDate
-        ? new Date(experience.endDate).toISOString().split('T')[0]
-        : ''
+        ? new Date(experience.endDate).toISOString().split("T")[0]
+        : "";
 
       reset({
-        position: experience?.position,
-        company: experience?.company,
-        employmentType: experience?.employmentType,
+        position: experience?.position || "",
+        company: experience?.company || "",
+        employmentType: experience?.employmentType || "",
         startedAt: formattedStartedAt,
         endDate: formattedEndDate,
-        description: experience?.description,
-        technologies: experience?.technologies,
-      })
-      setValue('currentlyWorking', experience?.currentlyWorking === 1)
-      setIsUpdate(true)
+        description: experience?.description || "",
+        technologies: experience?.technologies || "",
+      });
+      setValue("currentlyWorking", experience?.currentlyWorking === 1);
+      setIsUpdate(true);
     }
-  }, [id, experience, reset])
+  }, [id, experience, reset, setValue]);
 
-  const { mutate, isPending, isError, isSuccess, data, error } = useAddExperience()
+  const { mutate, isPending, isError, isSuccess, data, error } =
+    useAddExperience();
 
-  const onSubmit = data => {
-    const formData = new FormData()
-    formData.append('isUpdate', isUpdate)
-    formData.append('expId', isUpdate ? id : null)
-    formData.append(
-      'companyLogoOBJ',
-      isUpdate && experience?.companyLogo ? JSON.stringify(experience?.companyLogo) : ''
-    )
+  const onSubmit = useCallback(
+    (formData) => {
+      const fd = new FormData();
+      fd.append("isUpdate", isUpdate);
+      fd.append("expId", isUpdate ? id : "");
+      fd.append(
+        "companyLogoOBJ",
+        isUpdate && experience?.companyLogo
+          ? JSON.stringify(experience?.companyLogo)
+          : "",
+      );
 
-    // ✅ Correct file handling
-    if (data.companyLogo && data.companyLogo[0]) {
-      formData.append('companyLogo', data.companyLogo[0]) // only append the file itself
-    }
-
-    // Append all other fields (except the file)
-    Object.entries(data).forEach(([key, value]) => {
-      if (key !== 'companyLogo' && value !== undefined && value !== null) {
-        formData.append(key, value)
+      if (formData.companyLogo && formData.companyLogo[0]) {
+        fd.append("companyLogo", formData.companyLogo[0]);
       }
-    })
 
-    for (data of formData) {
-      console.log(data)
-    }
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key !== "companyLogo" && value !== undefined && value !== null) {
+          fd.append(key, value);
+        }
+      });
 
-    mutate(formData)
-  }
+      mutate(fd);
+    },
+    [isUpdate, id, experience, mutate],
+  );
 
+  // Toast feedback
   useEffect(() => {
     if (isSuccess) {
-      console.log(data)
-      glassToast(data?.message, 'success')
+      glassToast.success(
+        data?.message ||
+          `Experience ${isUpdate ? "updated" : "added"} successfully!`,
+      );
+      if (!isUpdate) {
+        reset(defaultValues);
+      }
     }
     if (isError) {
-      console.log(error?.response?.data)
-      glassToast(error?.response?.data?.message, 'error')
+      glassToast.error(
+        error?.response?.data?.message || "Failed to save experience",
+      );
     }
-  }, [isSuccess, isError])
+  }, [isSuccess, isError, data, error, isUpdate, reset, defaultValues]);
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: [0.25, 0.46, 0.45, 0.94],
+      },
+    },
+  };
+
+  const inputClasses = (hasError, disabled = false) =>
+    `
+    w-full bg-slate-800/50 border ${hasError ? "border-rose-500/50" : "border-white/10"} 
+    rounded-xl outline-none text-white placeholder:text-slate-500 
+    backdrop-blur-sm px-4 py-3 transition-all duration-200
+    focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20
+    hover:border-white/20 hover:bg-slate-800/70
+    ${disabled ? "opacity-50 cursor-not-allowed" : ""}
+  `.trim();
+
+  const employmentOptions = [
+    { value: "Full-time", label: "Full-time" },
+    { value: "Part-time", label: "Part-time" },
+    { value: "Internship", label: "Internship" },
+    { value: "Freelance", label: "Freelance" },
+    { value: "Contract", label: "Contract" },
+  ];
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
-      className={glassClass}
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="w-full"
     >
-      <h3 className="text-white font-semibold md:text-[1.6vw] sm:text-[2.6vw] xs:text-[4.6vw] tracking-wide mb-[1vw]">
-        🎓 Add Experience
-      </h3>
-
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        encType="multipart/form-data"
-        className="w-full flex flex-col md:gap-[1.2vw] sm:gap-[2.2vw] xs:gap-[3.2vw]"
-      >
-        {/* Row 1 */}
-        <div className="grid md:grid-cols-2 grid-cols-1 gap-[1vw]">
-          <FormField
-            label="Position / Role"
-            name="position"
-            register={register}
-            errors={errors}
-            placeholder="e.g., Frontend Developer, Software Engineer"
-          />
-          <FormField
-            label="Company Name"
-            name="company"
-            register={register}
-            errors={errors}
-            placeholder="e.g., Cybrix Pvt. Ltd., Tech Stack Solutions"
-          />
-        </div>
-
-        {/* Row 2 */}
-        <div className="grid md:grid-cols-2 grid-cols-1 gap-[1vw]">
-          <SelectField
-            label="Employment Type"
-            name={`employmentType`}
-            register={register}
-            errors={errors}
-            required={true}
-            placeholder="-- Select Employment Type --"
-            options={[
-              { value: 'Full-time', label: 'Full-time' },
-              { value: 'Part-time', label: 'Part-time' },
-              { value: 'Internship', label: 'Internship' },
-              { value: 'Freelance', label: 'Freelance' },
-              { value: 'Contract', label: 'Contract' },
-            ]}
-          />
-          <div className="w-full flex flex-col gap-0.5">
-            <label className="flex flex-col">
-              <span className="md:text-[1vw] sm:text-[2vw] xs:text-[3.5vw] text-gray-300 mb-[0.5vw]">
-                Started At
-              </span>
-              <input
-                type="date"
-                {...register('startedAt', { required: 'Experience started date is required!' })}
-                className={`${fieldBase} cursor-pointer ${
-                  errors.startedAt ? 'border-red-500' : ''
-                }`}
-              />
-            </label>
-            {errors['startedAt'] && (
-              <span className="md:text-[0.9vw] sm:text-[1.8vw] xs:text-[3.5vw] text-red-400 mt-[0.3vw]">
-                {errors['startedAt']?.message}
-              </span>
-            )}
+      <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 sm:p-8 shadow-xl">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-8 pb-4 border-b border-white/5">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/20">
+            <Briefcase className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              {isUpdate ? "Edit Experience" : "Add Experience"}
+            </h3>
+            <p className="text-slate-400 text-sm">
+              {isUpdate
+                ? "Update work experience details"
+                : "Add your professional experience"}
+            </p>
           </div>
         </div>
 
-        {/* Row 3 */}
-        <div className="grid md:grid-cols-2 grid-cols-1 gap-[1vw] items-center  ">
-          <div className="w-full flex flex-col gap-0.5">
-            <label className="flex flex-col">
-              <span className="md:text-[1vw] sm:text-[2vw] xs:text-[3.5vw] text-gray-300 mb-[0.5vw]">
-                End Date
-              </span>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          encType="multipart/form-data"
+          className="w-full flex flex-col gap-6"
+        >
+          {/* Position & Company */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField
+              label="Position / Role"
+              name="position"
+              register={register}
+              errors={errors}
+              placeholder="e.g., Frontend Developer"
+              icon={Briefcase}
+            />
+            <FormField
+              label="Company Name"
+              name="company"
+              register={register}
+              errors={errors}
+              placeholder="e.g., Cybrix Pvt. Ltd."
+              icon={Building2}
+            />
+          </div>
+
+          {/* Employment Type & Start Date */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <SelectField
+              label="Employment Type"
+              name="employmentType"
+              register={register}
+              errors={errors}
+              required={true}
+              placeholder="-- Select Employment Type --"
+              options={employmentOptions}
+            />
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-slate-500" />
+                Started At
+              </label>
               <input
                 type="date"
-                {...register('endDate', {
-                  required: currentlyWorking ? false : 'Experience started date is required!',
+                {...register("startedAt", {
+                  required: "Start date is required",
                 })}
-                className={`${fieldBase} cursor-pointer ${
-                  currentlyWorking ? 'opacity-60 cursor-not-allowed' : ''
-                } ${errors['endDate'] ? 'border-red-500' : ''}`}
+                className={inputClasses(errors.startedAt)}
+              />
+              {errors.startedAt && (
+                <p className="text-xs text-rose-400">
+                  {errors.startedAt.message}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* End Date & Currently Working */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-slate-500" />
+                End Date
+              </label>
+              <input
+                type="date"
+                {...register("endDate", {
+                  required: currentlyWorking ? false : "End date is required",
+                })}
+                className={inputClasses(errors.endDate, currentlyWorking)}
                 disabled={currentlyWorking}
               />
-            </label>
-            {errors['endDate'] && (
-              <span className="md:text-[0.9vw] sm:text-[1.8vw] xs:text-[3.5vw] text-red-400 mt-[0.3vw]">
-                {errors['endDate']?.message}
+              {errors.endDate && (
+                <p className="text-xs text-rose-400">
+                  {errors.endDate.message}
+                </p>
+              )}
+            </div>
+
+            <label className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/30 border border-white/5 cursor-pointer hover:bg-slate-800/50 transition-colors">
+              <input
+                type="checkbox"
+                {...register("currentlyWorking")}
+                className="w-5 h-5 rounded border-slate-600 text-cyan-500 focus:ring-cyan-500/20 bg-slate-700"
+              />
+              <span className="text-sm text-slate-300 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-cyan-400" />
+                Currently Working
               </span>
-            )}
+            </label>
           </div>
-          <label className="flex items-center md:gap-[0.9vw] sm:gap-[1.4vw] xs:gap-[1.9vw]">
-            <input
-              type="checkbox"
-              {...register('currentlyWorking')}
-              className="md:w-[1vw] md:h-[1vw] sm:w-[2vw] sm:h-[2vw] xs:w-[3.5vw] xs:h-[3.5vw] accent-cyan-400"
+
+          {/* Logo & Technologies */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FileInputField
+              label="Company Logo"
+              name="companyLogo"
+              register={register}
+              error={errors["companyLogo"]}
+              existingFileUrl={experience?.companyLogo?.url || ""}
+              required={false}
+              accept="image/*"
             />
-            <span id className="md:text-[1.1vw] sm:text-[2.1vw] xs:text-[4.1vw] text-gray-300">
-              Currently Working
-            </span>
-          </label>
-        </div>
+            <FormField
+              label="Technologies"
+              name="technologies"
+              register={register}
+              errors={errors}
+              required={false}
+              placeholder="e.g., React, Node.js, TypeScript"
+              icon={Wrench}
+            />
+          </div>
 
-        <div className="grid md:grid-cols-2 grid-cols-1 gap-[1vw] items-center  ">
-          <FileInputField
-            label="Company Logo"
-            name="companyLogo"
-            register={register}
-            error={errors['companyLogo']}
-            existingFileUrl={experience?.companyLogo?.url || ''}
-            required={false}
-            fieldBase={fieldBase}
-          />
-
-          <FormField
-            label="Technologies"
-            name="technologies"
+          {/* Description */}
+          <TextareaField
+            label="Job Description / Responsibilities"
+            name="description"
             register={register}
             errors={errors}
-            placeholder="e.g., HTML, CSS,"
+            rows={5}
+            placeholder="Describe your role, achievements, and responsibilities..."
+            icon={FileText}
           />
-        </div>
 
-        <TextareaField
-          label="Job Description / Responsibilities"
-          name={`description`}
-          register={register}
-          errors={errors}
-          placeholder="Describe your experience achievements, or responsibilities..."
-        />
-
-        {/* Submit Button */}
-        <div className="w-full flex items-center justify-end">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            transition={{ type: 'spring', stiffness: 200 }}
-            whileTap={{ scale: 0.98 }}
-            className="md:py-[0.7vw] sm:py-[1.2vw] xs:py-[1.7vw] md:px-[2.5vw] sm:px-[3.5vw] xs:px-[4.5vw] bg-gradient-to-r from-cyan-500 to-blue-500 text-cyan-100 border border-cyan-500 shadow-[0_0_15px_rgba(34,211,238,0.25)] md:rounded-[0.7vw] sm:rounded-[1.2vw] xs:rounded-[1.7vw] md:text-[1vw] sm:text-[2vw] xs:text-[4vw] flex items-center justify-center"
-            title={isPending ? 'Loading...' : ''}
-            type={isPending ? 'button' : 'submit'}
-          >
-            {isPending ? (
-              <ThreeCircles
-                visible={true}
-                color="#ff657c"
-                width={20}
-                height={20}
-                ariaLabel="three-circles-loading"
-              />
-            ) : (
-              'Add Education'
-            )}
-          </motion.button>
-        </div>
-      </form>
+          {/* Submit Button */}
+          <div className="w-full flex items-center justify-end pt-4">
+            <motion.button
+              type="submit"
+              disabled={isPending}
+              whileHover={
+                prefersReducedMotion || isPending ? {} : { scale: 1.02 }
+              }
+              whileTap={isPending ? {} : { scale: 0.98 }}
+              className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  {isUpdate ? "Updating..." : "Saving..."}
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5" />
+                  {isUpdate ? "Update Experience" : "Add Experience"}
+                </>
+              )}
+            </motion.button>
+          </div>
+        </form>
+      </div>
     </motion.div>
-  )
-}
+  );
+};
 
-export default ExpForm
+export default memo(ExpForm);

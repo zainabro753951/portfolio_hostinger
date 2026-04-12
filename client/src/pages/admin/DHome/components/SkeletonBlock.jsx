@@ -1,24 +1,36 @@
-import { motion } from 'motion/react'
-const shimmer = {
+import React, { memo } from "react";
+import { motion } from "motion/react";
+
+// Shimmer animation configuration - optimized for performance
+const shimmerConfig = {
   animate: {
-    backgroundPosition: ['200% 0', '-200% 0'],
+    backgroundPosition: ["200% 0", "-200% 0"],
   },
   transition: {
     repeat: Infinity,
-    duration: 1.6,
-    ease: 'linear',
+    duration: 1.5,
+    ease: "linear",
   },
-}
+};
 
-export const SkeletonBlock = ({ className }) => (
+export const SkeletonBlock = memo(({ className, delay = 0 }) => (
   <motion.div
-    className={`relative overflow-hidden rounded-[0.6vw] bg-white/6 ${className}`}
+    initial={{ opacity: 0 }}
+    animate={{
+      opacity: 1,
+      backgroundPosition: shimmerConfig.animate.backgroundPosition,
+    }}
+    transition={{
+      opacity: { duration: 0.3, delay },
+      backgroundPosition: shimmerConfig.transition,
+    }}
+    className={`relative overflow-hidden rounded-lg bg-slate-700/40 ${className}`}
     style={{
       backgroundImage:
-        'linear-gradient(110deg, rgba(255,255,255,0.06) 8%, rgba(255,255,255,0.14) 18%, rgba(255,255,255,0.06) 33%)',
-      backgroundSize: '200% 100%',
+        "linear-gradient(110deg, rgba(255,255,255,0.03) 8%, rgba(255,255,255,0.12) 18%, rgba(255,255,255,0.03) 33%)",
+      backgroundSize: "200% 100%",
     }}
-    animate={shimmer.animate}
-    transition={shimmer.transition}
   />
-)
+));
+
+SkeletonBlock.displayName = "SkeletonBlock";

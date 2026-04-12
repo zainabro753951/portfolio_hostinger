@@ -6,17 +6,13 @@ export const initSocket = (server) => {
   const allowedOrigins =
     process.env.NODE_ENV === "production"
       ? process.env.FRONTEND_URLS?.split(",")
-      : [
-          "http://localhost:5173",
-          "http://localhost:5174",
-          "http://127.0.0.1:5173",
-        ];
+      : ["http://localhost:5173", "http://localhost:5174"];
 
   io = new Server(server, {
     cors: {
       origin: allowedOrigins,
       methods: ["GET", "POST"],
-      credentials: true, // Cookies ya Auth headers ke liye zaroori hai
+      credentials: true,
     },
   });
 
@@ -27,13 +23,14 @@ export const initSocket = (server) => {
 
     activeUsers.set(socket.id, true);
 
-    // Broadcast count to all
+    // 🔥 send to all clients
     io.emit("activeUsersCount", {
       count: activeUsers.size,
     });
 
     socket.on("disconnect", (reason) => {
       console.log(`🔴 Socket Disconnected: ${socket.id} | Reason: ${reason}`);
+
       activeUsers.delete(socket.id);
 
       io.emit("activeUsersCount", {

@@ -1,104 +1,229 @@
-import React, { useState } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
-import { MdOutlineNotificationsNone } from 'react-icons/md'
+import React, { memo, useState, useCallback, useRef, useEffect } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
+import { Bell, Plus, Search, ChevronDown } from "lucide-react";
 
 const Header = () => {
-  const [showNotifications, setShowNotifications] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationRef = useRef(null);
+  const prefersReducedMotion = useReducedMotion();
 
   const notifications = [
-    { id: 1, text: 'New project added successfully', time: '2m ago' },
-    { id: 2, text: 'Profile updated', time: '10m ago' },
-    { id: 3, text: 'New visitor on portfolio', time: '25m ago' },
-  ]
+    {
+      id: 1,
+      text: "New project added successfully",
+      time: "2m ago",
+      type: "success",
+    },
+    { id: 2, text: "Profile updated", time: "10m ago", type: "info" },
+    {
+      id: 3,
+      text: "New visitor on portfolio",
+      time: "25m ago",
+      type: "visitor",
+    },
+  ];
+
+  // Close notifications when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target)
+      ) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleNotifications = useCallback(() => {
+    setShowNotifications((prev) => !prev);
+  }, []);
+
+  const headerVariants = {
+    hidden: { opacity: 0, y: -20 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: [0.25, 0.46, 0.45, 0.94],
+      },
+    },
+  };
+
+  const dropdownVariants = {
+    hidden: {
+      opacity: 0,
+      y: -10,
+      scale: 0.95,
+    },
+    show: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        duration: 0.2,
+        ease: [0.25, 0.46, 0.45, 0.94],
+      },
+    },
+    exit: {
+      opacity: 0,
+      y: -10,
+      scale: 0.95,
+      transition: {
+        duration: 0.15,
+      },
+    },
+  };
+
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case "success":
+        return "bg-emerald-500/20 text-emerald-400";
+      case "visitor":
+        return "bg-violet-500/20 text-violet-400";
+      default:
+        return "bg-cyan-500/20 text-cyan-400";
+    }
+  };
 
   return (
-    <div className="relative md:py-[0.5vw] sm:py-[1.5vw] xs:py-[2.5vw] w-full flex items-center justify-between backdrop-blur-xl bg-white/10 border-b border-white/10 md:px-[1vw] sm:px-[1.5vw] xs:px-[2vw]">
-      {/* Left side */}
-      <div>
-        <h2 className="md:text-[1.4vw] sm:text-[2.4vw] xs:text-[4.4vw] font-semibold text-theme-cyan ">
-          Portfolio - Dashboard
-        </h2>
-        <p className="md:text-[0.9vw] sm:text-[1.9vw] xs:text-[3.9vw] text-gray-400 sm:block xs:hidden">
-          Manage content — projects, about, skills & more
-        </p>
-      </div>
+    <motion.header
+      variants={headerVariants}
+      initial="hidden"
+      animate="show"
+      className="sticky top-0 z-40 w-full backdrop-blur-2xl bg-slate-900/80 border-b border-white/10 px-4 sm:px-6 lg:px-8 py-3 sm:py-4"
+    >
+      <div className="flex items-center justify-between gap-4">
+        {/* Left side - Title */}
+        <div className="flex-1 min-w-0">
+          <h2 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+            Portfolio Dashboard
+          </h2>
+          <p className="hidden sm:block text-slate-400 text-sm mt-0.5">
+            Manage content — projects, about, skills & more
+          </p>
+        </div>
 
-      {/* Right side */}
-      <div className="flex items-center md:gap-[1vw] sm:gap-[1.5vw] xs:gap-[2vw] relative">
-        <input
-          type="search"
-          className="md:py-[0.5vw] sm:py-[1vw] xs:py-[1.5vw]  md:px-[1vw] sm:px-[1.5vw] xs:px-[2vw]  outline-none bg-gradient-to-r from-cyan-500/30 to-blue-500/20 text-cyan-300 border border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.25)] rounded-full md:text-[1vw] sm:text-[2vw] xs:text-[4vw] md:block xs:hidden"
-          placeholder="Search here"
-        />
+        {/* Right side - Actions */}
+        <div className="flex items-center gap-3 sm:gap-4" ref={notificationRef}>
+          {/* Search Input - Hidden on mobile */}
+          <div className="hidden xl:flex items-center relative group">
+            <Search className="absolute left-3 w-4 h-4 text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
+            <input
+              type="search"
+              className="w-64 pl-10 pr-4 py-2.5 rounded-xl bg-slate-800/50 border border-white/10 text-slate-200 placeholder-slate-500 outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 transition-all duration-300 text-sm"
+              placeholder="Search projects..."
+            />
+          </div>
 
-        {/* New Project button */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          transition={{ type: 'spring', stiffness: 200 }}
-          className="md:py-[0.5vw] sm:py-[1vw] xs:py-[1.5vw] md:px-[1.5vw] sm:px-[2.5vw] xs:px-[4.5vw] bg-gradient-to-r from-cyan-500 to-blue-500 text-cyan-100 border border-cyan-500 shadow-[0_0_15px_rgba(34,211,238,0.25)] rounded-full md:text-[1vw] sm:text-[2vw] xs:text-[4vw] md:block xs:hidden"
-        >
-          New Project
-        </motion.button>
-
-        {/* Notification icon */}
-        <motion.div className="relative cursor-pointer rounded-full md:text-[2vw] sm:text-[3vw] xs:text-[4vw] text-cyan-300">
-          <motion.div
-            whileHover={{ rotate: 10, scale: 1.1 }}
-            transition={{ type: 'spring', stiffness: 300 }}
-            onClick={() => setShowNotifications(prev => !prev)}
+          {/* New Project Button - Hidden on small mobile */}
+          <motion.button
+            whileHover={prefersReducedMotion ? {} : { scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium text-sm shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300"
           >
-            <MdOutlineNotificationsNone />
-            <div className="w-1 h-1 rounded-full bg-cyan-400 absolute right-[0.3vw] top-[0.3vw] animate-pulse"></div>
-          </motion.div>
+            <Plus className="w-4 h-4" />
+            <span className="hidden md:block">New Project</span>
+          </motion.button>
 
-          {/* Notification dropdown */}
+          {/* Notification Bell */}
+          <motion.button
+            whileHover={prefersReducedMotion ? {} : { rotate: 10, scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={toggleNotifications}
+            className="relative p-2.5 rounded-xl text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all duration-300"
+            aria-label="Notifications"
+          >
+            <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
+            {/* Notification Badge */}
+            <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-cyan-400 ring-2 ring-slate-900 animate-pulse" />
+          </motion.button>
+
+          {/* Notification Dropdown */}
           <AnimatePresence>
             {showNotifications && (
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="absolute right-0 md:mt-[1vw] sm:mt-[2vw] xs:mt-[3vw] md:w-[40vw] sm:w-[50vw] xs:w-[65vw] bg-gradient-to-br from-[#0a0a2a]/90 to-[#001122]/90 border border-cyan-500/20 md:rounded-[1.5vw] sm:rounded-[2vw] xs:rounded-[2.5vw] shadow-lg backdrop-blur-xl overflow-hidden z-50"
+                variants={dropdownVariants}
+                initial="hidden"
+                animate="show"
+                exit="exit"
+                className="absolute right-0 top-full mt-3 w-80 sm:w-96 rounded-2xl bg-gradient-to-br from-slate-900/95 to-slate-800/95 border border-white/10 shadow-2xl backdrop-blur-xl overflow-hidden"
               >
-                <div className="md:p-[1vw] sm:p-[2vw] xs:p-[3vw] text-cyan-300 font-semibold border-b border-cyan-400/10 md:text-[1.5vw] sm:text-[2.5vw] xs:text-[4.5vw]">
-                  Notifications
+                {/* Dropdown Header */}
+                <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-white/[0.02]">
+                  <h3 className="text-white font-semibold flex items-center gap-2">
+                    <Bell className="w-4 h-4 text-cyan-400" />
+                    Notifications
+                  </h3>
+                  <span className="text-xs px-2 py-1 rounded-full bg-cyan-500/20 text-cyan-400 font-medium">
+                    {notifications.length} new
+                  </span>
                 </div>
+
+                {/* Notifications List */}
                 {notifications.length > 0 ? (
-                  <div className="md:max-h-[15vw] sm:max-h-[40vw] xs:max-h-[50vw] overflow-y-auto w-full ">
-                    {notifications.map(n => (
-                      <div
+                  <div className="max-h-72 overflow-y-auto custom-scrollbar">
+                    {notifications.map((n, index) => (
+                      <motion.div
                         key={n.id}
-                        className="md:px-[1vw] sm:px-[2vw] xs:px-[3vw] md:py-[0.6vw] sm:py-[1.1vw] xs:py-[1.6vw]  hover:bg-white/5 transition flex justify-between text-sm text-gray-300 md:text-[1.1vw] sm:text-[2.1vw] xs:text-[3.1vw] w-full "
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="group flex items-start gap-3 px-5 py-3.5 hover:bg-white/5 transition-colors cursor-pointer border-b border-white/5 last:border-0"
                       >
-                        <span>{n.text}</span>
-                        <span className="text-gray-500 ">{n.time}</span>
-                      </div>
+                        <div
+                          className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${getNotificationIcon(n.type).split(" ")[0].replace("bg-", "bg-").replace("/20", "")}`}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-slate-300 text-sm font-medium group-hover:text-white transition-colors">
+                            {n.text}
+                          </p>
+                          <p className="text-slate-500 text-xs mt-1">
+                            {n.time}
+                          </p>
+                        </div>
+                      </motion.div>
                     ))}
                   </div>
                 ) : (
-                  <div className="p-[1vw] text-gray-400 text-sm">No new notifications</div>
+                  <div className="px-5 py-8 text-center">
+                    <Bell className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                    <p className="text-slate-500 text-sm">
+                      No new notifications
+                    </p>
+                  </div>
                 )}
+
+                {/* Dropdown Footer */}
+                <div className="px-5 py-3 border-t border-white/5 bg-white/[0.02]">
+                  <button className="w-full text-center text-xs text-slate-400 hover:text-cyan-400 transition-colors font-medium">
+                    View all notifications
+                  </button>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
-        </motion.div>
 
-        {/* Profile Image */}
-        <motion.div
-          whileHover={{ rotate: 10, scale: 1.05 }}
-          transition={{ type: 'spring', stiffness: 200 }}
-          className="md:w-[2.7vw] md:h-[2.7vw] sm:w-[5vw] sm:h-[5vw] xs:w-[7vw] xs:h-[7vw] rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 shadow-[0_0_15px_rgba(34,211,238,0.4)] overflow-hidden"
-        >
-          <img
-            src="https://images.saymedia-content.com/.image/t_share/MTk4OTEyNDE2Mzg0Mjk2Mjk5/songs-about-men.jpg"
-            className="w-full h-full object-cover object-center"
-            alt="User Avatar"
-          />
-        </motion.div>
+          {/* Profile Avatar */}
+          <motion.button
+            whileHover={prefersReducedMotion ? {} : { scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-full overflow-hidden ring-2 ring-white/10 hover:ring-cyan-500/50 transition-all duration-300"
+          >
+            <img
+              src="https://images.saymedia-content.com/.image/t_share/MTk4OTEyNDE2Mzg0Mjk2Mjk5/songs-about-men.jpg"
+              className="w-full h-full object-cover"
+              alt="User Avatar"
+            />
+            <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 to-transparent opacity-0 hover:opacity-100 transition-opacity" />
+          </motion.button>
+        </div>
       </div>
-    </div>
-  )
-}
+    </motion.header>
+  );
+};
 
-export default Header
+export default memo(Header);

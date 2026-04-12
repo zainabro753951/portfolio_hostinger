@@ -1,246 +1,352 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { FaEdit, FaEye, FaTrashAlt } from 'react-icons/fa'
-import { useDispatch, useSelector } from 'react-redux'
+import React, { useEffect, useRef, memo, useCallback } from "react";
+import { motion } from "motion/react";
+import {
+  Eye,
+  Trash2,
+  Mail,
+  MapPin,
+  Globe,
+  Wifi,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Hash,
+  User,
+  FileText,
+  Mail as MailIcon,
+  Building2,
+  Flag,
+} from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
 import {
   contactMsgFindById,
   selectAllMessages,
   toggleSelectMessage,
-} from '../../../../features/messageSlice'
-import { useDeleteEntryContext } from '../../../../context/DeleteEntry'
+} from "../../../../features/messageSlice";
+import { useDeleteEntryContext } from "../../../../context/DeleteEntry";
 
 const CMTable = () => {
   const { contactCurrentMessages, currentPageMsgsCounts } = useSelector(
-    state => state.contactMessages
-  )
-  const { setRoute, setIds, setQueryKey, setIsOpen } = useDeleteEntryContext()
+    (state) => state.contactMessages,
+  );
+  const { setRoute, setIds, setQueryKey, setIsOpen } = useDeleteEntryContext();
+  const dispatch = useDispatch();
+  const masterRef = useRef(null);
 
-  // ✅ Whenever something deletes successfully, call refetch()
+  // Set query key for delete context
   useEffect(() => {
-    setQueryKey('contactMessages') // used for DeleteConfirm context
-  }, [setQueryKey])
+    setQueryKey("contactMessages");
+  }, [setQueryKey]);
 
-  const dispatch = useDispatch()
-  const masterRef = useRef(null)
-
-  // 🟦 Update master checkbox state
+  // Update master checkbox state
   useEffect(() => {
     if (contactCurrentMessages.length > 0 && masterRef.current) {
-      const allSelected = contactCurrentMessages.every(m => m.selected)
-      const someSelected = contactCurrentMessages.some(m => m.selected)
-      masterRef.current.checked = allSelected
-      masterRef.current.indeterminate = someSelected && !allSelected
+      const allSelected = contactCurrentMessages.every((m) => m.selected);
+      const someSelected = contactCurrentMessages.some((m) => m.selected);
+      masterRef.current.checked = allSelected;
+      masterRef.current.indeterminate = someSelected && !allSelected;
     }
-  }, [contactCurrentMessages])
+  }, [contactCurrentMessages]);
 
-  // 🟧 Handlers
-  const handleSelectAll = e => {
-    dispatch(selectAllMessages(e.target.checked))
-  }
+  // Handlers
+  const handleSelectAll = useCallback(
+    (e) => {
+      dispatch(selectAllMessages(e.target.checked));
+    },
+    [dispatch],
+  );
 
-  const handleRowSelect = id => {
-    console.log(typeof id)
-    dispatch(toggleSelectMessage(id))
-  }
+  const handleRowSelect = useCallback(
+    (id) => {
+      dispatch(toggleSelectMessage(id));
+    },
+    [dispatch],
+  );
 
-  const handleViewMessageStack = id => {
-    dispatch(contactMsgFindById(id))
-  }
+  const handleViewMessage = useCallback(
+    (id) => {
+      dispatch(contactMsgFindById(id));
+    },
+    [dispatch],
+  );
 
-  const setDeleteIds = async (id = null) => {
-    let idsToDelete = []
-    if (id) {
-      // 🗑️ Single delete
-      idsToDelete = [id]
-    } else {
-      // 🧾 Multiple or All delete
-      idsToDelete = contactCurrentMessages.filter(m => m.selected).map(m => m.id)
-    }
+  const setDeleteIds = useCallback(
+    (id = null) => {
+      let idsToDelete = [];
+      if (id) {
+        idsToDelete = [id];
+      } else {
+        idsToDelete = contactCurrentMessages
+          .filter((m) => m.selected)
+          .map((m) => m.id);
+      }
 
-    setIds(idsToDelete)
-    setIsOpen(true)
-    setRoute('/message/delete')
-    setQueryKey('contactMessages')
-  }
+      if (idsToDelete.length === 0) {
+        return;
+      }
+
+      setIds(idsToDelete);
+      setIsOpen(true);
+      setRoute("/message/delete");
+      setQueryKey("contactMessages");
+    },
+    [contactCurrentMessages, setIds, setIsOpen, setRoute, setQueryKey],
+  );
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: [0.25, 0.46, 0.45, 0.94],
+      },
+    },
+  };
+
+  // Table headers configuration
+  const headers = [
+    { key: "select", label: "", icon: null, width: "w-12" },
+    { key: "id", label: "ID", icon: Hash, width: "w-16" },
+    { key: "planId", label: "Plan ID", icon: FileText, width: "w-24" },
+    { key: "fullName", label: "Sender", icon: User, width: "w-32" },
+    { key: "subject", label: "Subject", icon: MailIcon, width: "w-40" },
+    { key: "email", label: "Email", icon: Mail, width: "w-48" },
+    { key: "city", label: "City", icon: Building2, width: "w-24" },
+    { key: "country", label: "Country", icon: Flag, width: "w-24" },
+    { key: "isp", label: "ISP", icon: Wifi, width: "w-32" },
+    { key: "location", label: "Location", icon: MapPin, width: "w-32" },
+    { key: "ip", label: "IP Address", icon: Globe, width: "w-32" },
+    { key: "region", label: "Region", icon: Flag, width: "w-24" },
+    { key: "date", label: "Date", icon: Calendar, width: "w-32" },
+    { key: "status", label: "Status", icon: CheckCircle2, width: "w-24" },
+    { key: "actions", label: "Actions", icon: null, width: "w-24" },
+  ];
 
   return (
-    <div
-      className="w-full md:rounded-[1.5vw] sm:rounded-[2vw] xs:rounded-[2.5vw]
-        border border-cyan-400/20 bg-gradient-to-br from-[#0a0a2a]/60 to-[#101040]/30
-        backdrop-blur-2xl shadow-[0_0_20px_rgba(34,211,238,0.2)]
-         overflow-hidden"
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="w-full "
     >
-      {/* ✅ Scrollable Wrapper for Mobile */}
-      <div className="overflow-x-auto custom-scrollbar ">
-        <div className="space-y-4">
-          <div className="md:min-w-[200vw] sm:min-w-[350vw] xs:min-w-[550vw]">
-            {/* Header */}
-            <div className="w-full grid grid-cols-16 md:gap-[2vw] sm:gap-[4vw] xs:gap-[6vw] items-center md:text-[1vw] sm:text-[2vw] xs:text-[3.5vw] font-semibold text-cyan-300 border-b border-cyan-400/30 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 backdrop-blur-lg">
-              <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center tracking-wide uppercase">
-                <input
-                  ref={masterRef}
-                  type="checkbox"
-                  onChange={handleSelectAll}
-                  className="accent-cyan-400 md:w-[1vw] md:h-[1vw] sm:w-[2vw] sm:h-[2vw] xs:w-[3.5vw] xs:h-[3.5vw]"
-                />
-              </div>
-              {[
-                'id',
-                'Plan Id (optional)',
-                'Sender',
-                'Subject',
-                'Email',
-                'City',
-                'Country',
-                'ISP',
-                'Latitude',
-                'Longitude',
-                'IP Address',
-                'Region',
-                'Date',
-                'Status',
-                'Action',
-              ].map((head, i) => {
-                return (
-                  <div
-                    key={i}
-                    className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center tracking-wide uppercase"
+      <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 shadow-xl overflow-hidden">
+        {/* Table Container */}
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full min-w-[1400px] table-auto">
+            {/* Table Header */}
+            <thead>
+              <tr className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border-b border-white/10">
+                {headers.map((head) => (
+                  <th
+                    key={head.key}
+                    className={`py-4 px-3 text-left text-xs font-semibold text-cyan-300 uppercase tracking-wider ${head.width}`}
                   >
-                    {head}
-                  </div>
-                )
-              })}
-            </div>
+                    <div className="flex items-center gap-2">
+                      {head.key === "select" ? (
+                        <input
+                          ref={masterRef}
+                          type="checkbox"
+                          onChange={handleSelectAll}
+                          className="w-4 h-4 rounded border-slate-600 text-cyan-500 focus:ring-cyan-500/20 bg-slate-700 cursor-pointer"
+                        />
+                      ) : (
+                        <>
+                          {head.icon && (
+                            <head.icon className="w-4 h-4 text-cyan-400" />
+                          )}
+                          {head.label}
+                        </>
+                      )}
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
 
-            {/* Scrollable Table Body */}
-            <div className="md:max-h-[25vw] sm:max-h-[55vw] xs:max-h-[75vw] overflow-y-auto custom-scrollbar divide-y divide-cyan-400/20 ">
-              {contactCurrentMessages.length > 0 ? (
-                contactCurrentMessages.map((item, _) => {
-                  console.log(item)
+            {/* Table Body */}
+            <tbody className="divide-y divide-white/5">
+              {contactCurrentMessages?.length > 0 ? (
+                contactCurrentMessages.map((item, index) => {
+                  const date = new Date(item?.createdAt).toLocaleDateString();
 
-                  const date = new Date(item?.createdAt).toLocaleDateString()
                   return (
-                    <div
+                    <motion.tr
                       key={item.id}
-                      className="grid grid-cols-16 md:gap-[2vw] sm:gap-[4vw] xs:gap-[6vw] items-center text-cyan-100 md:text-[0.95vw] sm:text-[1.9vw] xs:text-[3.5vw]
-                  hover:bg-gradient-to-r hover:from-cyan-500/10 hover:to-blue-500/10
-                  transition-all duration-300 ease-in-out break-words"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: index * 0.03 }}
+                      className={`group hover:bg-gradient-to-r hover:from-cyan-500/5 hover:to-blue-500/5 transition-all duration-300 ${
+                        item.selected ? "bg-cyan-500/10" : ""
+                      }`}
                     >
-                      <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center tracking-wide uppercase">
+                      {/* Select */}
+                      <td className="py-4 px-3">
                         <input
                           type="checkbox"
                           checked={item.selected}
                           onChange={() => handleRowSelect(item?.id)}
-                          className="accent-cyan-400 md:w-[1vw] md:h-[1vw] sm:w-[2vw] sm:h-[2vw] xs:w-[3.5vw] xs:h-[3.5vw]"
+                          className="w-4 h-4 rounded border-slate-600 text-cyan-500 focus:ring-cyan-500/20 bg-slate-700 cursor-pointer"
                         />
-                      </div>
+                      </td>
 
-                      <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                        {item.id}
-                      </div>
-
-                      <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                        {item.planId}
-                      </div>
-
-                      <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                        {item.fullName}
-                      </div>
-
-                      <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                        {item.subject}
-                      </div>
-
-                      <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                        {item.email}
-                      </div>
-
-                      <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                        {item?.city || 'Not Provided'}
-                      </div>
-
-                      <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                        {item?.country || 'Not Provided'}
-                      </div>
-
-                      <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                        {item?.isp || 'Not Provided'}
-                      </div>
-
-                      <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                        {item?.latitude || 'Not Provided'}
-                      </div>
-
-                      <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                        {item?.longitude || 'Not Provided'}
-                      </div>
-
-                      <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                        {item?.ipAddress || 'Not Provided'}
-                      </div>
-
-                      <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                        {item?.region || 'Not Provided'}
-                      </div>
-
-                      <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                        {date}
-                      </div>
-
-                      <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center">
-                        <span
-                          className={`md:px-[1vw] sm:px-[2vw] xs:px-[3vw] md:py-[0.3vw] sm:py-[0.8vw] xs:py-[1.3vw] rounded-full text-[0.9em]
-                      ${
-                        item.status.toLowerCase() === 'read'
-                          ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40'
-                          : 'bg-yellow-500/20 text-yellow-300 border border-yellow-400/40'
-                      }`}
-                        >
-                          {item.status}
+                      {/* ID */}
+                      <td className="py-4 px-3">
+                        <span className="text-xs text-slate-500 font-mono">
+                          #{item.id}
                         </span>
-                      </div>
+                      </td>
 
-                      <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] flex justify-center md:gap-[1vw] sm:gap-[2vw] xs:gap-[3vw]">
-                        <button
-                          className="md:w-[2.5vw] md:h-[2.5vw] sm:w-[5vw] sm:h-[5vw] xs:w-[7.5vw] xs:h-[7.5vw] md:rounded-[0.5vw] sm:rounded-[1vw] xs:rounded-[1.5vw] flex items-center justify-center
-                      bg-gradient-to-r from-purple-600/30 to-indigo-600/30
-                      border border-purple-500/40 text-purple-200 hover:from-purple-500/50 hover:to-indigo-500/40
-                      shadow-[0_0_10px_rgba(147,51,234,0.3)] transition-all duration-300"
-                          title="View"
-                          onClick={() => handleViewMessageStack(item?.id)}
-                        >
-                          <FaEye className="md:text-[1vw] sm:text-[2vw] xs:text-[3.5vw]" />
-                        </button>
+                      {/* Plan ID */}
+                      <td className="py-4 px-3">
+                        <span className="text-sm text-slate-300">
+                          {item.planId || "—"}
+                        </span>
+                      </td>
 
-                        <button
-                          onClick={() => setDeleteIds(item?.id)}
-                          className="md:w-[2.5vw] md:h-[2.5vw] sm:w-[5vw] sm:h-[5vw] xs:w-[7.5vw] xs:h-[7.5vw] flex items-center justify-center md:rounded-[0.5vw] sm:rounded-[1vw] xs:rounded-[1.5vw]
-                      bg-gradient-to-r from-cyan-600/30 to-blue-600/30
-                      border border-cyan-500/40 text-cyan-200 hover:from-cyan-500/50 hover:to-blue-500/40
-                      shadow-[0_0_10px_rgba(34,211,238,0.3)] transition-all duration-300"
-                          title="Delete"
+                      {/* Sender */}
+                      <td className="py-4 px-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 text-xs font-bold">
+                            {item.fullName?.charAt(0)?.toUpperCase() || "?"}
+                          </div>
+                          <span className="text-sm text-white font-medium truncate max-w-[100px]">
+                            {item.fullName}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Subject */}
+                      <td className="py-4 px-3">
+                        <span className="text-sm text-slate-300 truncate max-w-[150px] block">
+                          {item.subject}
+                        </span>
+                      </td>
+
+                      {/* Email */}
+                      <td className="py-4 px-3">
+                        <span className="text-xs text-slate-400 truncate max-w-[180px] block">
+                          {item.email}
+                        </span>
+                      </td>
+
+                      {/* City */}
+                      <td className="py-4 px-3">
+                        <span className="text-sm text-slate-300">
+                          {item?.city || "—"}
+                        </span>
+                      </td>
+
+                      {/* Country */}
+                      <td className="py-4 px-3">
+                        <span className="text-sm text-slate-300">
+                          {item?.country || "—"}
+                        </span>
+                      </td>
+
+                      {/* ISP */}
+                      <td className="py-4 px-3">
+                        <span className="text-xs text-slate-400 truncate max-w-[100px] block">
+                          {item?.isp || "—"}
+                        </span>
+                      </td>
+
+                      {/* Location */}
+                      <td className="py-4 px-3">
+                        <span className="text-xs text-slate-500 font-mono">
+                          {item?.latitude && item?.longitude
+                            ? `${parseFloat(item.latitude).toFixed(2)}, ${parseFloat(item.longitude).toFixed(2)}`
+                            : "—"}
+                        </span>
+                      </td>
+
+                      {/* IP */}
+                      <td className="py-4 px-3">
+                        <span className="text-xs text-slate-500 font-mono">
+                          {item?.ipAddress || "—"}
+                        </span>
+                      </td>
+
+                      {/* Region */}
+                      <td className="py-4 px-3">
+                        <span className="text-sm text-slate-300">
+                          {item?.region || "—"}
+                        </span>
+                      </td>
+
+                      {/* Date */}
+                      <td className="py-4 px-3">
+                        <span className="text-xs text-slate-400">{date}</span>
+                      </td>
+
+                      {/* Status */}
+                      <td className="py-4 px-3 flex items-center justify-center ">
+                        <span
+                          className={`px-2 py-1 rounded-full w-full text-xs font-medium border ${
+                            item.status?.toLowerCase() === "read"
+                              ? "bg-cyan-500/15 text-cyan-300 border-cyan-400/30"
+                              : "bg-amber-500/15 text-amber-300 border-amber-400/30"
+                          }`}
                         >
-                          <FaTrashAlt className="md:text-[1vw] sm:text-[2vw] xs:text-[3.5vw]" />
-                        </button>
-                      </div>
-                    </div>
-                  )
+                          <div className="flex items-center gap-1">
+                            {item.status?.toLowerCase() === "read" ? (
+                              <CheckCircle2 className="w-3 h-3" />
+                            ) : (
+                              <Clock className="w-3 h-3" />
+                            )}
+                            {item.status}
+                          </div>
+                        </span>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-4 px-3 ">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleViewMessage(item?.id)}
+                            className="p-2 rounded-lg bg-gradient-to-r from-cyan-600/30 to-blue-600/30 border border-cyan-500/40 text-cyan-300 hover:from-cyan-500/50 hover:to-blue-500/50 hover:text-white transition-all duration-300 hover:scale-110"
+                            title="View"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            onClick={() => setDeleteIds(item?.id)}
+                            className="p-2 rounded-lg bg-gradient-to-r from-rose-600/30 to-red-600/30 border border-rose-500/40 text-rose-300 hover:from-rose-500/50 hover:to-red-500/50 hover:text-white transition-all duration-300 hover:scale-110"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  );
                 })
               ) : (
-                <p className="md:text-[1.2vw] sm:text-[2.2vw] xs:text-[4.2vw] text-gray-400 text-center md:py-[2vw] sm:py-[3vw] xs:py-[4vw]">
-                  No Message found with this filter
-                </p>
+                <tr>
+                  <td colSpan={15} className="py-12 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center border border-cyan-500/30">
+                        <Mail className="w-8 h-8 text-cyan-400" />
+                      </div>
+                      <p className="text-slate-400 text-lg">
+                        No messages found
+                      </p>
+                      <p className="text-slate-500 text-sm">
+                        Messages will appear here when users contact you
+                      </p>
+                    </div>
+                  </td>
+                </tr>
               )}
-
-              {/* Empty state */}
-              {currentPageMsgsCounts.length === 0 && (
-                <div className="p-8 text-center text-gray-300">No messages found.</div>
-              )}
-            </div>
-          </div>
+            </tbody>
+          </table>
         </div>
       </div>
-    </div>
-  )
-}
+    </motion.div>
+  );
+};
 
-export default CMTable
+export default memo(CMTable);

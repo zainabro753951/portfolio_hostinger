@@ -1,8 +1,8 @@
-import React from 'react'
-import PaginationSkeleton from './PaginationSkeleton'
+import React from "react";
+import PaginationSkeleton from "./PaginationSkeleton";
 
 const ProjectPagination = () => {
-  const pages = [1, 2, 3, 4]
+  const pages = [1, 2, 3, 4];
 
   return (
     <div className="flex justify-center items-center md:mt-[2vw] sm:mt-[3vw] xs:mt-[4vw] md:mb-[1vw] ms:mb-[2vw] xs:mb-[3vw] md:gap-[1vw] sm:gap-[2vw] xs:gap-[3vw]">
@@ -17,7 +17,7 @@ const ProjectPagination = () => {
         </button>
       ))}
     </div>
-  )
-}
+  );
+};
 
-export default ProjectPagination
+export default ProjectPagination;

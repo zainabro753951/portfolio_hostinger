@@ -1,40 +1,67 @@
-import { Navigate, Route, Routes } from "react-router-dom";
-import { useSelector } from "react-redux";
-
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import "./App.css";
 import ScrollToTop from "./components/ScrollToTop";
-import allRoutes from "./Routes/routes";
-import { adminRoutes } from "./Routes/admin.route";
+import { userRoutes } from "./routes/user.route";
 
-import DHomePage from "./pages/admin/Layout/DHomePage";
-import ProtectedRoute from "./context/ProtectedRoute";
-import Login from "./pages/admin/Login";
-import AppInitializer from "./components/AppInitializer";
 import MetaUpdater from "./components/MetaUpdater";
+import AppInitializer from "./components/AppInitializer";
+import Login from "./pages/admin/Login";
+import { useSelector } from "react-redux";
 import AuthLoader from "./context/AuthLoader";
+import ProtectedRoute from "./context/ProtectedRoute";
 import AdminDataInitializer from "./components/AdminDataInitializer";
+import DHomePage from "./pages/admin/Layout/DHomePage";
 import DHomeCards from "./pages/admin/DHome/components/DHomeCards";
+import { adminRoutes } from "./routes/admin.route";
 
-const App = () => {
+gsap.registerPlugin(ScrollTrigger);
+
+function App() {
   const { isAuth } = useSelector((state) => state.adminAuth);
+  useEffect(() => {
+    // Initialize smooth scroll behavior
+    const handleScroll = () => {
+      ScrollTrigger.refresh();
+    };
+
+    window.addEventListener("resize", handleScroll);
+
+    return () => {
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, []);
 
   return (
-    <>
+    <div className="noise-overlay">
       <ScrollToTop />
       <MetaUpdater />
 
       <AppInitializer>
         <Routes>
-          {/* 🌍 PUBLIC WEBSITE */}
-          <Route
-            path="/*"
-            element={
-              <Routes>
-                {allRoutes.map(({ path, element }, idx) => (
-                  <Route key={idx} path={path} element={element} />
-                ))}
-              </Routes>
-            }
-          />
+          {/* 🌍 User Routes Here */}
+          {userRoutes.map((route, idx) => {
+            return (
+              <Route key={idx} path={route.path} element={route.element}>
+                {route?.children?.map((childRoute) => {
+                  return (
+                    <>
+                      <Route
+                        index={childRoute.index}
+                        element={childRoute.element}
+                      />
+                      <Route
+                        path={childRoute.path}
+                        element={childRoute.element}
+                      />
+                    </>
+                  );
+                })}
+              </Route>
+            );
+          })}
 
           {/* 🔑 ADMIN LOGIN (public) */}
           <Route
@@ -62,8 +89,8 @@ const App = () => {
           </Route>
         </Routes>
       </AppInitializer>
-    </>
+    </div>
   );
-};
+}
 
 export default App;

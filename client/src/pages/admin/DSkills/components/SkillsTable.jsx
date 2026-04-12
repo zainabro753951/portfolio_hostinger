@@ -1,100 +1,192 @@
-import { FaEdit, FaTrashAlt } from 'react-icons/fa'
-import { useSelector } from 'react-redux'
-import { Link } from 'react-router-dom'
-import { useDeleteEntryContext } from '../../../../context/DeleteEntry'
-import { useEffect } from 'react'
+import React, { memo, useEffect, useCallback, useMemo } from "react";
+import { motion, useReducedMotion } from "motion/react";
+import { Pencil, Trash2, Wrench, Gauge, Zap } from "lucide-react";
+import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
+import { useDeleteEntryContext } from "../../../../context/DeleteEntry";
 
-const SkillsTable = () => {
-  const { skills } = useSelector(state => state.skills)
-  const { setRoute, setIsOpen, setQueryKey } = useDeleteEntryContext()
+// Proficiency badge component
+const ProficiencyBadge = memo(({ level }) => {
+  const getStyles = () => {
+    if (level >= 80)
+      return "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
+    if (level >= 60) return "bg-cyan-500/10 text-cyan-400 border-cyan-500/30";
+    if (level >= 40)
+      return "bg-amber-500/10 text-amber-400 border-amber-500/30";
+    return "bg-slate-500/10 text-slate-400 border-slate-500/30";
+  };
 
-  // ✅ Whenever something deletes successfully, call refetch()
-  useEffect(() => {
-    setQueryKey('skills') // used for DeleteConfirm context
-  }, [setQueryKey])
+  const getLabel = () => {
+    if (level >= 80) return "Expert";
+    if (level >= 60) return "Advanced";
+    if (level >= 40) return "Intermediate";
+    return "Beginner";
+  };
 
-  // const skills = [
-  //   {
-  //     name: 'React',
-  //     proficiency: 'Advance',
-  //   },
-  //   {
-  //     name: 'JavaScripts',
-  //     proficiency: 'Medium',
-  //   },
-  // ]
-
-  const actionButtonClass = `md:w-[2vw] md:h-[2vw] sm:w-[4.5vw] sm:h-[4.5vw] xs:w-[7vw] xs:h-[7vw] md:rounded-[0.5vw] sm:rounded-[1vw] xs:rounded-[1.5vw] flex items-center justify-center bg-gradient-to-r border  transition-all duration-300`
   return (
-    <div
-      className="w-full md:rounded-[1.5vw] sm:rounded-[2vw] xs:rounded-[2.5vw]
-        border border-cyan-400/20 bg-gradient-to-br from-[#0a0a2a]/60 to-[#101040]/30
-        backdrop-blur-2xl shadow-[0_0_20px_rgba(34,211,238,0.2)]
-        md:mt-[2vw] sm:mt-[3vw] xs:mt-[4vw] "
+    <span
+      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${getStyles()}`}
     >
-      {/* ✅ Scrollable Wrapper for Mobile */}
-      <div className="overflow-x-auto custom-scrollbar ">
-        <div className="min-w-[15vw]">
-          {' '}
-          {/* 👈 Force width so scrollbar appears on small screens */}
-          {/* Header */}
-          <div className="w-full grid grid-cols-3 items-center md:text-[1vw] sm:text-[2vw] xs:text-[3.5vw] font-semibold text-cyan-300 border-b border-cyan-400/30 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 backdrop-blur-lg">
-            {['Name', 'proficiency', 'Action'].map((head, i) => (
-              <div
-                key={i}
-                className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center tracking-wide uppercase"
-              >
-                {head}
-              </div>
-            ))}
-          </div>
-          {/* Scrollable Table Body */}
-          <div className="md:max-h-[25vw] sm:max-h-[55vw] xs:max-h-[75vw] overflow-y-auto custom-scrollbar divide-y divide-cyan-400/20 ">
-            {skills.map((item, index) => (
-              <div
-                key={index}
-                className="grid grid-cols-3 items-center text-cyan-100 md:text-[0.95vw] sm:text-[1.9vw] xs:text-[3.5vw]
-                  hover:bg-gradient-to-r hover:from-cyan-500/10 hover:to-blue-500/10
-                  transition-all duration-300 ease-in-out"
-              >
-                <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium">
-                  {item.skillName}
-                </div>
-                <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center text-cyan-200/90">
-                  {item.proficiency}
-                </div>
-                <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] flex justify-center md:gap-[1vw] sm:gap-[2vw] xs:gap-[3vw]">
-                  <Link
-                    to={`/admin/skills/${item?.id}`}
-                    className={
-                      actionButtonClass +
-                      'from-purple-600/30 to-indigo-600/30 border border-purple-500/40 text-purple-200 hover:from-purple-500/50 hover:to-indigo-500/40 shadow-[0_0_10px_rgba(147,51,234,0.3)]'
-                    }
-                  >
-                    <FaEdit className="md:text-[0.9vw] sm:text-[1.9vw] xs:text-[3.9vw]" />
-                  </Link>
+      <Zap className="w-3.5 h-3.5" />
+      {getLabel()} ({level}%)
+    </span>
+  );
+});
 
-                  <button
-                    onClick={() => {
-                      setIsOpen(true)
-                      setRoute(`/skill/delete/${item?.id}`)
-                      setQueryKey('skills')
-                    }}
-                    className={
-                      actionButtonClass +
-                      'from-cyan-600/30 to-blue-600/30 border border-cyan-500/40 text-cyan-200 hover:from-cyan-500/50 hover:to-blue-500/40 shadow-[0_0_10px_rgba(34,211,238,0.3)]'
-                    }
-                  >
-                    <FaTrashAlt className="md:text-[0.9vw] sm:text-[1.9vw] xs:text-[3.9vw]" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+ProficiencyBadge.displayName = "ProficiencyBadge";
+
+// Table row component
+const SkillRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
+  const rowVariants = useMemo(
+    () => ({
+      hidden: { opacity: 0, x: -20 },
+      show: {
+        opacity: 1,
+        x: 0,
+        transition: {
+          duration: 0.4,
+          ease: [0.25, 0.46, 0.45, 0.94],
+          delay: index * 0.05,
+        },
+      },
+    }),
+    [index],
+  );
+
+  return (
+    <motion.div
+      variants={rowVariants}
+      initial="hidden"
+      animate="show"
+      className="group grid grid-cols-3 items-center text-sm border-b border-white/5 hover:bg-white/[0.03] transition-colors duration-300"
+    >
+      {/* Skill Name */}
+      <div className="py-4 px-4 text-center">
+        <div className="flex items-center justify-center gap-2">
+          <Wrench className="w-4 h-4 text-slate-500" />
+          <span className="font-medium text-white">{item.skillName}</span>
         </div>
       </div>
-    </div>
-  )
-}
 
-export default SkillsTable
+      {/* Proficiency */}
+      <div className="py-4 px-4 text-center">
+        <ProficiencyBadge level={item.proficiency} />
+      </div>
+
+      {/* Actions */}
+      <div className="py-4 px-4 flex justify-center gap-2">
+        <Link
+          to={`/admin/skills/${item?.id}`}
+          className="p-2 rounded-lg bg-slate-800/50 text-slate-400 hover:text-violet-400 hover:bg-violet-500/10 border border-white/5 hover:border-violet-500/30 transition-all duration-300"
+          title="Edit Skill"
+        >
+          <Pencil className="w-4 h-4" />
+        </Link>
+
+        <button
+          onClick={() => onDelete(item.id)}
+          className="p-2 rounded-lg bg-slate-800/50 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-white/5 hover:border-rose-500/30 transition-all duration-300"
+          title="Delete Skill"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+    </motion.div>
+  );
+});
+
+SkillRow.displayName = "SkillRow";
+
+const SkillsTable = () => {
+  const { skills } = useSelector((state) => state.skills);
+  const { setRoute, setIsOpen, setQueryKey } = useDeleteEntryContext();
+  const prefersReducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    setQueryKey("skills");
+  }, [setQueryKey]);
+
+  const handleDelete = useCallback(
+    (id) => {
+      setRoute(`/skill/delete/${id}`);
+      setIsOpen(true);
+      setQueryKey("skills");
+    },
+    [setRoute, setIsOpen, setQueryKey],
+  );
+
+  const containerVariants = useMemo(
+    () => ({
+      hidden: { opacity: 0, y: 20 },
+      show: {
+        opacity: 1,
+        y: 0,
+        transition: {
+          duration: 0.5,
+          ease: [0.25, 0.46, 0.45, 0.94],
+          staggerChildren: 0.05,
+          delayChildren: 0.1,
+        },
+      },
+    }),
+    [],
+  );
+
+  const headers = useMemo(
+    () => [
+      { key: "name", label: "Skill", icon: Wrench },
+      { key: "proficiency", label: "Proficiency", icon: Gauge },
+      { key: "action", label: "Actions", icon: null },
+    ],
+    [],
+  );
+
+  return (
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="w-full rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-800/80 backdrop-blur-xl shadow-2xl overflow-hidden"
+    >
+      {/* Table Header */}
+      <div className="grid grid-cols-3 items-center bg-white/[0.02] border-b border-white/10">
+        {headers.map((head) => (
+          <div
+            key={head.key}
+            className="py-4 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider text-center flex items-center justify-center gap-2"
+          >
+            {head.icon && <head.icon className="w-4 h-4" />}
+            {head.label}
+          </div>
+        ))}
+      </div>
+
+      {/* Table Body */}
+      <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+        {skills?.length > 0 ? (
+          skills.map((item, index) => (
+            <SkillRow
+              key={item.id}
+              item={item}
+              index={index}
+              onDelete={handleDelete}
+              prefersReducedMotion={prefersReducedMotion}
+            />
+          ))
+        ) : (
+          <div className="py-12 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-slate-800/50 flex items-center justify-center mx-auto mb-4">
+              <Wrench className="w-8 h-8 text-slate-600" />
+            </div>
+            <p className="text-slate-500 text-sm">No skills added yet</p>
+            <p className="text-slate-600 text-xs mt-1">
+              Add your first skill to get started
+            </p>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
+export default memo(SkillsTable);

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useEffect, useCallback, useRef, memo } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { createPortal } from "react-dom";
 import {
   X,
@@ -9,6 +9,7 @@ import {
   ChevronDown,
   Sparkles,
   Loader2,
+  Mail,
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import EmailEditor from "./EmailEditor";
@@ -35,7 +36,6 @@ const ReplyModal = () => {
 
   const [activeTab, setActiveTab] = useState("compose");
   const [showTemplates, setShowTemplates] = useState(false);
-
   const [emailData, setEmailData] = useState({
     to: "",
     subject: "",
@@ -43,25 +43,17 @@ const ReplyModal = () => {
     attachments: [],
   });
 
-  // ✅ FIX: Use ref to prevent cursor jumping - store editor content separately
   const editorContentRef = useRef("");
   const isInitialMount = useRef(true);
 
-  // ✅ FIX: Memoized default reply generator
+  // Generate default reply
   const generateDefaultReply = useCallback((msg) => {
     if (!msg) return "";
-
     return `Dear ${msg.fullName || "Customer"},
 
 Thank you for contacting us regarding "${msg.subject || "your inquiry"}".
 
-${
-  msg.message
-    ? `\nYour message:\n"${msg.message.substring(0, 200)}${
-        msg.message.length > 200 ? "..." : ""
-      }"\n`
-    : ""
-}
+${msg.message ? `\nYour message:\n"${msg.message.substring(0, 200)}${msg.message.length > 200 ? "..." : ""}"\n` : ""}
 
 We have received your inquiry and would like to assist you further.
 
@@ -71,19 +63,16 @@ Best regards,
 Support Team`;
   }, []);
 
-  // ✅ FIX: Initialize form when modal opens - only once
+  // Initialize form
   useEffect(() => {
     if (viewMessage && isReplyModalOpen && isInitialMount.current) {
       const defaultBody = generateDefaultReply(viewMessage);
-
       setEmailData({
         to: viewMessage.email || "",
         subject: `Re: ${viewMessage.subject || ""}`,
         body: defaultBody,
         attachments: [],
       });
-
-      // ✅ IMPORTANT: Set editor ref content
       editorContentRef.current = defaultBody;
       isInitialMount.current = false;
       setActiveTab("compose");
@@ -91,7 +80,7 @@ Support Team`;
     }
   }, [viewMessage, isReplyModalOpen, generateDefaultReply]);
 
-  // ✅ FIX: Reset initial mount when modal closes
+  // Reset on close
   useEffect(() => {
     if (!isReplyModalOpen) {
       isInitialMount.current = true;
@@ -99,25 +88,22 @@ Support Team`;
     }
   }, [isReplyModalOpen]);
 
-  // ✅ FIX: Debounced body update to prevent cursor jumping
+  // Handle body change
   const handleBodyChange = useCallback((newBody) => {
     editorContentRef.current = newBody;
-
-    // Use functional update to prevent stale closures
     setEmailData((prev) => {
-      // Only update if actually changed to prevent unnecessary re-renders
       if (prev.body === newBody) return prev;
       return { ...prev, body: newBody };
     });
   }, []);
 
-  const handleSend = async () => {
+  // Send handler
+  const handleSend = useCallback(async () => {
     const currentBody = editorContentRef.current || emailData.body;
-
     if (
       !currentBody.trim() ||
       currentBody.includes("[Type your response here...]") ||
-      currentBody.replace(/\\s/g, "").length < 10
+      currentBody.replace(/\s/g, "").length < 10
     ) {
       glassToast("Please enter a proper message", "warning");
       return;
@@ -128,78 +114,73 @@ Support Team`;
     formData.append("subject", emailData.subject);
     formData.append("body", currentBody);
     formData.append("originalMessageId", viewMessage?.id);
-
     emailData.attachments.forEach((file) => {
       formData.append("attachments", file);
     });
 
     sendReply(formData);
-  };
+  }, [emailData, viewMessage, sendReply]);
 
+  // Success/Error effects
   useEffect(() => {
     if (isSuccess) {
-      glassToast("Reply sent successfully!", "success");
+      glassToast.success("Reply sent successfully!");
       dispatch(closeReplyModal());
-      // Reset state
-      setEmailData({
-        to: "",
-        subject: "",
-        body: "",
-        attachments: [],
-      });
+      setEmailData({ to: "", subject: "", body: "", attachments: [] });
       editorContentRef.current = "";
       isInitialMount.current = true;
     }
     if (isError) {
-      glassToast(
+      glassToast.error(
         error?.response?.data?.message || "Failed to send reply",
-        "error",
       );
     }
-  }, [isSuccess, isError]);
+  }, [isSuccess, isError, error, dispatch]);
 
-  const handleAttachment = (e) => {
-    const files = Array.from(e.target.files);
-    const totalFiles = emailData.attachments.length + files.length;
+  // Attachment handlers
+  const handleAttachment = useCallback(
+    (e) => {
+      const files = Array.from(e.target.files);
+      const totalFiles = emailData.attachments.length + files.length;
+      if (totalFiles > 5) {
+        glassToast("Maximum 5 files allowed", "warning");
+        return;
+      }
+      const oversized = files.filter((f) => f.size > 10 * 1024 * 1024);
+      if (oversized.length > 0) {
+        glassToast("Files must be less than 10MB each", "warning");
+        return;
+      }
+      setEmailData((prev) => ({
+        ...prev,
+        attachments: [...prev.attachments, ...files],
+      }));
+    },
+    [emailData.attachments.length],
+  );
 
-    if (totalFiles > 5) {
-      glassToast("Maximum 5 files allowed", "warning");
-      return;
-    }
-
-    // File size check (10MB each)
-    const oversized = files.filter((f) => f.size > 10 * 1024 * 1024);
-    if (oversized.length > 0) {
-      glassToast("Files must be less than 10MB each", "warning");
-      return;
-    }
-
-    setEmailData((prev) => ({
-      ...prev,
-      attachments: [...prev.attachments, ...files],
-    }));
-  };
-
-  const removeAttachment = (index) => {
+  const removeAttachment = useCallback((index) => {
     setEmailData((prev) => ({
       ...prev,
       attachments: prev.attachments.filter((_, i) => i !== index),
     }));
-  };
+  }, []);
 
-  const applyTemplate = (template) => {
-    const newContent = template.content
-      .replace(/{{name}}/g, viewMessage?.fullName || "Customer")
-      .replace(/{{subject}}/g, viewMessage?.subject || "")
-      .replace(/{{date}}/g, new Date().toLocaleDateString());
+  // Apply template
+  const applyTemplate = useCallback(
+    (template) => {
+      const newContent = template.content
+        .replace(/{{name}}/g, viewMessage?.fullName || "Customer")
+        .replace(/{{subject}}/g, viewMessage?.subject || "")
+        .replace(/{{date}}/g, new Date().toLocaleDateString());
+      editorContentRef.current = newContent;
+      setEmailData((prev) => ({ ...prev, body: newContent }));
+      setShowTemplates(false);
+    },
+    [viewMessage],
+  );
 
-    // ✅ FIX: Update both ref and state
-    editorContentRef.current = newContent;
-    setEmailData((prev) => ({ ...prev, body: newContent }));
-    setShowTemplates(false);
-  };
-
-  // Close on escape key
+  // Escape key handler
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === "Escape" && isReplyModalOpen) {
@@ -212,7 +193,6 @@ Support Team`;
 
   if (!isReplyModalOpen || !viewMessage) return null;
 
-  // ✅ FIX: Proper Portal structure with AnimatePresence inside
   return createPortal(
     <AnimatePresence mode="wait">
       {isReplyModalOpen && (
@@ -230,42 +210,42 @@ Support Team`;
             exit={{ scale: 0.9, y: 20, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-2xl border border-cyan-400/30 bg-gradient-to-br from-[#0a0a2a]/95 to-[#101040]/90 backdrop-blur-2xl shadow-[0_0_50px_rgba(34,211,238,0.3)]"
+            className="w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-2xl border border-cyan-400/30 bg-gradient-to-br from-slate-900/95 to-slate-800/90 backdrop-blur-2xl shadow-[0_0_50px_rgba(34,211,238,0.2)]"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-cyan-400/20 bg-gradient-to-r from-cyan-500/10 to-blue-500/10">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-gradient-to-r from-cyan-500/10 to-blue-500/10">
               <div className="flex items-center gap-4">
-                <div className="p-2 rounded-lg bg-cyan-500/20">
-                  <Send className="w-5 h-5 text-cyan-300" />
+                <div className="p-2 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-400/30">
+                  <Mail className="w-5 h-5 text-cyan-400" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-white">
                     Reply to Message
                   </h3>
-                  <p className="text-sm text-cyan-300/70">
+                  <p className="text-sm text-cyan-400/70">
                     To: {viewMessage.email}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <div className="flex p-1 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="flex p-1 rounded-xl bg-slate-800/50 border border-white/10">
                   <button
                     onClick={() => setActiveTab("compose")}
-                    className={`px-4 py-1.5 rounded-md text-sm transition-all ${
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                       activeTab === "compose"
                         ? "bg-cyan-500/20 text-cyan-300"
-                        : "text-gray-400 hover:text-white"
+                        : "text-slate-400 hover:text-white"
                     }`}
                   >
                     Compose
                   </button>
                   <button
                     onClick={() => setActiveTab("history")}
-                    className={`px-4 py-1.5 rounded-md text-sm transition-all ${
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                       activeTab === "history"
                         ? "bg-cyan-500/20 text-cyan-300"
-                        : "text-gray-400 hover:text-white"
+                        : "text-slate-400 hover:text-white"
                     }`}
                   >
                     History
@@ -276,7 +256,7 @@ Support Team`;
                   onClick={() => dispatch(closeReplyModal())}
                   className="p-2 rounded-lg hover:bg-white/10 transition-colors"
                 >
-                  <X className="w-5 h-5 text-gray-400" />
+                  <X className="w-5 h-5 text-slate-400" />
                 </button>
               </div>
             </div>
@@ -284,19 +264,17 @@ Support Team`;
             {/* Content */}
             <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
               {activeTab === "compose" ? (
-                <div className="space-y-4">
+                <div className="space-y-5">
                   {/* Templates */}
-                  <div className="flex items-center gap-2 mb-4">
+                  <div className="flex items-center gap-2">
                     <button
                       onClick={() => setShowTemplates(!showTemplates)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-purple-500/30 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 transition-all"
+                      className="flex items-center gap-2 px-4 py-2 text-sm rounded-xl border border-purple-500/30 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 transition-all"
                     >
                       <Sparkles className="w-4 h-4" />
                       Templates
                       <ChevronDown
-                        className={`w-4 h-4 transition-transform ${
-                          showTemplates ? "rotate-180" : ""
-                        }`}
+                        className={`w-4 h-4 transition-transform ${showTemplates ? "rotate-180" : ""}`}
                       />
                     </button>
                   </div>
@@ -316,7 +294,7 @@ Support Team`;
 
                   {/* Subject */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-cyan-300">
+                    <label className="text-sm font-medium text-slate-300">
                       Subject
                     </label>
                     <input
@@ -328,18 +306,17 @@ Support Team`;
                           subject: e.target.value,
                         }))
                       }
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-cyan-400/20 text-white placeholder-gray-500 focus:border-cyan-400/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 transition-all"
+                      className="w-full px-4 py-3 rounded-xl bg-slate-800/50 border border-white/10 text-white placeholder-slate-500 focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none transition-all"
                     />
                   </div>
 
                   {/* Editor */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-cyan-300">
+                    <label className="text-sm font-medium text-slate-300">
                       Message
                     </label>
-                    {/* ✅ FIX: Pass ref content and custom handler */}
                     <EmailEditor
-                      key={viewMessage?.id || "editor"} // Force remount on message change
+                      key={viewMessage?.id || "editor"}
                       initialValue={emailData.body}
                       onChange={handleBodyChange}
                       placeholder="Type your reply here..."
@@ -348,7 +325,7 @@ Support Team`;
 
                   {/* Attachments */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-cyan-300">
+                    <label className="text-sm font-medium text-slate-300">
                       Attachments
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -358,18 +335,18 @@ Support Team`;
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
                           exit={{ scale: 0 }}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-400/30 text-sm text-cyan-300"
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-cyan-500/10 border border-cyan-400/30 text-sm text-cyan-300"
                         >
                           <Paperclip className="w-4 h-4" />
                           <span className="max-w-[150px] truncate">
                             {file.name}
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-slate-500">
                             ({(file.size / 1024 / 1024).toFixed(2)} MB)
                           </span>
                           <button
                             onClick={() => removeAttachment(idx)}
-                            className="hover:text-red-400 transition-colors"
+                            className="hover:text-rose-400 transition-colors"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -390,7 +367,7 @@ Support Team`;
                         </label>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-slate-500">
                       Max 5 files. Supported: PDF, DOC, Images (Max 10MB each)
                     </p>
                   </div>
@@ -405,8 +382,8 @@ Support Team`;
 
             {/* Footer */}
             {activeTab === "compose" && (
-              <div className="flex items-center justify-between px-6 py-4 border-t border-cyan-400/20 bg-white/5">
-                <div className="text-sm text-gray-400">
+              <div className="flex items-center justify-between px-6 py-4 border-t border-white/10 bg-slate-800/30">
+                <div className="text-sm text-slate-400">
                   {isPending ? (
                     <span className="flex items-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -419,7 +396,7 @@ Support Team`;
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => dispatch(closeReplyModal())}
-                    className="px-6 py-2.5 rounded-xl text-gray-300 hover:bg-white/10 transition-all"
+                    className="px-6 py-2.5 rounded-xl text-slate-300 hover:bg-white/10 transition-all"
                     disabled={isPending}
                   >
                     Cancel
@@ -429,7 +406,7 @@ Support Team`;
                     whileTap={{ scale: 0.98 }}
                     onClick={handleSend}
                     disabled={isPending}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:shadow-[0_0_30px_rgba(34,211,238,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     {isPending ? (
                       <>
@@ -454,4 +431,4 @@ Support Team`;
   );
 };
 
-export default ReplyModal;
+export default memo(ReplyModal);

@@ -1,441 +1,457 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react'
-import { EditorContent, useEditor } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import Underline from '@tiptap/extension-underline'
-import Link from '@tiptap/extension-link'
-import Image from '@tiptap/extension-image'
-import TextAlign from '@tiptap/extension-text-align'
-import Highlight from '@tiptap/extension-highlight'
-import TaskList from '@tiptap/extension-task-list'
-import TaskItem from '@tiptap/extension-task-item'
-import Color from '@tiptap/extension-color'
-import { TextStyle } from '@tiptap/extension-text-style'
-import HardBreak from '@tiptap/extension-hard-break'
-import Dropcursor from '@tiptap/extension-dropcursor'
-import Gapcursor from '@tiptap/extension-gapcursor'
-import '../../../tiptap.css'
-
+import React, { memo, useEffect, useRef, useCallback } from "react";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Underline from "@tiptap/extension-underline";
+import Link from "@tiptap/extension-link";
+import Image from "@tiptap/extension-image";
+import TextAlign from "@tiptap/extension-text-align";
+import Highlight from "@tiptap/extension-highlight";
+import TaskList from "@tiptap/extension-task-list";
+import TaskItem from "@tiptap/extension-task-item";
+import Color from "@tiptap/extension-color";
+import { TextStyle } from "@tiptap/extension-text-style";
+import HardBreak from "@tiptap/extension-hard-break";
+import Dropcursor from "@tiptap/extension-dropcursor";
+import Gapcursor from "@tiptap/extension-gapcursor";
+import { motion } from "motion/react";
 import {
-  MdFormatBold,
-  MdFormatItalic,
-  MdFormatUnderlined,
-  MdStrikethroughS,
-  MdCode,
-  MdFormatListBulleted,
-  MdFormatListNumbered,
-  MdChecklist,
-  MdLink,
-  MdImage,
-  MdHorizontalRule,
-  MdUndo,
-  MdRedo,
-  MdFormatAlignLeft,
-  MdFormatAlignCenter,
-  MdFormatAlignRight,
-  MdFormatAlignJustify,
-  MdHighlight,
-  MdFormatQuote,
-} from 'react-icons/md'
+  Bold,
+  Italic,
+  Underline as UnderlineIcon,
+  Strikethrough,
+  Code,
+  List,
+  ListOrdered,
+  CheckSquare,
+  Link as LinkIcon,
+  Image as ImageIcon,
+  Minus,
+  Undo,
+  Redo,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  Highlighter,
+  Quote,
+  Type,
+  X,
+} from "lucide-react";
+import "../../../tiptap.css";
 
-export default function RichEditor({ output, setOutput }) {
-  const editorRef = useRef(null)
-  const updateTimer = useRef(null)
+// Toolbar button component
+const ToolbarButton = memo(
+  ({ onClick, isActive, icon: Icon, label, children, className = "" }) => (
+    <motion.button
+      type="button"
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={onClick}
+      className={`p-2 rounded-lg transition-all duration-200 flex items-center justify-center ${
+        isActive
+          ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
+          : "text-slate-400 hover:text-white hover:bg-white/10 border border-transparent"
+      } ${className}`}
+      title={label}
+      aria-label={label}
+    >
+      {children || <Icon className="w-4 h-4" />}
+    </motion.button>
+  ),
+);
 
-  // -----------------------------------------------------------
-  // ✅ Custom HardBreak to map Shift+Enter → line break
-  // -----------------------------------------------------------
-  const HardBreakWithKey = HardBreak.extend({
-    addKeyboardShortcuts() {
-      return {
-        'Shift-Enter': () => this.editor.chain().focus().setHardBreak().run(),
-      }
-    },
-  })
+ToolbarButton.displayName = "ToolbarButton";
 
-  // -----------------------------------------------------------
-  // ✅ Editor Setup (Clean, Stable, Optimal)
-  // -----------------------------------------------------------
+// Color picker button
+const ColorButton = memo(({ color, onClick, isHighlight }) => (
+  <motion.button
+    type="button"
+    whileHover={{ scale: 1.1 }}
+    whileTap={{ scale: 0.95 }}
+    onClick={onClick}
+    className="w-6 h-6 rounded-md border border-white/20 hover:border-white/40 transition-colors"
+    style={{
+      backgroundColor: color,
+      boxShadow:
+        color === "#ffffff" ? "inset 0 0 0 1px rgba(255,255,255,0.3)" : "none",
+    }}
+    aria-label={`Color ${color}`}
+  />
+));
+
+ColorButton.displayName = "ColorButton";
+
+// Toolbar section divider
+const ToolbarSection = memo(({ children }) => (
+  <div className="flex items-center gap-1 px-2 border-r border-white/10 last:border-0">
+    {children}
+  </div>
+));
+
+ToolbarSection.displayName = "ToolbarSection";
+
+// Custom HardBreak extension
+const HardBreakWithKey = HardBreak.extend({
+  addKeyboardShortcuts() {
+    return {
+      "Shift-Enter": () => this.editor.chain().focus().setHardBreak().run(),
+    };
+  },
+});
+
+const RichEditor = ({ output, setOutput }) => {
+  const editorRef = useRef(null);
+  const updateTimer = useRef(null);
+
+  // Initialize editor
   const editor = useEditor({
-    content: output || '<p>Start typing...</p>',
-
+    content: output || "<p>Start typing...</p>",
     extensions: [
       StarterKit.configure({
-        paragraph: { HTMLAttributes: { class: 'rtp' } },
-        heading: { HTMLAttributes: { class: 'rth' } },
+        paragraph: { HTMLAttributes: { class: "rtp" } },
+        heading: { HTMLAttributes: { class: "rth" } },
         bulletList: true,
         orderedList: true,
       }),
-
       Underline,
       Highlight.configure({ multicolor: true }),
       TextStyle,
-      Color.configure({ types: ['textStyle'] }),
+      Color.configure({ types: ["textStyle"] }),
       Link.configure({ openOnClick: true }),
       Image,
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
       TaskList,
-      TaskItem.configure({
-        nested: true,
-      }),
-
-      Dropcursor.configure({ width: 2, class: 'dropcursor' }),
+      TaskItem.configure({ nested: true }),
+      Dropcursor.configure({ width: 2, class: "dropcursor" }),
       Gapcursor,
       HardBreakWithKey,
     ],
-
     editorProps: {
       attributes: {
         class:
-          'rich-editor-content rounded-lg custom-scrollbar outline-none ' +
-          'min-h-[200px] bg-transparent md:p-[0.9vw] sm:p-[1.4vw] p-[1.9vw]',
-        spellcheck: 'true',
-      },
-
-      // ✅ Remove Tiptap default margins for perfect spacing
-      handleDOMEvents: {
-        beforeinput: () => false,
+          "rich-editor-content min-h-[200px] outline-none p-4 prose prose-invert max-w-none",
+        spellcheck: "true",
       },
     },
-
-    // -----------------------------------------------------------
-    // ✅ Debounced onChange (fixed jitter)
-    // -----------------------------------------------------------
     onUpdate: ({ editor }) => {
-      if (updateTimer.current) clearTimeout(updateTimer.current)
+      if (updateTimer.current) clearTimeout(updateTimer.current);
       updateTimer.current = setTimeout(() => {
-        setOutput(editor.getHTML())
-      }, 120)
+        setOutput(editor.getHTML());
+      }, 120);
     },
-  })
+  });
 
-  // Keep editor instance
+  // Keep editor reference
   useEffect(() => {
-    editorRef.current = editor
-  }, [editor])
+    editorRef.current = editor;
+  }, [editor]);
 
-  // -----------------------------------------------------------
-  // ✅ Task list sync — consistent & efficient
-  // -----------------------------------------------------------
+  // Task list sync effect
   useEffect(() => {
-    if (!editor) return
+    if (!editor) return;
 
-    const sync = root => {
-      const container = document.querySelector(root)
-      if (!container) return
+    const syncTaskList = () => {
+      document.querySelectorAll(".task-list-item").forEach((li) => {
+        const checkbox = li.querySelector('input[type="checkbox"]');
+        if (checkbox) {
+          checkbox.checked
+            ? li.classList.add("checked")
+            : li.classList.remove("checked");
+        }
+      });
+    };
 
-      container.querySelectorAll('.task-list-item').forEach(li => {
-        const checkbox = li.querySelector('input[type="checkbox"]')
-        checkbox?.checked ? li.classList.add('checked') : li.classList.remove('checked')
-      })
+    syncTaskList();
+
+    const target = document.querySelector(".rich-editor-content");
+    if (!target) return;
+
+    const observer = new MutationObserver(syncTaskList);
+    observer.observe(target, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+    });
+
+    return () => observer.disconnect();
+  }, [editor]);
+
+  // Sync external output changes
+  useEffect(() => {
+    if (!editor || !output) return;
+    const currentContent = editor.getHTML();
+    if (output.trim() && currentContent !== output) {
+      editor.commands.setContent(output, false);
     }
+  }, [editor, output]);
 
-    sync('.rich-editor-content')
-    sync('.rich-output')
-
-    // observe live editor updates
-    const target = document.querySelector('.rich-editor-content')
-    if (!target) return
-
-    const mo = new MutationObserver(() => sync('.rich-editor-content'))
-    mo.observe(target, { childList: true, subtree: true, attributes: true })
-
-    return () => mo.disconnect()
-  }, [editor])
-
+  // Cleanup timer on unmount
   useEffect(() => {
-    if (!editor) return
-    // Only update if editor is empty (first load)
-    const html = output?.trim()
-    if (html && editor.getHTML() !== html) {
-      editor.commands.setContent(html, false) // false preserves undo history
-    }
-  }, [editor, output])
+    return () => {
+      if (updateTimer.current) clearTimeout(updateTimer.current);
+    };
+  }, []);
 
-  if (!editor) return null
+  if (!editor) return null;
 
-  const btnBase =
-    'md:p-[0.7vw] sm:p-[1.2vw] xs:p-[1.7vw] md:rounded-[1vw] sm:rounded-[1.5vw] xs:rounded-[2vw] transition flex items-center justify-center md:text-[1.3vw] sm:text-[2.3vw] xs:text-[3.3vw]'
-  const btnActive = 'bg-white/12 scale-105'
-
-  const textColors = ['#111827', '#ffffff', '#ef4444', '#16a34a', '#2563eb', '#f59e0b']
-  const highlightColors = ['#fff9c4', '#ffd7d7', '#d4f8d4', '#dbeafe', '#ffe9d2']
-
-  const isActive = (name, arg) => {
+  // Check if format is active
+  const isActive = (name, args) => {
     try {
-      if (!editor) return false
-      return editor.isActive(name, arg)
+      return editor.isActive(name, args);
     } catch (e) {
-      return false
+      return false;
     }
-  }
+  };
+
+  // Text colors
+  const textColors = [
+    { color: "#111827", label: "Dark" },
+    { color: "#ffffff", label: "White" },
+    { color: "#ef4444", label: "Red" },
+    { color: "#22c55e", label: "Green" },
+    { color: "#3b82f6", label: "Blue" },
+    { color: "#f59e0b", label: "Amber" },
+  ];
+
+  // Highlight colors
+  const highlightColors = [
+    { color: "#fef08a", label: "Yellow" },
+    { color: "#fecaca", label: "Red" },
+    { color: "#bbf7d0", label: "Green" },
+    { color: "#bfdbfe", label: "Blue" },
+    { color: "#fed7aa", label: "Orange" },
+  ];
+
+  // Heading levels
+  const headings = [
+    { level: "paragraph", label: "P", icon: Type },
+    { level: 1, label: "H1" },
+    { level: 2, label: "H2" },
+    { level: 3, label: "H3" },
+    { level: 4, label: "H4" },
+  ];
 
   return (
-    <div className="w-full md:space-y-[0.9vw] sm:space-y-[1.4vw] xs:space-y-[1.9vw]">
-      {/* Toolbar (unchanged layout) */}
-      <div className="w-full flex flex-wrap items-center md:gap-[.0.8vw] sm:gap-[1.3vw] xs:gap-[1.8vw] md:p-[0.9vw] sm:p-[1.4vw] xs:p-[1.9vw] backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-lg">
+    <div className="w-full space-y-4">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-1 p-3 backdrop-blur-xl bg-slate-800/50 border border-white/10 rounded-xl shadow-lg">
         {/* Formatting */}
-        <div className="flex items-center md:gap-[.0.8vw] sm:gap-[1.3vw] xs:gap-[1.8vw] border-r border-white/20 md:pr-[1vw] sm:pr-[1.5vw] xs:pr-[2vw]">
-          <button
-            type="button"
-            aria-label="Bold"
-            className={`${btnBase} ${isActive('bold') ? btnActive : ''}`}
+        <ToolbarSection>
+          <ToolbarButton
             onClick={() => editor.chain().focus().toggleBold().run()}
-            title="Bold"
-          >
-            <MdFormatBold />
-          </button>
-
-          <button
-            type="button"
-            aria-label="Italic"
-            className={`${btnBase} ${isActive('italic') ? btnActive : ''}`}
+            isActive={isActive("bold")}
+            icon={Bold}
+            label="Bold"
+          />
+          <ToolbarButton
             onClick={() => editor.chain().focus().toggleItalic().run()}
-            title="Italic"
-          >
-            <MdFormatItalic />
-          </button>
-
-          <button
-            type="button"
-            aria-label="Underline"
-            className={`${btnBase} ${isActive('underline') ? btnActive : ''}`}
+            isActive={isActive("italic")}
+            icon={Italic}
+            label="Italic"
+          />
+          <ToolbarButton
             onClick={() => editor.chain().focus().toggleUnderline().run()}
-            title="Underline"
-          >
-            <MdFormatUnderlined />
-          </button>
-
-          <button
-            type="button"
-            aria-label="Strike"
-            className={`${btnBase} ${isActive('strike') ? btnActive : ''}`}
+            isActive={isActive("underline")}
+            icon={UnderlineIcon}
+            label="Underline"
+          />
+          <ToolbarButton
             onClick={() => editor.chain().focus().toggleStrike().run()}
-            title="Strike"
-          >
-            <MdStrikethroughS />
-          </button>
-
-          <button
-            type="button"
-            aria-label="Code"
-            className={btnBase}
+            isActive={isActive("strike")}
+            icon={Strikethrough}
+            label="Strikethrough"
+          />
+          <ToolbarButton
             onClick={() => editor.chain().focus().toggleCode().run()}
-            title="Code"
-          >
-            <MdCode />
-          </button>
-
-          <button
-            type="button"
-            aria-label="Highlight"
-            className={`${btnBase} ${isActive('highlight') ? btnActive : ''}`}
+            isActive={isActive("code")}
+            icon={Code}
+            label="Code"
+          />
+          <ToolbarButton
             onClick={() => editor.chain().focus().toggleHighlight().run()}
-            title="Highlight"
-          >
-            <MdHighlight />
-          </button>
-        </div>
+            isActive={isActive("highlight")}
+            icon={Highlighter}
+            label="Highlight"
+          />
+        </ToolbarSection>
 
         {/* Headings */}
-        <div className="flex items-center md:gap-[.0.8vw] sm:gap-[1.3vw] xs:gap-[1.8vw] border-r border-white/20 md:pr-[1vw] sm:pr-[1.5vw] xs:pr-[2vw]">
-          {['paragraph', 1, 2, 3, 4, 5].map(v => (
-            <button
-              key={String(v)}
-              type="button"
-              className={`${btnBase} hover:bg-white/10 transition ${
-                (v === 'paragraph' && isActive('paragraph')) ||
-                (v !== 'paragraph' && isActive('heading', { level: v }))
-                  ? 'bg-white/12'
-                  : ''
-              }`}
+        <ToolbarSection>
+          {headings.map(({ level, label, icon }) => (
+            <ToolbarButton
+              key={level}
               onClick={() => {
-                if (v === 'paragraph') editor.chain().focus().setParagraph().run()
-                else editor.chain().focus().toggleHeading({ level: v }).run()
+                if (level === "paragraph") {
+                  editor.chain().focus().setParagraph().run();
+                } else {
+                  editor.chain().focus().toggleHeading({ level }).run();
+                }
               }}
-            >
-              {v === 'paragraph' ? 'P' : `H${v}`}
-            </button>
+              isActive={
+                level === "paragraph"
+                  ? isActive("paragraph")
+                  : isActive("heading", { level })
+              }
+              icon={
+                icon ||
+                (() => <span className="text-xs font-bold">{label}</span>)
+              }
+              label={label}
+            />
           ))}
-        </div>
+        </ToolbarSection>
 
         {/* Lists */}
-        <div className="flex items-center md:gap-[.0.8vw] sm:gap-[1.3vw] xs:gap-[1.8vw] border-r border-white/20 md:pr-[1vw] sm:pr-[1.5vw] xs:pr-[2vw]">
-          <button
-            type="button"
-            aria-label="Bullet list"
-            className={`${btnBase} ${isActive('bulletList') ? btnActive : ''}`}
+        <ToolbarSection>
+          <ToolbarButton
             onClick={() => editor.chain().focus().toggleBulletList().run()}
-          >
-            <MdFormatListBulleted />
-          </button>
-          <button
-            type="button"
-            aria-label="Ordered list"
-            className={`${btnBase} ${isActive('orderedList') ? btnActive : ''}`}
+            isActive={isActive("bulletList")}
+            icon={List}
+            label="Bullet List"
+          />
+          <ToolbarButton
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          >
-            <MdFormatListNumbered />
-          </button>
-          <button
-            type="button"
-            aria-label="Task list"
-            className={`${btnBase} ${isActive('taskList') ? btnActive : ''}`}
+            isActive={isActive("orderedList")}
+            icon={ListOrdered}
+            label="Numbered List"
+          />
+          <ToolbarButton
             onClick={() => editor.chain().focus().toggleTaskList().run()}
-          >
-            <MdChecklist />
-          </button>
-        </div>
+            isActive={isActive("taskList")}
+            icon={CheckSquare}
+            label="Task List"
+          />
+        </ToolbarSection>
 
         {/* Alignment */}
-        <div className="flex items-center md:gap-[.0.8vw] sm:gap-[1.3vw] xs:gap-[1.8vw] border-r border-white/20 md:pr-[1vw] sm:pr-[1.5vw] xs:pr-[2vw]">
-          <button
-            type="button"
-            aria-label="Align left"
-            className={`${btnBase} ${isActive('textAlign', { align: 'left' }) ? btnActive : ''}`}
-            onClick={() => editor.chain().focus().setTextAlign('left').run()}
-          >
-            <MdFormatAlignLeft />
-          </button>
-          <button
-            type="button"
-            aria-label="Align center"
-            className={`${btnBase} ${isActive('textAlign', { align: 'center' }) ? btnActive : ''}`}
-            onClick={() => editor.chain().focus().setTextAlign('center').run()}
-          >
-            <MdFormatAlignCenter />
-          </button>
-          <button
-            type="button"
-            aria-label="Align right"
-            className={`${btnBase} ${isActive('textAlign', { align: 'right' }) ? btnActive : ''}`}
-            onClick={() => editor.chain().focus().setTextAlign('right').run()}
-          >
-            <MdFormatAlignRight />
-          </button>
-          <button
-            type="button"
-            aria-label="Justify"
-            className={`${btnBase} ${isActive('textAlign', { align: 'justify' }) ? btnActive : ''}`}
-            onClick={() => editor.chain().focus().setTextAlign('justify').run()}
-          >
-            <MdFormatAlignJustify />
-          </button>
-        </div>
+        <ToolbarSection>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().setTextAlign("left").run()}
+            isActive={isActive("textAlign", { align: "left" })}
+            icon={AlignLeft}
+            label="Align Left"
+          />
+          <ToolbarButton
+            onClick={() => editor.chain().focus().setTextAlign("center").run()}
+            isActive={isActive("textAlign", { align: "center" })}
+            icon={AlignCenter}
+            label="Align Center"
+          />
+          <ToolbarButton
+            onClick={() => editor.chain().focus().setTextAlign("right").run()}
+            isActive={isActive("textAlign", { align: "right" })}
+            icon={AlignRight}
+            label="Align Right"
+          />
+          <ToolbarButton
+            onClick={() => editor.chain().focus().setTextAlign("justify").run()}
+            isActive={isActive("textAlign", { align: "justify" })}
+            icon={AlignJustify}
+            label="Justify"
+          />
+        </ToolbarSection>
 
-        {/* Blockquote Button */}
-        <div className="flex items-center md:gap-[.0.8vw] sm:gap-[1.3vw] xs:gap-[1.8vw] border-r border-white/20 md:pr-[1vw] sm:pr-[1.5vw] xs:pr-[2vw]">
-          <button
-            type="button"
-            aria-label="Blockquote"
-            className={`${btnBase} ${isActive('blockquote') ? btnActive : ''}`}
+        {/* Blockquote */}
+        <ToolbarSection>
+          <ToolbarButton
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          >
-            <MdFormatQuote />
-          </button>
-        </div>
+            isActive={isActive("blockquote")}
+            icon={Quote}
+            label="Blockquote"
+          />
+        </ToolbarSection>
 
-        {/* Color pickers */}
-        <div className="flex items-center md:gap-[.0.8vw] sm:gap-[1.3vw] xs:gap-[1.8vw] border-r border-white/20 md:pr-[1vw] sm:pr-[1.5vw] xs:pr-[2vw]">
+        {/* Colors */}
+        <ToolbarSection>
           <div className="flex items-center gap-1">
-            {textColors.map(color => (
-              <button
+            {textColors.map(({ color, label }) => (
+              <ColorButton
                 key={color}
-                type="button"
-                aria-label={`Text color ${color}`}
-                className="md:w-[1.5vw] sm:w-[2.5vw] xs:w-[3.5vw] md:h-[1.5vw] sm:h-[2.5vw] xs:h-[3.5vw] rounded-full border border-white/20 hover:scale-110 transition ring-0 focus:ring-2 focus:ring-offset-1"
-                style={{ backgroundColor: color }}
+                color={color}
                 onClick={() => editor.chain().focus().setColor(color).run()}
               />
             ))}
           </div>
-
+          <div className="w-px h-6 bg-white/10 mx-1" />
           <div className="flex items-center gap-1">
-            {highlightColors.map(color => (
-              <button
+            {highlightColors.map(({ color }) => (
+              <ColorButton
                 key={color}
-                type="button"
-                aria-label={`Highlight ${color}`}
-                className="md:w-[1.5vw] sm:w-[2.5vw] xs:w-[3.5vw] md:h-[1.5vw] sm:h-[2.5vw] xs:h-[3.5vw] rounded-md border border-white/20 hover:scale-110 transition"
-                style={{ backgroundColor: color }}
-                onClick={() => editor.chain().focus().setHighlight({ color }).run()}
+                color={color}
+                isHighlight
+                onClick={() =>
+                  editor.chain().focus().setHighlight({ color }).run()
+                }
               />
             ))}
           </div>
-
-          <button
-            type="button"
-            className={`${btnBase}`}
-            onClick={() => editor.chain().focus().unsetColor().unsetHighlight().run()}
-            title="Clear colors"
-          >
-            Clear
-          </button>
-        </div>
+          <ToolbarButton
+            onClick={() =>
+              editor.chain().focus().unsetColor().unsetHighlight().run()
+            }
+            icon={X}
+            label="Clear Colors"
+            className="ml-1"
+          />
+        </ToolbarSection>
 
         {/* Insert */}
-        <div className="flex items-center md:gap-[.0.8vw] sm:gap-[1.3vw] xs:gap-[1.8vw] border-r border-white/20 md:pr-[1vw] sm:pr-[1.5vw] xs:pr-[2vw]">
-          <button
-            type="button"
-            aria-label="Insert image"
-            className={btnBase}
+        <ToolbarSection>
+          <ToolbarButton
             onClick={() => {
-              const src = prompt('Image URL:')
-              if (src) editor.chain().focus().setImage({ src }).run()
+              const src = prompt("Enter image URL:");
+              if (src) editor.chain().focus().setImage({ src }).run();
             }}
-          >
-            <MdImage />
-          </button>
-          <button
-            type="button"
-            aria-label="Insert link"
-            className={btnBase}
+            icon={ImageIcon}
+            label="Insert Image"
+          />
+          <ToolbarButton
             onClick={() => {
-              const url = prompt('Enter URL:')
-              if (url) editor.chain().focus().setLink({ href: url }).run()
+              const url = prompt("Enter URL:");
+              if (url) editor.chain().focus().setLink({ href: url }).run();
             }}
-          >
-            <MdLink />
-          </button>
-          <button
-            type="button"
-            aria-label="Horizontal rule"
-            className={btnBase}
+            icon={LinkIcon}
+            label="Insert Link"
+          />
+          <ToolbarButton
             onClick={() => editor.chain().focus().setHorizontalRule().run()}
-          >
-            <MdHorizontalRule />
-          </button>
-        </div>
+            icon={Minus}
+            label="Horizontal Rule"
+          />
+        </ToolbarSection>
 
-        {/* Controls */}
-        <div className="flex items-center md:gap-[.0.8vw] sm:gap-[1.3vw] xs:gap-[1.8vw] ml-auto">
-          <button
-            type="button"
-            aria-label="Undo"
-            className={btnBase}
+        {/* Undo/Redo */}
+        <ToolbarSection className="ml-auto">
+          <ToolbarButton
             onClick={() => editor.chain().focus().undo().run()}
-          >
-            <MdUndo />
-          </button>
-          <button
-            type="button"
-            aria-label="Redo"
-            className={btnBase}
+            icon={Undo}
+            label="Undo"
+          />
+          <ToolbarButton
             onClick={() => editor.chain().focus().redo().run()}
-          >
-            <MdRedo />
-          </button>
-        </div>
+            icon={Redo}
+            label="Redo"
+          />
+        </ToolbarSection>
       </div>
 
-      {/* Editor Area */}
-      <div className="border border-white/10 md:rounded-[1vw] sm:rounded-[1.5vw] xs:rounded-[2vw] p-0 bg-white/5 backdrop-blur-xl">
+      {/* Editor Content */}
+      <div className="border border-white/10 rounded-xl overflow-hidden bg-slate-900/30 backdrop-blur-sm">
         <EditorContent editor={editor} />
       </div>
 
       {/* Output Preview */}
-      <div className="border border-white/10 md:rounded-[1vw] sm:rounded-[1.5vw] xs:rounded-[2vw] md:p-[0.9vw] sm:p-[1.4vw] xs:p-[1.9vw] bg-white/5 backdrop-blur-xl min-h-[150px]">
-        <div className="rich-output" dangerouslySetInnerHTML={{ __html: output }} />
+      <div className="border border-white/10 rounded-xl p-4 bg-slate-900/30 backdrop-blur-sm min-h-[120px]">
+        <p className="text-xs text-slate-500 mb-2 font-medium uppercase tracking-wider">
+          Preview
+        </p>
+        <div
+          className="rich-output prose prose-invert max-w-none"
+          dangerouslySetInnerHTML={{ __html: output }}
+        />
       </div>
     </div>
-  )
-}
+  );
+};
+
+export default memo(RichEditor);

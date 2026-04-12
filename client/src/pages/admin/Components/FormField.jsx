@@ -1,69 +1,85 @@
-import React from 'react'
+import React, { memo } from "react";
+import { motion } from "motion/react";
+import { AlertCircle } from "lucide-react";
 
-const fieldBase = `
-  w-full bg-gradient-to-r from-white/5 to-white/10
-  border border-cyan-400/20
-  focus:border-cyan-300/60
-  md:rounded-[0.8vw] sm:rounded-[1.3vw] xs:rounded-[1.8vw]
-  outline-none text-white placeholder:text-gray-400
-  backdrop-blur-xl md:px-[1vw] sm:px-[2vw] xs:px-[3vw]
-  md:py-[1vw] sm:py-[1.5vw] xs:py-[2vw]
-  transition-all duration-200 ease-in-out
-  focus:ring-2 focus:ring-cyan-400/30
-  focus:shadow-[0_0_10px_rgba(34,211,238,0.2)]
-  md:placeholder:text-[1vw] sm:placeholder:text-[2vw] xs:placeholder:text-[4vw]
-  md:text-[1vw] sm:text-[2vw] xs:text-[3vw]
-`
+// Field base classes - converted from template literal to object
+const fieldClasses = {
+  base: "w-full bg-slate-800/50 border border-white/10 rounded-xl outline-none text-white placeholder:text-slate-500 backdrop-blur-sm px-4 py-3 transition-all duration-200",
+  focus:
+    "focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 focus:shadow-lg focus:shadow-cyan-500/10",
+  hover: "hover:border-white/20 hover:bg-slate-800/70",
+  disabled: "opacity-50 cursor-not-allowed",
+  error: "border-rose-500/50 focus:border-rose-500/50 focus:ring-rose-500/20",
+};
 
 const FormField = ({
   label,
   name,
-  type = 'text',
+  type = "text",
   register,
   errors = {},
-  placeholder = '',
+  placeholder = "",
   required = true,
   validation = {},
   disabled = false,
+  className = "",
 }) => {
+  const hasError = errors[name];
+
   const rules = {
     ...(required && { required: `${label || name} is required` }),
-    ...(name === 'email' && {
+    ...(name === "email" && {
       pattern: {
         value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-        message: 'Please enter a valid email address',
+        message: "Please enter a valid email address",
       },
     }),
     ...validation,
-  }
+  };
+
+  const inputClasses = `
+    ${fieldClasses.base}
+    ${fieldClasses.focus}
+    ${fieldClasses.hover}
+    ${disabled ? fieldClasses.disabled : ""}
+    ${hasError ? fieldClasses.error : ""}
+    ${className}
+  `.trim();
 
   return (
-    <label className="flex flex-col w-full">
+    <label className="flex flex-col w-full gap-2">
       {label && (
-        <span className="md:text-[1vw] sm:text-[2vw] xs:text-[4vw] text-gray-300 mb-[0.5vw]">
+        <span className="text-sm font-medium text-slate-300 flex items-center gap-2">
           {label}
+          {required && <span className="text-rose-400">*</span>}
         </span>
       )}
+
       <input
         type={type}
-        {...register(name, rules)} // ✅ RHF controls value automatically
+        {...register(name, rules)}
         placeholder={placeholder}
         disabled={disabled}
-        className={`${fieldBase}
-          focus:shadow-[0_0_12px_rgba(34,211,238,0.25)]
-          hover:border-cyan-400/40
-          ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-        `}
+        className={inputClasses}
         aria-label={label || name}
+        aria-invalid={hasError ? "true" : "false"}
+        aria-describedby={hasError ? `${name}-error` : undefined}
       />
 
-      {errors[name] && (
-        <span className="md:text-[0.9vw] sm:text-[1.8vw] xs:text-[3.5vw] text-red-400 mt-[0.3vw]">
+      {hasError && (
+        <motion.span
+          id={`${name}-error`}
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-xs text-rose-400 flex items-center gap-1.5"
+          role="alert"
+        >
+          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
           {errors[name].message || `${label || name} is required`}
-        </span>
+        </motion.span>
       )}
     </label>
-  )
-}
+  );
+};
 
-export default FormField
+export default memo(FormField);

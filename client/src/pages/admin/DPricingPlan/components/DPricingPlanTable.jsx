@@ -1,136 +1,223 @@
-import { motion } from 'motion/react'
-import React, { useEffect } from 'react'
-import { FaEdit, FaTrashAlt } from 'react-icons/fa'
-import { useSelector } from 'react-redux'
-import { Link } from 'react-router-dom'
-import { useDeleteEntryContext } from '../../../../context/DeleteEntry'
-
-const glassClass = `md:p-[1.5vw] sm:p-[2vw] xs:p-[2.5vw] md:rounded-[1.5vw] sm:rounded-[2vw] xs:rounded-[2.5vw]
-      bg-gradient-to-br from-[#0a0a2a]/60 to-[#101040]/30
-                 border border-white/20 backdrop-blur-2xl shadow-[0_0_20px_rgba(34,211,238,0.2)]
-       w-full`
-
-const actionButtonClass = `md:w-[2vw] md:h-[2vw] sm:w-[4.5vw] sm:h-[4.5vw] xs:w-[7vw] xs:h-[7vw] md:rounded-[0.5vw] sm:rounded-[1vw] xs:rounded-[1.5vw] flex items-center justify-center bg-gradient-to-r border  transition-all duration-300`
-
-const plan = [
-  {
-    planName: 'Basic',
-    price: 99,
-    currency: '$',
-    billingCycle: 'Monthly',
-  },
-  {
-    planName: 'Standard',
-    price: 919,
-    currency: '$',
-    billingCycle: 'Monthly',
-  },
-]
+import React, { useEffect, memo, useCallback } from "react";
+import { motion } from "motion/react";
+import {
+  Pencil,
+  Trash2,
+  CreditCard,
+  DollarSign,
+  Coins,
+  Calendar,
+  Tag,
+  Crown,
+  Loader2,
+} from "lucide-react";
+import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
+import { useDeleteEntryContext } from "../../../../context/DeleteEntry";
 
 const DPricingPlanTable = () => {
-  const { plans } = useSelector(state => state.plan)
-  const { setRoute, setIsOpen, setQueryKey } = useDeleteEntryContext()
+  const { plans } = useSelector((state) => state.plan);
+  const { setRoute, setIsOpen, setQueryKey } = useDeleteEntryContext();
 
-  // ✅ Whenever something deletes successfully, call refetch()
+  // Set query key for delete context
   useEffect(() => {
-    setQueryKey('pricePlan') // used for DeleteConfirm context
-  }, [setQueryKey])
+    setQueryKey("pricePlan");
+  }, [setQueryKey]);
 
-  console.log(plans)
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: [0.25, 0.46, 0.45, 0.94],
+      },
+    },
+  };
+
+  // Get plan icon based on name
+  const getPlanIcon = useCallback((planName) => {
+    const icons = {
+      basic: (
+        <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center text-slate-400" />
+      ),
+      standard: (
+        <div className="w-8 h-8 rounded-lg bg-cyan-900/50 flex items-center justify-center text-cyan-400" />
+      ),
+      premium: (
+        <div className="w-8 h-8 rounded-lg bg-amber-900/50 flex items-center justify-center text-amber-400" />
+      ),
+      enterprise: (
+        <div className="w-8 h-8 rounded-lg bg-purple-900/50 flex items-center justify-center text-purple-400" />
+      ),
+    };
+    return icons[planName?.toLowerCase()] || icons.basic;
+  }, []);
+
+  // Format price with currency
+  const formatPrice = useCallback((price, currency) => {
+    const symbols = { $: "$", Rs: "₨", "€": "€" };
+    return `${symbols[currency] || currency}${price}`;
+  }, []);
+
+  // Table headers configuration
+  const headers = [
+    { key: "planName", label: "Plan Name", icon: Crown },
+    { key: "price", label: "Price", icon: DollarSign },
+    { key: "currency", label: "Currency", icon: Coins },
+    { key: "billingCycle", label: "Billing Cycle", icon: Calendar },
+    { key: "actions", label: "Actions", icon: null },
+  ];
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
-      className={glassClass}
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="w-full "
     >
-      <h3 className="md:text-[1.3vw] sm:text-[2.3vw] xs:text-[4.3vw] font-semibold">All Plans</h3>
+      <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 sm:p-8 shadow-xl">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-8 pb-4 border-b border-white/5">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/20">
+            <CreditCard className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              All Pricing Plans
+            </h3>
+            <p className="text-slate-400 text-sm">
+              {plans?.length || 0} {plans?.length === 1 ? "plan" : "plans"}{" "}
+              available
+            </p>
+          </div>
+        </div>
 
-      <div
-        className="w-full md:rounded-[1.5vw] sm:rounded-[2vw] xs:rounded-[2.5vw]
-        border border-cyan-400/20 bg-gradient-to-br from-[#0a0a2a]/60 to-[#101040]/30
-        backdrop-blur-2xl shadow-[0_0_20px_rgba(34,211,238,0.2)]
-        md:mt-[2vw] sm:mt-[3vw] xs:mt-[4vw]"
-      >
-        {/* ✅ Scrollable Wrapper for Mobile */}
-        <div className="overflow-x-auto custom-scrollbar ">
-          <div className="md:min-w-[15vw] sm:min-w-[50vw] xs:min-w-[85vw]">
-            {' '}
-            {/* 👈 Force width so scrollbar appears on small screens */}
-            {/* Header */}
-            <div className="w-full grid grid-cols-5 items-center md:text-[1vw] sm:text-[2vw] xs:text-[3.5vw] font-semibold text-cyan-300 border-b border-cyan-400/30 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 backdrop-blur-lg">
-              {['Plan Name', 'Price', 'Currency', 'Billing cycle', 'Action'].map((head, i) => (
-                <div
-                  key={i}
-                  className={` md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center tracking-wide uppercase`}
-                >
-                  {head}
-                </div>
-              ))}
-            </div>
-            {/* Scrollable Table Body */}
-            <div className="md:max-h-[25vw] sm:max-h-[55vw] xs:max-h-[75vw] overflow-y-auto custom-scrollbar divide-y divide-cyan-400/20 ">
-              {plans.map((item, index) => (
-                <div
-                  key={index}
-                  className="grid grid-cols-5 items-center text-cyan-100 md:text-[0.95vw] sm:text-[1.9vw] xs:text-[3.5vw]
-                          hover:bg-gradient-to-r hover:from-cyan-500/10 hover:to-blue-500/10
-                          transition-all duration-300 ease-in-out"
-                >
-                  <div
-                    className={`md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium`}
-                  >
-                    {item?.planName}
-                  </div>
-                  <div
-                    className={`md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium`}
-                  >
-                    {item?.price}
-                  </div>
-                  <div
-                    className={`md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium`}
-                  >
-                    {item?.currency}
-                  </div>
-                  <div
-                    className={`md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] text-center font-medium`}
-                  >
-                    {item?.billingCycle}
-                  </div>
-                  <div className="md:py-[1.5vw] sm:py-[2.5vw] xs:py-[3.5vw] flex justify-center md:gap-[1vw] sm:gap-[2vw] xs:gap-[3vw]">
-                    <Link
-                      to={`/admin/pricing-plan/${item?.id}`}
-                      className={
-                        actionButtonClass +
-                        'from-purple-600/30 to-indigo-600/30 border border-purple-500/40 text-purple-200 hover:from-purple-500/50 hover:to-indigo-500/40 shadow-[0_0_10px_rgba(147,51,234,0.3)]'
-                      }
+        {/* Table Container */}
+        <div className="w-full rounded-xl border border-white/10 bg-slate-800/30 overflow-hidden">
+          {/* Scrollable Wrapper */}
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full min-w-[800px]">
+              {/* Table Header */}
+              <thead>
+                <tr className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border-b border-white/10">
+                  {headers.map((head) => (
+                    <th
+                      key={head.key}
+                      className="py-4 px-4 text-left text-xs sm:text-sm font-semibold text-cyan-300 uppercase tracking-wider"
                     >
-                      <FaEdit className="md:text-[0.9vw] sm:text-[1.9vw] xs:text-[3.9vw]" />
-                    </Link>
+                      <div className="flex items-center gap-2">
+                        {head.icon && (
+                          <head.icon className="w-4 h-4 text-cyan-400" />
+                        )}
+                        {head.label}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
 
-                    <button
-                      onClick={() => {
-                        setRoute(`/plan/delete/${item?.id}`)
-                        setIsOpen(true)
-                        setQueryKey('pricePlan')
-                      }}
-                      className={
-                        actionButtonClass +
-                        'from-cyan-600/30 to-blue-600/30 border border-cyan-500/40 text-cyan-200 hover:from-cyan-500/50 hover:to-blue-500/40 shadow-[0_0_10px_rgba(34,211,238,0.3)]'
-                      }
+              {/* Table Body */}
+              <tbody className="divide-y divide-white/5">
+                {plans?.length > 0 ? (
+                  plans.map((item, index) => (
+                    <motion.tr
+                      key={item.id || index}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="group hover:bg-gradient-to-r hover:from-cyan-500/5 hover:to-blue-500/5 transition-all duration-300"
                     >
-                      <FaTrashAlt className="md:text-[0.9vw] sm:text-[1.9vw] xs:text-[3.9vw]" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                      {/* Plan Name */}
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          {getPlanIcon(item?.planName)}
+                          <div>
+                            <span className="text-sm text-white font-medium capitalize">
+                              {item?.planName}
+                            </span>
+                            <p className="text-xs text-slate-500">
+                              {item?.shortDesc || "No description"}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Price */}
+                      <td className="py-4 px-4">
+                        <span className="text-lg font-bold text-cyan-400">
+                          {formatPrice(item?.price, item?.currency)}
+                        </span>
+                      </td>
+
+                      {/* Currency */}
+                      <td className="py-4 px-4">
+                        <span className="px-3 py-1 rounded-full bg-slate-700/50 text-slate-300 text-xs font-medium border border-white/10">
+                          {item?.currency === "$" && "USD"}
+                          {item?.currency === "Rs" && "PKR"}
+                          {item?.currency === "€" && "EUR"}
+                          {!["$", "Rs", "€"].includes(item?.currency) &&
+                            item?.currency}
+                        </span>
+                      </td>
+
+                      {/* Billing Cycle */}
+                      <td className="py-4 px-4">
+                        <span className="text-sm text-slate-300">
+                          {item?.billingCycle}
+                        </span>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-2">
+                          <Link
+                            to={`/admin/pricing-plan/${item?.id}`}
+                            className="p-2 rounded-lg bg-gradient-to-r from-cyan-600/30 to-blue-600/30 border border-cyan-500/40 text-cyan-300 hover:from-cyan-500/50 hover:to-blue-500/50 hover:text-white transition-all duration-300 hover:scale-110"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Link>
+
+                          <button
+                            onClick={() => {
+                              setRoute(`/plan/delete/${item?.id}`);
+                              setIsOpen(true);
+                              setQueryKey("pricePlan");
+                            }}
+                            className="p-2 rounded-lg bg-gradient-to-r from-rose-600/30 to-red-600/30 border border-rose-500/40 text-rose-300 hover:from-rose-500/50 hover:to-red-500/50 hover:text-white transition-all duration-300 hover:scale-110"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center border border-cyan-500/30">
+                          <CreditCard className="w-8 h-8 text-cyan-400" />
+                        </div>
+                        <p className="text-slate-400 text-lg">
+                          No pricing plans found
+                        </p>
+                        <p className="text-slate-500 text-sm">
+                          Create your first pricing plan to get started
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
     </motion.div>
-  )
-}
+  );
+};
 
-export default DPricingPlanTable
+export default memo(DPricingPlanTable);
