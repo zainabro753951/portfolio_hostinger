@@ -4,7 +4,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import "./App.css";
 import ScrollToTop from "./components/ScrollToTop";
-import { userRoutes } from "./routes/user.route";
+import { userRoutes } from "./routes/user.route.jsx";
 
 import MetaUpdater from "./components/MetaUpdater";
 import AppInitializer from "./components/AppInitializer";
@@ -15,7 +15,7 @@ import ProtectedRoute from "./context/ProtectedRoute";
 import AdminDataInitializer from "./components/AdminDataInitializer";
 import DHomePage from "./pages/admin/Layout/DHomePage";
 import DHomeCards from "./pages/admin/DHome/components/DHomeCards";
-import { adminRoutes } from "./routes/admin.route";
+import { adminRoutes } from "./routes/admin.route.jsx";
 
 gsap.registerPlugin(ScrollTrigger);
 
