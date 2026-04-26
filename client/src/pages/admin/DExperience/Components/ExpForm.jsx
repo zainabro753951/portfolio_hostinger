@@ -1,5 +1,12 @@
-import React, { memo, useEffect, useState, useCallback } from "react";
-import { useForm } from "react-hook-form";
+import React, {
+  memo,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
+import { FormProvider, useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { motion, useReducedMotion } from "motion/react";
@@ -22,6 +29,8 @@ import TextareaField from "../../Components/TextAreaField";
 import { useAddExperience } from "../../../../Queries/AddExperience";
 import { glassToast } from "../../Components/ToastMessage";
 import { clearExp, expFindById } from "../../../../features/experienceSlice";
+import useScrollToRef from "@/hooks/useScrollToRef";
+import { safeParse } from "../../../../Utils/Utils";
 
 const ExpForm = () => {
   const { id } = useParams();
@@ -29,18 +38,27 @@ const ExpForm = () => {
   const prefersReducedMotion = useReducedMotion();
   const { experiences, experience } = useSelector((state) => state.experience);
   const [isUpdate, setIsUpdate] = useState(false);
+  const updateExpRef = useRef(null);
+  const companyLogo = safeParse(experience?.companyLogo);
 
-  const defaultValues = {
-    position: "",
-    company: "",
-    employmentType: "",
-    startedAt: "",
-    endDate: "",
-    currentlyWorking: false,
-    description: "",
-    technologies: "",
-    companyLogo: null,
-  };
+  const defaultValues = useMemo(
+    () => ({
+      position: "",
+      company: "",
+      employmentType: "",
+      startedAt: "",
+      endDate: "",
+      currentlyWorking: false,
+      description: "",
+      technologies: "",
+      companyLogo: null,
+    }),
+    [],
+  );
+
+  const methods = useForm({
+    defaultValues,
+  });
 
   const {
     register,
@@ -49,11 +67,14 @@ const ExpForm = () => {
     watch,
     setValue,
     formState: { errors },
-  } = useForm({
-    defaultValues,
-  });
+  } = methods;
 
   const currentlyWorking = watch("currentlyWorking", false);
+
+  // Handle Reset
+  const handleReset = useCallback(() => {
+    reset(defaultValues);
+  }, [reset, defaultValues]);
 
   // Fetch experience for edit
   useEffect(() => {
@@ -91,8 +112,13 @@ const ExpForm = () => {
     }
   }, [id, experience, reset, setValue]);
 
+  // ✅ Sirf tab scroll kare jab id  ho
+  useScrollToRef(updateExpRef, [id], { block: "nearest" }, !!id);
+
   const { mutate, isPending, isError, isSuccess, data, error } =
     useAddExperience();
+
+  const existingLogo = useMemo(() => companyLogo, [experience]);
 
   const onSubmit = useCallback(
     (formData) => {
@@ -101,24 +127,23 @@ const ExpForm = () => {
       fd.append("expId", isUpdate ? id : "");
       fd.append(
         "companyLogoOBJ",
-        isUpdate && experience?.companyLogo
-          ? JSON.stringify(experience?.companyLogo)
-          : "",
+        isUpdate && existingLogo ? JSON.stringify(existingLogo) : null,
       );
 
-      if (formData.companyLogo && formData.companyLogo[0]) {
-        fd.append("companyLogo", formData.companyLogo[0]);
+      if (formData.companyLogo instanceof File) {
+        fd.append("companyLogo", formData.companyLogo);
       }
 
       Object.entries(formData).forEach(([key, value]) => {
-        if (key !== "companyLogo" && value !== undefined && value !== null) {
+        if (key !== "companyLogo" && value != null) {
+          // ✅ null/undefined dono handle
           fd.append(key, value);
         }
       });
 
       mutate(fd);
     },
-    [isUpdate, id, experience, mutate],
+    [isUpdate, id, existingLogo, mutate],
   );
 
   // Toast feedback
@@ -129,7 +154,7 @@ const ExpForm = () => {
           `Experience ${isUpdate ? "updated" : "added"} successfully!`,
       );
       if (!isUpdate) {
-        reset(defaultValues);
+        handleReset();
       }
     }
     if (isError) {
@@ -137,7 +162,7 @@ const ExpForm = () => {
         error?.response?.data?.message || "Failed to save experience",
       );
     }
-  }, [isSuccess, isError, data, error, isUpdate, reset, defaultValues]);
+  }, [isSuccess, isError, data, error, isUpdate, handleReset]);
 
   // Animation variants
   const containerVariants = {
@@ -171,132 +196,124 @@ const ExpForm = () => {
   ];
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-      className="w-full"
-    >
-      <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 sm:p-8 shadow-xl">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8 pb-4 border-b border-white/5">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/20">
-            <Briefcase className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-              {isUpdate ? "Edit Experience" : "Add Experience"}
-            </h3>
-            <p className="text-slate-400 text-sm">
-              {isUpdate
-                ? "Update work experience details"
-                : "Add your professional experience"}
-            </p>
-          </div>
-        </div>
-
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          encType="multipart/form-data"
-          className="w-full flex flex-col gap-6"
-        >
-          {/* Position & Company */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              label="Position / Role"
-              name="position"
-              register={register}
-              errors={errors}
-              placeholder="e.g., Frontend Developer"
-              icon={Briefcase}
-            />
-            <FormField
-              label="Company Name"
-              name="company"
-              register={register}
-              errors={errors}
-              placeholder="e.g., Cybrix Pvt. Ltd."
-              icon={Building2}
-            />
-          </div>
-
-          {/* Employment Type & Start Date */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <SelectField
-              label="Employment Type"
-              name="employmentType"
-              register={register}
-              errors={errors}
-              required={true}
-              placeholder="-- Select Employment Type --"
-              options={employmentOptions}
-            />
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-slate-500" />
-                Started At
-              </label>
-              <input
-                type="date"
-                {...register("startedAt", {
-                  required: "Start date is required",
-                })}
-                className={inputClasses(errors.startedAt)}
-              />
-              {errors.startedAt && (
-                <p className="text-xs text-rose-400">
-                  {errors.startedAt.message}
-                </p>
-              )}
+    <FormProvider {...methods}>
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="w-full"
+      >
+        <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 sm:p-8 shadow-xl">
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-8 pb-4 border-b border-white/5">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/20">
+              <Briefcase className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                {isUpdate ? "Edit Experience" : "Add Experience"}
+              </h3>
+              <p className="text-slate-400 text-sm">
+                {isUpdate
+                  ? "Update work experience details"
+                  : "Add your professional experience"}
+              </p>
             </div>
           </div>
 
-          {/* End Date & Currently Working */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-slate-500" />
-                End Date
-              </label>
-              <input
-                type="date"
-                {...register("endDate", {
-                  required: currentlyWorking ? false : "End date is required",
-                })}
-                className={inputClasses(errors.endDate, currentlyWorking)}
-                disabled={currentlyWorking}
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            encType="multipart/form-data"
+            ref={updateExpRef}
+            className="w-full flex flex-col gap-6"
+          >
+            {/* Position & Company */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                label="Position / Role"
+                name="position"
+                register={register}
+                errors={errors}
+                placeholder="e.g., Frontend Developer"
+                icon={Briefcase}
               />
-              {errors.endDate && (
-                <p className="text-xs text-rose-400">
-                  {errors.endDate.message}
-                </p>
-              )}
+              <FormField
+                label="Company Name"
+                name="company"
+                register={register}
+                errors={errors}
+                placeholder="e.g., Cybrix Pvt. Ltd."
+                icon={Building2}
+              />
             </div>
 
-            <label className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/30 border border-white/5 cursor-pointer hover:bg-slate-800/50 transition-colors">
-              <input
-                type="checkbox"
-                {...register("currentlyWorking")}
-                className="w-5 h-5 rounded border-slate-600 text-cyan-500 focus:ring-cyan-500/20 bg-slate-700"
+            {/* Employment Type & Start Date */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <SelectField
+                label="Employment Type"
+                name="employmentType"
+                register={register}
+                errors={errors}
+                required={true}
+                placeholder="-- Select Employment Type --"
+                options={employmentOptions}
               />
-              <span className="text-sm text-slate-300 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-cyan-400" />
-                Currently Working
-              </span>
-            </label>
-          </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-slate-500" />
+                  Started At
+                </label>
+                <input
+                  type="date"
+                  {...register("startedAt", {
+                    required: "Start date is required",
+                  })}
+                  className={inputClasses(errors.startedAt)}
+                />
+                {errors.startedAt && (
+                  <p className="text-xs text-rose-400">
+                    {errors.startedAt.message}
+                  </p>
+                )}
+              </div>
+            </div>
 
-          {/* Logo & Technologies */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FileInputField
-              label="Company Logo"
-              name="companyLogo"
-              register={register}
-              error={errors["companyLogo"]}
-              existingFileUrl={experience?.companyLogo?.url || ""}
-              required={false}
-              accept="image/*"
-            />
+            {/* End Date & Currently Working */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-slate-500" />
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  {...register("endDate", {
+                    required: currentlyWorking ? false : "End date is required",
+                  })}
+                  className={inputClasses(errors.endDate, currentlyWorking)}
+                  disabled={currentlyWorking}
+                />
+                {errors.endDate && (
+                  <p className="text-xs text-rose-400">
+                    {errors.endDate.message}
+                  </p>
+                )}
+              </div>
+
+              <label className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/30 border border-white/5 cursor-pointer hover:bg-slate-800/50 transition-colors">
+                <input
+                  type="checkbox"
+                  {...register("currentlyWorking")}
+                  className="w-5 h-5 rounded border-slate-600 text-cyan-500 focus:ring-cyan-500/20 bg-slate-700"
+                />
+                <span className="text-sm text-slate-300 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-cyan-400" />
+                  Currently Working
+                </span>
+              </label>
+            </div>
+
+            {/* Logo & Technologies */}
             <FormField
               label="Technologies"
               name="technologies"
@@ -306,46 +323,56 @@ const ExpForm = () => {
               placeholder="e.g., React, Node.js, TypeScript"
               icon={Wrench}
             />
-          </div>
 
-          {/* Description */}
-          <TextareaField
-            label="Job Description / Responsibilities"
-            name="description"
-            register={register}
-            errors={errors}
-            rows={5}
-            placeholder="Describe your role, achievements, and responsibilities..."
-            icon={FileText}
-          />
+            {/* Company Logo */}
+            <FileInputField
+              label="Company Logo"
+              name="companyLogo"
+              error={errors["companyLogo"]}
+              existingFileUrl={companyLogo?.url || ""}
+              required={false}
+              accept="image/*"
+            />
 
-          {/* Submit Button */}
-          <div className="w-full flex items-center justify-end pt-4">
-            <motion.button
-              type="submit"
-              disabled={isPending}
-              whileHover={
-                prefersReducedMotion || isPending ? {} : { scale: 1.02 }
-              }
-              whileTap={isPending ? {} : { scale: 0.98 }}
-              className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  {isUpdate ? "Updating..." : "Saving..."}
-                </>
-              ) : (
-                <>
-                  <Save className="w-5 h-5" />
-                  {isUpdate ? "Update Experience" : "Add Experience"}
-                </>
-              )}
-            </motion.button>
-          </div>
-        </form>
-      </div>
-    </motion.div>
+            {/* Description */}
+            <TextareaField
+              label="Job Description / Responsibilities"
+              name="description"
+              register={register}
+              errors={errors}
+              rows={5}
+              placeholder="Describe your role, achievements, and responsibilities..."
+              icon={FileText}
+            />
+
+            {/* Submit Button */}
+            <div className="w-full flex items-center justify-end pt-4">
+              <motion.button
+                type="submit"
+                disabled={isPending}
+                whileHover={
+                  prefersReducedMotion || isPending ? {} : { scale: 1.02 }
+                }
+                whileTap={isPending ? {} : { scale: 0.98 }}
+                className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    {isUpdate ? "Updating..." : "Saving..."}
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5" />
+                    {isUpdate ? "Update Experience" : "Add Experience"}
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </form>
+        </div>
+      </motion.div>
+    </FormProvider>
   );
 };
 

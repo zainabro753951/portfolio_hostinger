@@ -1,5 +1,12 @@
-import React, { memo, useEffect, useState, useCallback, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import React, {
+  memo,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
+import { useForm, FormProvider } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { motion, useReducedMotion } from "motion/react";
@@ -25,6 +32,8 @@ import {
   clearTestimonial,
   testiFindById,
 } from "../../../../features/testimonialSlice";
+import { safeParse } from "../../../../Utils/Utils";
+import useScrollToRef from "@/hooks/useScrollToRef";
 
 const DTestimonialForm = () => {
   const { id } = useParams();
@@ -35,6 +44,8 @@ const DTestimonialForm = () => {
     (state) => state.testimonial,
   );
   const [isUpdate, setIsUpdate] = useState(false);
+  const updateTestiRef = useRef(null);
+  const clientImage = safeParse(testimonial?.clientImage);
 
   const defaultValues = useMemo(
     () => ({
@@ -43,22 +54,28 @@ const DTestimonialForm = () => {
       company: "",
       clientImage: null,
       ratting: "",
-      projectTitle: "",
+      projectId: "",
       testimonialDate: "",
       message: "",
     }),
     [],
   );
 
+  const methods = useForm({
+    defaultValues,
+  });
+
   const {
     register,
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors },
-  } = useForm({
-    defaultValues,
-  });
+  } = methods;
+
+  // Watch clientImage for debugging
+  const watchedClientImage = watch("clientImage");
 
   // Fetch testimonial for edit
   useEffect(() => {
@@ -86,13 +103,16 @@ const DTestimonialForm = () => {
         ratting: testimonial?.ratting
           ? parseFloat(testimonial?.ratting).toString()
           : "",
-        projectTitle: testimonial?.projectId?.toString() || "",
+        projectId: testimonial?.projectId?.toString() || "",
         testimonialDate: formattedDate,
         message: testimonial?.message || "",
       });
       setIsUpdate(true);
     }
   }, [id, testimonial, reset]);
+
+  // ✅ Sirf tab scroll kare jab id  ho
+  useScrollToRef(updateTestiRef, [id], { block: "nearest" }, !!id);
 
   const { mutate, isPending, isError, isSuccess, data, error } =
     useAddTestimonial();
@@ -104,13 +124,12 @@ const DTestimonialForm = () => {
       fd.append("testimonialID", isUpdate ? id : "");
       fd.append(
         "clientImageOBJ",
-        isUpdate && testimonial?.clientImage
-          ? JSON.stringify(testimonial?.clientImage)
-          : "",
+        isUpdate && clientImage ? JSON.stringify(clientImage) : "",
       );
 
-      if (formData.clientImage && formData.clientImage[0]) {
-        fd.append("clientImage", formData.clientImage[0]);
+      // File handling - check if clientImage is FileList or single file
+      if (formData.clientImage instanceof File) {
+        fd.append("clientImage", formData.clientImage);
       }
 
       Object.entries(formData).forEach(([key, value]) => {
@@ -136,6 +155,8 @@ const DTestimonialForm = () => {
       }
     }
     if (isError) {
+      console.error(error?.response);
+
       glassToast.error(
         error?.response?.data?.message || "Failed to save testimonial",
       );
@@ -187,158 +208,162 @@ const DTestimonialForm = () => {
   );
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-      className="w-full "
-    >
-      <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 sm:p-8 shadow-xl">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8 pb-4 border-b border-white/5">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/20">
-            <Quote className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-              {isUpdate ? "Edit Testimonial" : "Add Testimonial"}
-            </h3>
-            <p className="text-slate-400 text-sm">
-              {isUpdate
-                ? "Update client testimonial details"
-                : "Add a new client testimonial"}
-            </p>
-          </div>
-        </div>
-
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          encType="multipart/form-data"
-          className="w-full flex flex-col gap-6"
-        >
-          {/* Client Name & Designation */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              label="Client Name"
-              name="clientName"
-              register={register}
-              errors={errors}
-              placeholder="e.g., John Doe"
-              icon={User}
-            />
-            <FormField
-              label="Designation / Role"
-              name="designationRole"
-              register={register}
-              errors={errors}
-              placeholder="e.g., CEO at TechSoft"
-              icon={Briefcase}
-            />
-          </div>
-
-          {/* Company & Profile Image */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              label="Company / Organization"
-              name="company"
-              register={register}
-              errors={errors}
-              placeholder="e.g., TechSoft Solutions"
-              icon={Building2}
-            />
-            <FileInputField
-              label="Profile Image"
-              name="clientImage"
-              register={register}
-              error={errors["clientImage"]}
-              existingFileUrl={testimonial?.clientImage?.url || ""}
-              required={false}
-              accept="image/*"
-            />
-          </div>
-
-          {/* Rating & Project Title */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <SelectField
-              label="Rating"
-              name="ratting"
-              register={register}
-              errors={errors}
-              required={true}
-              placeholder="-- Select Rating --"
-              options={ratingOptions}
-            />
-            <SelectField
-              label="Project Title"
-              name="projectTitle"
-              register={register}
-              errors={errors}
-              required={true}
-              placeholder="-- Select Project --"
-              options={projectOptions}
-            />
-          </div>
-
-          {/* Testimonial Date */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-slate-500" />
-                Testimonial Date
-              </label>
-              <input
-                type="date"
-                {...register("testimonialDate", {
-                  required: "Testimonial date is required",
-                })}
-                className={inputClasses(errors.testimonialDate)}
-              />
-              {errors.testimonialDate && (
-                <p className="text-xs text-rose-400">
-                  {errors.testimonialDate.message}
-                </p>
-              )}
+    <FormProvider {...methods}>
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="w-full "
+      >
+        <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 sm:p-8 shadow-xl">
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-8 pb-4 border-b border-white/5">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/20">
+              <Quote className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                {isUpdate ? "Edit Testimonial" : "Add Testimonial"}
+              </h3>
+              <p className="text-slate-400 text-sm">
+                {isUpdate
+                  ? "Update client testimonial details"
+                  : "Add a new client testimonial"}
+              </p>
             </div>
           </div>
 
-          {/* Message */}
-          <TextareaField
-            label="Testimonial Message"
-            name="message"
-            register={register}
-            errors={errors}
-            rows={5}
-            placeholder="Share what the client said about your work..."
-            icon={MessageSquare}
-          />
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            encType="multipart/form-data"
+            ref={updateTestiRef}
+            className="w-full flex flex-col gap-6"
+          >
+            {/* Client Name & Designation */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                label="Client Name"
+                name="clientName"
+                register={register}
+                errors={errors}
+                placeholder="e.g., John Doe"
+                icon={User}
+                autocomplete="name"
+              />
+              <FormField
+                label="Designation / Role"
+                name="designationRole"
+                register={register}
+                errors={errors}
+                placeholder="e.g., CEO at TechSoft"
+                icon={Briefcase}
+                autocomplete="designation"
+              />
+            </div>
 
-          {/* Submit Button */}
-          <div className="w-full flex items-center justify-end pt-4">
-            <motion.button
-              type="submit"
-              disabled={isPending}
-              whileHover={
-                prefersReducedMotion || isPending ? {} : { scale: 1.02 }
-              }
-              whileTap={isPending ? {} : { scale: 0.98 }}
-              className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  {isUpdate ? "Updating..." : "Saving..."}
-                </>
-              ) : (
-                <>
-                  <Save className="w-5 h-5" />
-                  {isUpdate ? "Update Testimonial" : "Add Testimonial"}
-                </>
-              )}
-            </motion.button>
-          </div>
-        </form>
-      </div>
-    </motion.div>
+            {/* Company & Profile Image */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                label="Company / Organization"
+                name="company"
+                register={register}
+                errors={errors}
+                placeholder="e.g., TechSoft Solutions"
+                icon={Building2}
+              />
+              {/* Testimonial Date */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-slate-500" />
+                  Testimonial Date
+                </label>
+                <input
+                  type="date"
+                  {...register("testimonialDate", {
+                    required: "Testimonial date is required",
+                  })}
+                  className={inputClasses(errors.testimonialDate)}
+                />
+                {errors.testimonialDate && (
+                  <p className="text-xs text-rose-400">
+                    {errors.testimonialDate.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Rating & Project Title */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <SelectField
+                label="Rating"
+                name="ratting"
+                register={register}
+                errors={errors}
+                required={true}
+                placeholder="-- Select Rating --"
+                options={ratingOptions}
+              />
+              <SelectField
+                label="Project Title"
+                name="projectId"
+                register={register}
+                errors={errors}
+                required={true}
+                placeholder="-- Select Project --"
+                options={projectOptions}
+              />
+            </div>
+
+            {/* Client Image */}
+            <FileInputField
+              label="Profile Image"
+              name="clientImage"
+              error={errors["clientImage"]}
+              existingFileUrl={clientImage?.url || ""}
+              required={false}
+              accept="image/*"
+            />
+
+            {/* Message */}
+            <TextareaField
+              label="Testimonial Message"
+              name="message"
+              register={register}
+              errors={errors}
+              rows={5}
+              setValue={setValue}
+              placeholder="Share what the client said about your work..."
+              icon={MessageSquare}
+            />
+
+            {/* Submit Button */}
+            <div className="w-full flex items-center justify-end pt-4">
+              <motion.button
+                type="submit"
+                disabled={isPending}
+                whileHover={
+                  prefersReducedMotion || isPending ? {} : { scale: 1.02 }
+                }
+                whileTap={isPending ? {} : { scale: 0.98 }}
+                className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    {isUpdate ? "Updating..." : "Saving..."}
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5" />
+                    {isUpdate ? "Update Testimonial" : "Add Testimonial"}
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </form>
+        </div>
+      </motion.div>
+    </FormProvider>
   );
 };
 

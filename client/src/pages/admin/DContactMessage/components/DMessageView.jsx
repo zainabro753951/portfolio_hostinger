@@ -59,6 +59,8 @@ const DMessageView = () => {
         return;
       }
 
+      console.log(updatedIds);
+
       setIds(updatedIds);
       setRoute("/message/delete");
       setQueryKey("contactMessages");

@@ -1,202 +1,348 @@
 /* ============================================================
-   ✅ GLOBAL RESPONSIVE FONT SCALE
-   Mobile-first: xs → sm → md
+   ✅ MODERN GLASS MORPHISM RICH EDITOR STYLES
+   All units converted from vw to px for consistency
+============================================================ */
+
+/* ============================================================
+   ✅ GLOBAL STYLES & CSS VARIABLES
 ============================================================ */
 :root {
-  --font-xs: 4.3vw; /* Mobile */
-  --font-sm: 2.3vw; /* Tablet */
-  --font-md: 1.3vw; /* Desktop */
-}
+  /* Base font sizes - px based instead of vw */
+  --font-xs: 14px;
+  --font-sm: 15px;
+  --font-md: 16px;
+  --font-lg: 18px;
 
-/* Base font-size (applied to all text elements) */
-.rich-editor-content,
-.rich-output {
-  font-size: var(--font-xs);
-  line-height: 1.5;
-}
+  /* Glass morphism colors */
+  --glass-bg: rgba(15, 23, 42, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.05);
 
-/* Tablet */
-@media (min-width: 640px) {
-  .rich-editor-content,
-  .rich-output {
-    font-size: var(--font-sm);
-  }
-}
+  /* Accent colors */
+  --accent-cyan: #06b6d4;
+  --accent-purple: #8b5cf6;
+  --accent-pink: #ec4899;
 
-/* Desktop */
-@media (min-width: 768px) {
-  .rich-editor-content,
-  .rich-output {
-    font-size: var(--font-md);
-  }
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 20px rgba(6, 182, 212, 0.15);
 }
 
 /* ============================================================
-   ✅ HEADINGS (Responsive only font-size)
+   ✅ EDITOR CONTAINER - Glass Morphism Base
+============================================================ */
+.rich-editor-wrapper {
+  position: relative;
+  border-radius: 16px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg), var(--shadow-glow);
+  overflow: hidden;
+}
+
+/* ============================================================
+   ✅ EDITOR CONTENT AREA
+============================================================ */
+.rich-editor-content {
+  font-size: var(--font-md);
+  line-height: 1.6;
+  color: #e2e8f0;
+  min-height: 200px;
+  padding: 24px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.rich-editor-content:focus {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* ============================================================
+   ✅ PARAGRAPHS
+============================================================ */
+.rich-editor-content p,
+.rich-output p {
+  margin: 0 0 16px 0;
+  font-size: var(--font-md);
+  line-height: 1.7;
+  color: #e2e8f0;
+}
+
+.rich-editor-content p:last-child,
+.rich-output p:last-child {
+  margin-bottom: 0;
+}
+
+/* ============================================================
+   ✅ HEADINGS - Consistent px scaling
 ============================================================ */
 .rich-editor-content h1,
 .rich-output h1 {
-  font-size: calc(var(--font-xs) * 2.1);
-  line-height: 1.05;
-}
-@media (min-width: 640px) {
-  .rich-editor-content h1,
-  .rich-output h1 {
-    font-size: calc(var(--font-sm) * 2.1);
-  }
-}
-@media (min-width: 768px) {
-  .rich-editor-content h1,
-  .rich-output h1 {
-    font-size: calc(var(--font-md) * 2.1);
-  }
+  font-size: 32px;
+  line-height: 1.2;
+  font-weight: 700;
+  margin: 32px 0 20px 0;
+  color: #f8fafc;
+  background: linear-gradient(135deg, #f8fafc 0%, #94a3b8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .rich-editor-content h2,
 .rich-output h2 {
-  font-size: calc(var(--font-xs) * 1.7);
-  line-height: 1.1;
-}
-@media (min-width: 640px) {
-  .rich-editor-content h2,
-  .rich-output h2 {
-    font-size: calc(var(--font-sm) * 1.7);
-  }
-}
-@media (min-width: 768px) {
-  .rich-editor-content h2,
-  .rich-output h2 {
-    font-size: calc(var(--font-md) * 1.7);
-  }
+  font-size: 26px;
+  line-height: 1.25;
+  font-weight: 600;
+  margin: 28px 0 16px 0;
+  color: #f1f5f9;
 }
 
 .rich-editor-content h3,
 .rich-output h3 {
-  font-size: calc(var(--font-xs) * 1.4);
-  line-height: 1.15;
-}
-@media (min-width: 640px) {
-  .rich-editor-content h3,
-  .rich-output h3 {
-    font-size: calc(var(--font-sm) * 1.4);
-  }
-}
-@media (min-width: 768px) {
-  .rich-editor-content h3,
-  .rich-output h3 {
-    font-size: calc(var(--font-md) * 1.4);
-  }
+  font-size: 22px;
+  line-height: 1.3;
+  font-weight: 600;
+  margin: 24px 0 14px 0;
+  color: #e2e8f0;
 }
 
 .rich-editor-content h4,
 .rich-output h4 {
-  font-size: calc(var(--font-xs) * 1.2);
-  line-height: 1.2;
-}
-@media (min-width: 640px) {
-  .rich-editor-content h4,
-  .rich-output h4 {
-    font-size: calc(var(--font-sm) * 1.2);
-  }
-}
-@media (min-width: 768px) {
-  .rich-editor-content h4,
-  .rich-output h4 {
-    font-size: calc(var(--font-md) * 1.2);
-  }
+  font-size: 18px;
+  line-height: 1.35;
+  font-weight: 600;
+  margin: 20px 0 12px 0;
+  color: #cbd5e1;
 }
 
 .rich-editor-content h5,
 .rich-output h5 {
-  font-size: var(--font-xs);
-  line-height: 1.25;
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 600;
+  margin: 16px 0 10px 0;
+  color: #94a3b8;
 }
-@media (min-width: 640px) {
-  .rich-editor-content h5,
-  .rich-output h5 {
-    font-size: var(--font-sm);
-  }
-}
-@media (min-width: 768px) {
-  .rich-editor-content h5,
-  .rich-output h5 {
-    font-size: var(--font-md);
-  }
+
+.rich-editor-content h6,
+.rich-output h6 {
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 600;
+  margin: 14px 0 8px 0;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 /* ============================================================
-   ✅ INLINE ELEMENTS - PRESERVE USER STYLES
+   ✅ INLINE ELEMENTS
 ============================================================ */
 .rich-editor-content strong,
 .rich-editor-content b,
+.rich-output strong,
+.rich-output b {
+  font-weight: 700;
+  color: #f8fafc;
+}
+
 .rich-editor-content em,
 .rich-editor-content i,
-.rich-editor-content u,
-.rich-editor-content mark,
-.rich-editor-content a,
-.rich-editor-content span,
-.rich-output strong,
-.rich-output b,
 .rich-output em,
-.rich-output i,
-.rich-output u,
-.rich-output mark,
-.rich-output a,
-.rich-output span {
-  font-size: inherit; /* responsive scaling */
+.rich-output i {
+  font-style: italic;
+  color: #e2e8f0;
+}
+
+.rich-editor-content u,
+.rich-output u {
+  text-decoration: underline;
+  text-decoration-color: var(--accent-cyan);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.rich-editor-content s,
+.rich-editor-content strike,
+.rich-output s,
+.rich-output strike {
+  text-decoration: line-through;
+  text-decoration-color: #ef4444;
+  opacity: 0.8;
+}
+
+.rich-editor-content code,
+.rich-output code {
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 14px;
+  background: rgba(6, 182, 212, 0.15);
+  color: #22d3ee;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(6, 182, 212, 0.2);
+}
+
+.rich-editor-content mark,
+.rich-output mark {
+  background: linear-gradient(
+    120deg,
+    rgba(254, 240, 138, 0.4) 0%,
+    rgba(254, 240, 138, 0.2) 100%
+  );
+  color: inherit;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.rich-editor-content a,
+.rich-output a {
+  color: var(--accent-cyan);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.rich-editor-content a:hover,
+.rich-output a:hover {
+  border-bottom-color: var(--accent-cyan);
+  text-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
 }
 
 /* ============================================================
-   ✅ LISTS (UL / OL) - Fully functional
+   ✅ LISTS (UL / OL / TASK LIST)
 ============================================================ */
 .rich-editor-content ul,
 .rich-output ul {
-  list-style: disc;
-  padding-left: 1.6rem;
-  font-size: inherit;
+  list-style: none;
+  padding-left: 0;
+  margin: 16px 0;
+}
+
+.rich-editor-content ul li,
+.rich-output ul li {
+  position: relative;
+  padding-left: 24px;
+  margin: 10px 0;
+  font-size: var(--font-md);
+  line-height: 1.7;
+}
+
+.rich-editor-content ul li::before,
+.rich-output ul li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 8px;
+  height: 8px;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
 }
 
 .rich-editor-content ol,
 .rich-output ol {
-  list-style: decimal;
-  padding-left: 1.6rem;
-  font-size: inherit;
+  list-style: none;
+  counter-reset: item;
+  padding-left: 0;
+  margin: 16px 0;
 }
 
-.rich-editor-content li,
-.rich-output li {
-  margin: 0.35rem 0;
-  font-size: inherit; /* responsive */
+.rich-editor-content ol li,
+.rich-output ol li {
+  position: relative;
+  padding-left: 32px;
+  margin: 10px 0;
+  font-size: var(--font-md);
+  line-height: 1.7;
+  counter-increment: item;
 }
 
-/* ✅ UL bullet customization */
-.rich-editor-content ul li::marker,
-.rich-output ul li::marker {
-  font-size: 1em;
-  content: '• ';
+.rich-editor-content ol li::before,
+.rich-output ol li::before {
+  content: counter(item);
+  position: absolute;
+  left: 0;
+  top: 2px;
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
 }
 
 /* ✅ Task List Items */
 .rich-editor-content .task-list-item,
 .rich-output .task-list-item {
   list-style: none;
-  padding-left: 2em;
+  padding-left: 32px;
   position: relative;
   display: flex;
-  align-items: center;
-  font-size: inherit;
+  align-items: flex-start;
+  gap: 12px;
 }
 
 .rich-editor-content .task-list-item::before,
 .rich-output .task-list-item::before {
-  content: '☐';
+  content: "";
   position: absolute;
   left: 0;
+  top: 4px;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  background: transparent;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .rich-editor-content .task-list-item.checked::before,
 .rich-output .task-list-item.checked::before {
-  content: '✅';
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border-color: #22c55e;
+  content: "✓";
+  color: white;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+}
+
+.rich-editor-content .task-list-item input[type="checkbox"],
+.rich-output .task-list-item input[type="checkbox"] {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 20px;
+  height: 20px;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 10;
+  margin: 0;
+}
+
+/* Nested lists */
+.rich-editor-content ul ul,
+.rich-editor-content ol ol,
+.rich-editor-content ul ol,
+.rich-editor-content ol ul,
+.rich-output ul ul,
+.rich-output ol ol,
+.rich-output ul ol,
+.rich-output ol ul {
+  margin: 8px 0 8px 16px;
 }
 
 /* ============================================================
@@ -206,39 +352,301 @@
 .rich-output img {
   max-width: 100%;
   height: auto;
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
+  border: 1px solid var(--glass-border);
+}
+
+.rich-editor-content img:hover,
+.rich-output img:hover {
+  transform: scale(1.02);
+  box-shadow: var(--shadow-lg);
+}
+
+.rich-editor-content img.ProseMirror-selectednode,
+.rich-output img.ProseMirror-selectednode {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 4px;
 }
 
 /* ============================================================
-   ✅ BLOCKQUOTE
+   ✅ BLOCKQUOTE - Enhanced Glass Effect
 ============================================================ */
 .rich-editor-content blockquote,
 .rich-output blockquote {
-  font-size: inherit;
-  line-height: 1.45;
-  padding: 1.4rem 1.6rem;
-  margin: 1.6rem 0;
-  background: rgba(146, 53, 234, 0.12);
+  position: relative;
+  font-size: var(--font-md);
+  line-height: 1.7;
+  padding: 24px 28px;
+  margin: 24px 0;
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.15) 0%,
+    rgba(6, 182, 212, 0.1) 100%
+  );
   backdrop-filter: blur(14px) saturate(180%);
-  border-left: 6px solid #06b6d4;
-  border-radius: 14px;
-  border: 1px solid rgba(81, 97, 207, 0.3);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+  border-left: 4px solid var(--accent-cyan);
+  border-radius: 0 16px 16px 0;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-left-width: 4px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-/* SM */
-@media (min-width: 640px) {
-  .rich-editor-content blockquote,
-  .rich-output blockquote {
-    padding: 1.2rem 1.4rem;
-    border-left-width: 7px;
+.rich-editor-content blockquote::before,
+.rich-output blockquote::before {
+  content: '"';
+  position: absolute;
+  top: 8px;
+  left: 16px;
+  font-size: 48px;
+  color: var(--accent-cyan);
+  opacity: 0.3;
+  font-family: Georgia, serif;
+  line-height: 1;
+}
+
+.rich-editor-content blockquote p,
+.rich-output blockquote p {
+  margin: 0;
+  position: relative;
+  z-index: 1;
+  font-style: italic;
+  color: #cbd5e1;
+}
+
+/* ============================================================
+   ✅ HORIZONTAL RULE
+============================================================ */
+.rich-editor-content hr,
+.rich-output hr {
+  border: none;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  margin: 32px 0;
+  position: relative;
+}
+
+.rich-editor-content hr::after,
+.rich-output hr::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: var(--accent-cyan);
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.6);
+}
+
+/* ============================================================
+   ✅ CODE BLOCK
+============================================================ */
+.rich-editor-content pre,
+.rich-output pre {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+  overflow-x: auto;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  box-shadow: var(--shadow-md);
+}
+
+.rich-editor-content pre code,
+.rich-output pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #e2e8f0;
+  font-size: inherit;
+}
+
+/* ============================================================
+   ✅ TEXT ALIGNMENT
+============================================================ */
+.rich-editor-content .text-left,
+.rich-output .text-left {
+  text-align: left;
+}
+
+.rich-editor-content .text-center,
+.rich-output .text-center {
+  text-align: center;
+}
+
+.rich-editor-content .text-right,
+.rich-output .text-right {
+  text-align: right;
+}
+
+.rich-editor-content .text-justify,
+.rich-output .text-justify {
+  text-align: justify;
+}
+
+/* ============================================================
+   ✅ DROP CURSOR
+============================================================ */
+.dropcursor {
+  background: var(--accent-cyan) !important;
+  width: 2px !important;
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.6);
+}
+
+/* ============================================================
+   ✅ GAP CURSOR
+============================================================ */
+.ProseMirror-gapcursor {
+  display: none;
+  pointer-events: none;
+  position: absolute;
+}
+
+.ProseMirror-gapcursor:after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: -2px;
+  width: 20px;
+  border-top: 2px solid var(--accent-cyan);
+  animation: ProseMirror-cursor-blink 1.1s steps(2, start) infinite;
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.6);
+}
+
+@keyframes ProseMirror-cursor-blink {
+  to {
+    visibility: hidden;
   }
 }
 
-/* MD */
-@media (min-width: 768px) {
+.ProseMirror-focused .ProseMirror-gapcursor {
+  display: block;
+}
+
+/* ============================================================
+   ✅ PLACEHOLDER
+============================================================ */
+.rich-editor-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #64748b;
+  pointer-events: none;
+  height: 0;
+  font-style: italic;
+}
+
+/* ============================================================
+   ✅ COLOR HIGHLIGHTS
+============================================================ */
+.rich-editor-content [style*="background-color"],
+.rich-output [style*="background-color"] {
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+/* ============================================================
+   ✅ OUTPUT PREVIEW AREA
+============================================================ */
+.rich-output {
+  font-size: var(--font-md);
+  line-height: 1.7;
+  color: #e2e8f0;
+}
+
+/* ============================================================
+   ✅ RESPONSIVE ADJUSTMENTS
+============================================================ */
+@media (max-width: 640px) {
+  .rich-editor-content {
+    padding: 16px;
+    font-size: var(--font-sm);
+  }
+
+  .rich-editor-content h1,
+  .rich-output h1 {
+    font-size: 26px;
+  }
+
+  .rich-editor-content h2,
+  .rich-output h2 {
+    font-size: 22px;
+  }
+
+  .rich-editor-content h3,
+  .rich-output h3 {
+    font-size: 19px;
+  }
+
   .rich-editor-content blockquote,
   .rich-output blockquote {
-    padding: 1rem 1.2rem;
-    border-left-width: 8px;
+    padding: 18px 20px;
+    margin: 18px 0;
   }
+}
+
+/* ============================================================
+   ✅ SCROLLBAR STYLING
+============================================================ */
+.rich-editor-content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.rich-editor-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.rich-editor-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.rich-editor-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ============================================================
+   ✅ SELECTION STYLING
+============================================================ */
+.rich-editor-content ::selection {
+  background: rgba(6, 182, 212, 0.3);
+  color: #f8fafc;
+}
+
+/* ============================================================
+   ✅ FOCUS STATES
+============================================================ */
+.rich-editor-content:focus-visible {
+  outline: none;
+}
+
+/* ============================================================
+   ✅ EMPTY STATE
+============================================================ */
+.rich-editor-content.is-empty {
+  position: relative;
+}
+
+.rich-editor-content.is-empty::before {
+  content: "Start typing your content...";
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  color: #64748b;
+  font-style: italic;
+  pointer-events: none;
 }

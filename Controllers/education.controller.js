@@ -119,12 +119,10 @@ export const addEducation = async (req, res) => {
 
       if (duplicate.length > 0) {
         if (newFileKey) await deleteFromLocal(newFileKey);
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "This education entry already exists!",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "This education entry already exists!",
+        });
       }
 
       await pool.query(
@@ -155,6 +153,8 @@ export const addEducation = async (req, res) => {
 
 export const deleteEducation = async (req, res) => {
   const { id } = req.params;
+  console.log(id);
+
   try {
     const [rows] = await pool.query(
       "SELECT certificate FROM education WHERE id = ?",

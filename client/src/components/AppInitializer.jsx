@@ -1,6 +1,6 @@
 // src/components/AppInitializer.jsx
-import React, { useEffect, useMemo } from "react";
-import { useDispatch } from "react-redux";
+import React, { useEffect, useRef, useCallback } from "react";
+import { useDispatch, batch } from "react-redux";
 
 // 🧩 Queries
 import { useGetProjectsQuery } from "../Queries/GetProjects";
@@ -33,247 +33,197 @@ import { addVisitorsCount } from "../features/visitorsSlice";
 // 🧩 Components
 import ErrorFallback from "./ErrorFallBack";
 
+// 📋 Configuration Map - Single source of truth
+const DATA_CONFIG = [
+  {
+    key: "projects",
+    action: addProjects,
+    dataPath: "projects",
+    transform: (d) => ({ projects: d?.projects || [] }),
+  },
+  {
+    key: "settings",
+    action: setSiteSettings,
+    dataPath: "siteSettings",
+    transform: (d) => ({ settings: d?.siteSettings || {} }),
+  },
+  {
+    key: "about",
+    action: addAbout,
+    dataPath: "about",
+    transform: (d) => ({ about: d?.about || {} }),
+  },
+  {
+    key: "skills",
+    action: addSkills,
+    dataPath: "skills",
+    transform: (d) => ({ skills: d?.skills || [] }),
+  },
+  {
+    key: "education",
+    action: addEduc,
+    dataPath: "education",
+    transform: (d) => ({ education: d?.education || [] }),
+  },
+  {
+    key: "experience",
+    action: addExp,
+    dataPath: "experiences",
+    transform: (d) => ({ experiences: d?.experiences || [] }),
+  },
+  {
+    key: "testimonials",
+    action: addTesti,
+    dataPath: "testimonials",
+    transform: (d) => ({ testimonials: d?.testimonials || [] }),
+  },
+  {
+    key: "plans",
+    action: addPlan,
+    dataPath: "plans",
+    transform: (d) => ({ plans: d?.plans || [] }),
+  },
+  {
+    key: "services",
+    action: addServices,
+    dataPath: "services",
+    transform: (d) => ({ services: d?.services || [] }),
+  },
+  {
+    key: "faqs",
+    action: addFAQs,
+    dataPath: "faqs",
+    transform: (d) => ({ faqs: d?.faqs || [] }),
+  },
+  {
+    key: "messages",
+    action: addContactMessages,
+    dataPath: "data",
+    transform: (d) => ({
+      memoizedMessage: d?.data || [],
+      memoizedCurrentMsgCount: d?.count || 0,
+      memoizedCurrentPage: d?.currentPage || 1,
+      memoizedTotalMsgPages: d?.totalPages || 1,
+      memoizedAllEntriesCount: d?.total || 0,
+    }),
+  },
+  {
+    key: "visitorsCount",
+    action: addVisitorsCount,
+    dataPath: "visitorsCount",
+    transform: (d) => ({ visitorsCount: d?.visitorsCount || 0 }),
+    skipLoading: true, // Always has data (even if 0)
+  },
+];
+
 const AppInitializer = ({ children }) => {
   const dispatch = useDispatch();
 
-  // ✅ Fetch Queries
-  const projects = useGetProjectsQuery();
-  const settings = useGetSiteSettingsQuery();
-  const about = useGetAbout();
-  const skills = useGetSkills();
-  const education = useGetEducation();
-  const experience = useGetExp();
-  const testimonial = useGetTestimonial();
-  const plans = useGetPlan();
-  const messages = useGetMessage();
-  const services = useGetService();
-  const faqs = useGetFAQ();
-  const visitorsCount = useGetVisitorsCount();
+  // 🔄 Track processed data to prevent duplicate dispatches
+  const processedRefs = useRef(new Map());
 
-  // ✅ Memoized Data
-  const memo = useMemo(
-    () => ({
-      projects: projects.data?.projects || [],
-      settings: settings.data?.siteSettings || {},
-      about: about.data?.about || {},
-      skills: skills.data?.skills || [],
-      education: education.data?.education || [],
-      experience: experience?.data?.experiences || [],
-      services: services?.data?.services || [],
-      faqs: faqs?.data?.faqs || [],
-      testimonials: testimonial.data?.testimonials || [],
-      plans: plans.data?.plans || [],
-      messages: messages.data?.data || [],
-      msgCount: messages.data?.count || 0,
-      msgCurrentPage: messages.data?.currentPage || 1,
-      msgTotalPages: messages.data?.totalPages || 1,
-      msgAllEntries: messages.data?.total || 0,
-      visitorsCount: visitorsCount?.data?.visitorsCount || 0,
-    }),
-    [
-      projects?.data,
-      settings?.data,
-      about?.data,
-      skills?.data,
-      education?.data,
-      experience?.data,
-      testimonial?.data,
-      plans?.data,
-      messages?.data,
-      services?.data,
-      faqs?.data,
-      visitorsCount?.data,
-    ],
-  );
-
-  // ✅ Utility: safely update reducers with loading + data
-  const updateReducer = (action, data, isLoading) => {
-    // Step 1: Always update loading state first
-    dispatch(action({ isLoading }));
-
-    // Step 2: Only update data when loading finished
-    if (!isLoading && data) {
-      dispatch(action({ ...data, isLoading: false }));
-    }
+  // ✅ Fetch all queries
+  const queries = {
+    projects: useGetProjectsQuery(),
+    settings: useGetSiteSettingsQuery(),
+    about: useGetAbout(),
+    skills: useGetSkills(),
+    education: useGetEducation(),
+    experience: useGetExp(),
+    testimonials: useGetTestimonial(),
+    plans: useGetPlan(),
+    messages: useGetMessage(),
+    services: useGetService(),
+    faqs: useGetFAQ(),
+    visitorsCount: useGetVisitorsCount(),
   };
 
-  // 🔹 Commit 1 — Projects
+  // 🚀 Optimized dispatch with batching and deduplication
+  const syncData = useCallback(() => {
+    const updates = [];
+    const loadingStates = [];
+
+    DATA_CONFIG.forEach(({ key, action, transform, skipLoading }) => {
+      const query = queries[key];
+      const isLoading = query.isFetching || query.isPending;
+      const hasData = query.data !== undefined;
+
+      // Create unique key for this state
+      const stateKey = `${key}-${isLoading}-${JSON.stringify(query.data)}`;
+      const lastProcessed = processedRefs.current.get(key);
+
+      // Skip if already processed this exact state
+      if (lastProcessed === stateKey) return;
+
+      // Update tracking
+      processedRefs.current.set(key, stateKey);
+
+      // Collect loading state
+      if (!skipLoading) {
+        loadingStates.push({ action, isLoading });
+      }
+
+      // Collect data update (only when not loading and has data)
+      if (!isLoading && hasData) {
+        const payload = transform(query.data);
+        // Only dispatch if data actually changed
+        if (
+          Object.values(payload).some((v) =>
+            Array.isArray(v) ? v.length > 0 : Object.keys(v).length > 0,
+          )
+        ) {
+          updates.push({ action, payload: { ...payload, isLoading: false } });
+        }
+      }
+    });
+
+    // 🎯 Batch all dispatches together (single re-render)
+    batch(() => {
+      // First: Set all loading states
+      loadingStates.forEach(({ action, isLoading }) => {
+        dispatch(action({ isLoading }));
+      });
+
+      // Then: Set all data
+      updates.forEach(({ action, payload }) => {
+        dispatch(action(payload));
+      });
+    });
+  }, [queries, dispatch]);
+
+  // 🎯 Single effect for all data synchronization
   useEffect(() => {
-    const isLoading = projects.isFetching || projects.isPending;
-    updateReducer(
-      addProjects,
-      memo.projects.length ? { projects: memo.projects } : null,
-      isLoading,
-    );
-  }, [memo.projects, projects.isFetching, projects.isPending, dispatch]);
+    syncData();
+  }, [syncData]);
 
-  // 🔹 Commit 2 — Site Settings
-  useEffect(() => {
-    const isLoading = settings.isFetching || settings.isPending;
-    updateReducer(
-      setSiteSettings,
-      Object.keys(memo.settings).length ? { settings: memo.settings } : null,
-      isLoading,
-    );
-  }, [memo.settings, settings.isFetching, settings.isPending, dispatch]);
+  // ⚡ Memoized global states
+  const globalState = React.useMemo(() => {
+    const queryArray = Object.values(queries);
 
-  // 🔹 Commit 3 — About
-  useEffect(() => {
-    const isLoading = about.isFetching || about.isPending;
-    const hasAbout = Object.keys(memo.about || {}).length > 0;
-    updateReducer(addAbout, hasAbout ? { about: memo.about } : null, isLoading);
-  }, [memo.about, about.isFetching, about.isPending, dispatch]);
+    return {
+      isLoading: queryArray.some((q) => q.isFetching || q.isPending),
+      isError: queryArray.some((q) => q.isError),
+      error: queryArray.find((q) => q.isError)?.error,
+    };
+  }, [queries]);
 
-  // 🔹 Commit 4 — Skills
-  useEffect(() => {
-    const isLoading = skills.isFetching || skills.isPending;
-    updateReducer(
-      addSkills,
-      memo.skills.length ? { skills: memo.skills } : null,
-      isLoading,
-    );
-  }, [memo.skills, skills.isFetching, skills.isPending, dispatch]);
+  // 🚨 Error handling
+  if (globalState.isError) {
+    return <ErrorFallback error={globalState.error} />;
+  }
 
-  // 🔹 Commit 5 — Education
-  useEffect(() => {
-    const isLoading = education.isFetching || education.isPending;
-    updateReducer(
-      addEduc,
-      memo.education.length ? { education: memo.education } : null,
-      isLoading,
-    );
-  }, [memo.education, education.isFetching, education.isPending, dispatch]);
-
-  // 🔹 Commit 6 — Experience
-  useEffect(() => {
-    const isLoading = experience.isFetching || experience.isPending;
-    updateReducer(
-      addExp,
-      memo.experience.length ? { experiences: memo.experience } : null,
-      isLoading,
-    );
-  }, [memo.experience, experience.isFetching, experience.isPending, dispatch]);
-
-  // 🔹 Commit 7 — Testimonials
-  useEffect(() => {
-    const isLoading = testimonial.isFetching || testimonial.isPending;
-    updateReducer(
-      addTesti,
-      memo.testimonials.length ? { testimonials: memo.testimonials } : null,
-      isLoading,
-    );
-  }, [
-    memo.testimonials,
-    testimonial.isFetching,
-    testimonial.isPending,
-    dispatch,
-  ]);
-
-  // 🔹 Commit 8 — Pricing Plans
-  useEffect(() => {
-    const isLoading = plans.isFetching || plans.isPending;
-    updateReducer(
-      addPlan,
-      memo.plans.length ? { plans: memo.plans } : null,
-      isLoading,
-    );
-  }, [memo.plans, plans.isFetching, plans.isPending, dispatch]);
-
-  // 🔹 Commit 9 — Contact Messages
-  useEffect(() => {
-    const isLoading = messages.isFetching || messages.isPending;
-    updateReducer(
-      addContactMessages,
-      memo.messages.length
-        ? {
-            memoizedMessage: memo.messages,
-            memoizedCurrentMsgCount: memo.msgCount,
-            memoizedCurrentPage: memo.msgCurrentPage,
-            memoizedTotalMsgPages: memo.msgTotalPages,
-            memoizedAllEntriesCount: memo.msgAllEntries,
-          }
-        : null,
-      isLoading,
-    );
-  }, [
-    memo.messages,
-    memo.msgCount,
-    memo.msgCurrentPage,
-    memo.msgTotalPages,
-    memo.msgAllEntries,
-    messages.isFetching,
-    messages.isPending,
-    dispatch,
-  ]);
-
-  // 🔹 Commit 10 — Services
-  useEffect(() => {
-    const isLoading = services.isFetching || services.isPending;
-    updateReducer(
-      addServices,
-      memo.services.length ? { services: memo.services } : null,
-      isLoading,
-    );
-  }, [memo.services, services.isFetching, services.isPending, dispatch]);
-
-  // 🔹 Commit 11 — FAQs
-  useEffect(() => {
-    const isLoading = faqs.isFetching || faqs.isPending;
-    updateReducer(
-      addFAQs,
-      memo.faqs.length ? { faqs: memo.faqs } : null,
-      isLoading,
-    );
-  }, [memo.faqs, faqs.isFetching, faqs.isPending, dispatch]);
-
-  // 🔹 Commit 12 — Visitors Count
-  useEffect(() => {
-    const isLoading = visitorsCount.isFetching || visitorsCount.isPending;
-    updateReducer(
-      addVisitorsCount,
-      { visitorsCount: memo.visitorsCount },
-      isLoading,
-    );
-  }, [
-    memo.visitorsCount,
-    visitorsCount.isFetching,
-    visitorsCount.isPending,
-    dispatch,
-  ]);
-
-  // ✅ Global Loading/Error
-  const isLoading = [
-    projects,
-    settings,
-    about,
-    skills,
-    education,
-    experience,
-    testimonial,
-    plans,
-    services,
-    faqs,
-    messages,
-  ].some((q) => q.isFetching || q.isPending);
-
-  // const isError = [
-  //   projects,
-  //   settings,
-  //   about,
-  //   skills,
-  //   education,
-  //   experience,
-  //   testimonial,
-  //   plans,
-  //   messages,
-  //   services,
-  //   faqs,
-  // ].some((q) => q.isError);
-
-  // // 🔹 Error Handling
-  // if (isError) return <ErrorFallback />;
+  // Optional: Show nothing or minimal loader during initial load
+  // This prevents flash of unstyled content
+  if (globalState.isLoading && processedRefs.current.size === 0) {
+    return null; // Or return a sleek loading spinner
+  }
 
   return children;
 };
 
-export default React.memo(AppInitializer);
+// 🎨 Custom comparison for React.memo - deep compare queries object
+const areEqual = (prevProps, nextProps) => {
+  return prevProps.children === nextProps.children;
+};
+
+export default React.memo(AppInitializer, areEqual);

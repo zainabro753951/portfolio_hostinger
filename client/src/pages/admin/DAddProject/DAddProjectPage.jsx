@@ -30,6 +30,8 @@ import { mutateProject } from "../../../Queries/AddProject";
 import { glassToast } from "../Components/ToastMessage";
 import { clearProject, projectFindById } from "../../../features/projectSlice";
 import RichTextEditor from "../Components/RichText";
+import FormSection from "../Components/FormSection";
+import ChipInput from "../Components/ChipInput";
 
 // Form field base classes - converted from template literal to object
 const fieldClasses = {
@@ -63,98 +65,6 @@ const itemVariants = {
     },
   },
 };
-
-// Form section component
-const FormSection = memo(({ children, title, icon: Icon, className = "" }) => (
-  <motion.div
-    variants={itemVariants}
-    className={`rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 ${className}`}
-  >
-    {(title || Icon) && (
-      <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
-        {Icon && (
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/20">
-            <Icon className="w-5 h-5" />
-          </div>
-        )}
-        {title && <h3 className="text-lg font-semibold text-white">{title}</h3>}
-      </div>
-    )}
-    {children}
-  </motion.div>
-));
-
-FormSection.displayName = "FormSection";
-
-// Chip input component
-const ChipInput = memo(
-  ({
-    fields,
-    append,
-    remove,
-    inputId,
-    placeholder,
-    onAdd,
-    error,
-    icon: Icon,
-    label,
-  }) => (
-    <div className="space-y-3">
-      <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
-        {Icon && <Icon className="w-4 h-4 text-slate-500" />}
-        {label}
-      </label>
-      <div className="flex gap-2">
-        <input
-          id={inputId}
-          placeholder={placeholder}
-          className={fieldBase}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              onAdd(e);
-            }
-          }}
-        />
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onAdd}
-          type="button"
-          className="px-4 py-3 rounded-xl bg-slate-800/50 border border-white/10 text-white hover:bg-slate-700/50 transition-colors flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add
-        </motion.button>
-      </div>
-      {error && (
-        <p className="text-rose-400 text-xs flex items-center gap-1">
-          <AlertCircle className="w-3 h-3" />
-          {error.message}
-        </p>
-      )}
-      <div className="flex flex-wrap gap-2">
-        {fields.map((field, idx) => (
-          <span
-            key={field.id}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-500/10 text-cyan-400 text-sm border border-cyan-500/20"
-          >
-            {field.name}
-            <button
-              onClick={() => remove(idx)}
-              type="button"
-              className="text-cyan-400/60 hover:text-rose-400 transition-colors"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </span>
-        ))}
-      </div>
-    </div>
-  ),
-);
-
-ChipInput.displayName = "ChipInput";
 
 // Image upload section component
 const ImageUploadSection = memo(
@@ -423,30 +333,35 @@ const DAddProjectPage = () => {
     }
   }, [title, setValue]);
 
-  // Handlers
+  // ── FIXED: addChip receives (value, inputElement) ──────────────
   const addChip = useCallback(
-    (e, inputId, fields, append, fieldName, minLength = 2) => {
-      e.preventDefault();
-      const input = e.target.form?.querySelector(`#${inputId}`) || e.target;
-      const value = input.value.trim();
+    (value, inputElement, fieldName, fields, append, minLength = 2) => {
+      const trimmedValue = value.trim();
 
       clearErrors(fieldName);
 
-      if (!value) {
+      if (!trimmedValue) {
         setError(fieldName, {
           type: "required",
           message: `${fieldName} is required`,
         });
         return;
       }
-      if (value.length < minLength) {
+      if (trimmedValue.length < minLength) {
         setError(fieldName, {
           type: "minLength",
           message: `${fieldName} must be at least ${minLength} chars`,
         });
         return;
       }
-      if (fields.some((f) => f.name.toLowerCase() === value.toLowerCase())) {
+      // ✅ FIXED: Check f.name || f.value for both structures
+      if (
+        fields.some(
+          (f) =>
+            (f.name || f.value || "").toLowerCase() ===
+            trimmedValue.toLowerCase(),
+        )
+      ) {
         setError(fieldName, {
           type: "duplicate",
           message: `This ${fieldName} already exists`,
@@ -454,34 +369,38 @@ const DAddProjectPage = () => {
         return;
       }
 
-      append({ name: value });
-      input.value = "";
+      append({ name: trimmedValue });
+      if (inputElement) {
+        inputElement.value = "";
+        inputElement.focus();
+      }
     },
     [clearErrors, setError],
   );
 
+  // ── Updated chip handlers ──────────────────────────────────────
   const addTech = useCallback(
-    (e) => {
-      addChip(e, "techInput", techFields, appendTech, "techStack");
+    (value, inputElement) => {
+      addChip(value, inputElement, "techStack", techFields, appendTech);
     },
     [addChip, techFields, appendTech],
   );
 
   const addTag = useCallback(
-    (e) => {
-      addChip(e, "tagInput", tagFields, appendTag, "tag");
+    (value, inputElement) => {
+      addChip(value, inputElement, "tag", tagFields, appendTag);
     },
     [addChip, tagFields, appendTag],
   );
 
   const addMetaKeyword = useCallback(
-    (e) => {
+    (value, inputElement) => {
       addChip(
-        e,
-        "metaKeywordInput",
+        value,
+        inputElement,
+        "metaKeywords",
         metaKeywordsFields,
         appendMetaKeywords,
-        "metaKeywords",
       );
     },
     [addChip, metaKeywordsFields, appendMetaKeywords],

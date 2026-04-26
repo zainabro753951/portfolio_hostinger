@@ -14,11 +14,15 @@ const DeleteEntry = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dispatch = useDispatch();
 
-  const { mutate, isPending, isSuccess, isError, data, error } =
+  const { mutate, isPending, isSuccess, isError, data, error, reset } =
     useDeleteEntry(queryKey);
 
   const onClose = () => {
     setIsOpen(false);
+
+    // ✅ Sabse pehle mutation state reset karein
+    reset();
+
     // Small delay taake animation complete ho
     setTimeout(() => {
       setRoute("");
@@ -28,10 +32,21 @@ const DeleteEntry = ({ children }) => {
   };
 
   const onDelete = () => {
-    if (!route || ids.length === 0) {
+    // Check: route honi chahiye, aur ya to ids hon ya route mein ID already ho
+    if (!route) {
       glassToast("Invalid delete request", "error");
       return;
     }
+
+    // Multiple delete: ids array mein values honi chahiye
+    if (ids.length === 0 && !route.match(/\/\d+$/)) {
+      // Optional: check if route has ID param
+      glassToast("Invalid delete request", "error");
+      return;
+    }
+
+    console.log(route);
+
     mutate({ route, ids });
   };
 

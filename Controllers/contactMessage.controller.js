@@ -243,6 +243,7 @@ export const getMessage = async (req, res) => {
 export const deleteContactMessages = async (req, res) => {
   try {
     const { ids } = req.body;
+    console.log(ids);
 
     // ✅ 1. Validate input
     if (!Array.isArray(ids) || ids.length === 0) {
@@ -295,8 +296,8 @@ export const deleteContactMessages = async (req, res) => {
 
     // ✅ 5. Optional — Log notification for admin dashboard
     await pool.query(
-      `INSERT INTO notifications (title, message, type, created_at)
-       VALUES (?, ?, ?, NOW())`,
+      `INSERT INTO notifications (title, message, type)
+       VALUES (?, ?, ?)`,
       [
         "Contact Messages Deleted",
         `${existingMessages.length} contact message${

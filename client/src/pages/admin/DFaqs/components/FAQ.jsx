@@ -20,30 +20,27 @@ const ActionButton = memo(
     shadowColor,
   }) => {
     const baseClasses = `
-    w-9 h-9 sm:w-10 sm:h-10 md:w-10 md:h-10 
-    rounded-lg 
-    flex items-center justify-center 
-    bg-gradient-to-r border 
-    transition-all duration-300 ease-out
-    will-change-transform transform-gpu
-    hover:scale-110 active:scale-95
-  `;
+      w-9 h-9 sm:w-10 sm:h-10 md:w-10 md:h-10 
+      rounded-lg 
+      flex items-center justify-center 
+      bg-gradient-to-r border 
+      transition-all duration-300 ease-out
+      will-change-transform transform-gpu
+      hover:scale-110 active:scale-95
+    `;
 
-    const content = (
-      <>
-        <Icon className="text-sm sm:text-base md:text-lg" />
-      </>
-    );
+    const content = <Icon className="text-sm sm:text-base md:text-lg" />;
 
     const className = `
-    ${baseClasses}
-    ${gradientFrom} ${gradientTo} ${borderColor} ${textColor}
-    ${hoverFrom} ${hoverTo} ${shadowColor}
-  `;
+      ${baseClasses}
+      ${gradientFrom} ${gradientTo} ${borderColor} ${textColor}
+      ${hoverFrom} ${hoverTo} ${shadowColor}
+    `;
 
+    // ✅ FIX: onClick ko Link par bhi pass karo
     if (to) {
       return (
-        <Link to={to} className={className}>
+        <Link to={to} className={className} onClick={onClick}>
           {content}
         </Link>
       );
@@ -106,8 +103,14 @@ const FAQ = ({ faq, idx }) => {
       "
     >
       {/* Question Header */}
-      <button
+      <div
         onClick={toggleFAQ}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            toggleFAQ();
+          }
+        }}
         className="
           w-full px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-5 
           flex items-center justify-between 
@@ -116,6 +119,8 @@ const FAQ = ({ faq, idx }) => {
           cursor-pointer
           group
         "
+        role="button"
+        tabIndex={0}
       >
         <h3
           className="
@@ -154,6 +159,9 @@ const FAQ = ({ faq, idx }) => {
             <ActionButton
               to={`/admin/faqs/${faq?.id}`}
               icon={FaEdit}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
               gradientFrom="from-violet-600/25"
               gradientTo="to-indigo-600/25"
               borderColor="border-violet-500/40"
@@ -164,7 +172,10 @@ const FAQ = ({ faq, idx }) => {
             />
 
             <ActionButton
-              onClick={handleDelete}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete();
+              }}
               icon={FaTrashAlt}
               gradientFrom="from-cyan-600/25"
               gradientTo="to-blue-600/25"
@@ -176,7 +187,7 @@ const FAQ = ({ faq, idx }) => {
             />
           </div>
         </div>
-      </button>
+      </div>
 
       {/* Answer Section with AnimatePresence */}
       <AnimatePresence initial={false} mode="wait">

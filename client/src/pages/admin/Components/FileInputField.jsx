@@ -1,5 +1,7 @@
+// FileInputField.jsx - Updated
 import React, { memo, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { useFormContext } from "react-hook-form"; // 👈 Add this
 import {
   FileText,
   AlertCircle,
@@ -11,11 +13,11 @@ import {
   File,
   CheckCircle2,
 } from "lucide-react";
+import { getFileIcon, getFileNameFromUrl } from "../../../Utils/Utils";
 
 const FileInputField = ({
   label,
   name,
-  register,
   error,
   required = false,
   existingFileUrl = "",
@@ -23,43 +25,52 @@ const FileInputField = ({
   maxSize = 10, // MB
   onFileSelect,
 }) => {
-  const [selectedFile, setSelectedFile] = useState(null);
+  const { setValue, watch, register } = useFormContext(); // 👈 Get from context
   const [isDragging, setIsDragging] = useState(false);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
 
-  // Get file icon based on type
-  const getFileIcon = useCallback((fileName) => {
-    if (!fileName) return File;
-    const ext = fileName.split(".").pop()?.toLowerCase();
-    if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext)) {
-      return FileImage;
-    }
-    if (["js", "jsx", "ts", "tsx", "html", "css", "json"].includes(ext)) {
-      return FileCode;
-    }
-    return File;
-  }, []);
+  // 👈 Watch the actual value from RHF
+  const currentValue = watch(name);
+  // ✅ Alternative - Check by file properties
+  const selectedFile =
+    currentValue &&
+    currentValue.name &&
+    currentValue.size &&
+    currentValue.type !== undefined
+      ? currentValue
+      : null;
 
   // Handle file selection
   const handleFileChange = useCallback(
     (e) => {
       const file = e.target.files?.[0];
-      if (file) {
-        // Check file size
-        if (file.size > maxSize * 1024 * 1024) {
-          return;
-        }
-        setSelectedFile(file);
-        onFileSelect?.(file);
+      if (!file) return;
+
+      if (file.size > maxSize * 1024 * 1024) {
+        alert(`File size should be less than ${maxSize}MB`);
+        return;
       }
+
+      // ✅ Set directly in RHF
+      setValue(name, file, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+
+      onFileSelect?.(file);
     },
-    [maxSize, onFileSelect],
+    [maxSize, onFileSelect, setValue, name],
   );
 
   // Clear selected file
   const handleClear = useCallback(() => {
-    setSelectedFile(null);
+    setValue(name, null, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
     onFileSelect?.(null);
-  }, [onFileSelect]);
+  }, [onFileSelect, setValue, name]);
 
   // Drag & drop handlers
   const handleDragEnter = useCallback((e) => {
@@ -76,23 +87,37 @@ const FileInputField = ({
     (e) => {
       e.preventDefault();
       setIsDragging(false);
+
       const file = e.dataTransfer.files?.[0];
-      if (file) {
-        if (file.size > maxSize * 1024 * 1024) {
-          return;
-        }
-        setSelectedFile(file);
-        onFileSelect?.(file);
+      if (!file) return;
+
+      if (file.size > maxSize * 1024 * 1024) {
+        alert(`File size should be less than ${maxSize}MB`);
+        return;
       }
+
+      setValue(name, file, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+
+      onFileSelect?.(file);
     },
-    [maxSize, onFileSelect],
+    [maxSize, onFileSelect, setValue, name],
   );
 
-  const FileIcon = getFileIcon(selectedFile?.name || existingFileUrl);
+  // Register for validation only (no ref needed)
+  const { ref: registerRef, ...registerProps } = register(name, {
+    required: required ? `${label} is required` : false,
+  });
+
+  const fileName = selectedFile?.name || getFileNameFromUrl(existingFileUrl);
+  const { Icon: FileIcon, color: FileIconColor } = getFileIcon(fileName);
+  const hasFile = selectedFile || existingFileUrl;
 
   return (
     <div className="w-full flex flex-col gap-2">
-      {/* Label */}
       <label className="flex flex-col gap-2">
         <span className="text-sm font-medium text-slate-300 flex items-center gap-2">
           <FileText className="w-4 h-4 text-cyan-400" />
@@ -105,7 +130,7 @@ const FileInputField = ({
           )}
         </span>
 
-        {/* Drop Zone */}
+        {/* Drop Zone - relative with pointer-events-none on parent */}
         <motion.div
           onDragEnter={handleDragEnter}
           onDragOver={handleDragEnter}
@@ -124,40 +149,66 @@ const FileInputField = ({
             hover:border-cyan-400/30 transition-all duration-300
           `}
         >
-          <div className="p-4 sm:p-6">
+          {/* 👇 INPUT LAYER - Lower z-index, only covers empty area */}
+          <input
+            type="file"
+            name={name}
+            accept={accept}
+            {...registerProps}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-0"
+            onChange={handleFileChange}
+          />
+
+          <div className="relative z-10 p-4 sm:p-6 pointer-events-none">
+            {" "}
+            {/* 👈 pointer-events-none */}
             <AnimatePresence mode="wait">
-              {selectedFile || existingFileUrl ? (
-                // File Selected State
+              {hasFile ? (
                 <motion.div
                   key="selected"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="flex items-center gap-4"
+                  className="flex items-center gap-4 pointer-events-auto" // 👈 Re-enable clicks here
                 >
                   {/* File Icon */}
-                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/20 flex-shrink-0">
-                    <FileIcon className="w-6 h-6" />
+                  <div
+                    className="w-12 h-12 rounded-lg  flex items-center justify-center  border  flex-shrink-0"
+                    style={{
+                      backgroundColor: FileIconColor + "20",
+                      borderColor: FileIconColor,
+                    }}
+                  >
+                    <FileIcon
+                      className="w-6 h-6 stroke-current"
+                      style={{
+                        color: FileIconColor,
+                      }}
+                    />
                   </div>
 
                   {/* File Info */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-white truncate">
-                      {selectedFile?.name || "Existing file"}
+                      {selectedFile?.name ||
+                        getFileNameFromUrl(existingFileUrl)}
                     </p>
                     {selectedFile && (
                       <p className="text-xs text-slate-400">
                         {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                       </p>
                     )}
+
+                    {/* 👇 LINK - Now clickable with higher z-index */}
                     {existingFileUrl && !selectedFile && (
                       <motion.a
-                        href={existingFileUrl}
+                        href={`${backendUrl}${existingFileUrl}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="inline-flex items-center gap-1.5 mt-1 text-xs text-cyan-400 hover:text-cyan-300"
+                        onClick={(e) => e.stopPropagation()} // 👈 Prevent input trigger
+                        className="inline-flex items-center gap-1.5 mt-1 text-xs text-cyan-400 hover:text-cyan-300 relative z-20 pointer-events-auto"
                       >
                         <ExternalLink className="w-3 h-3" />
                         View current file
@@ -165,8 +216,10 @@ const FileInputField = ({
                     )}
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-2">
+                  {/* 👇 ACTIONS - Now clickable */}
+                  <div className="flex items-center gap-2 pointer-events-auto">
+                    {" "}
+                    {/* 👈 Re-enable clicks */}
                     {selectedFile && (
                       <motion.div
                         initial={{ scale: 0 }}
@@ -176,17 +229,21 @@ const FileInputField = ({
                         <CheckCircle2 className="w-4 h-4" />
                       </motion.div>
                     )}
+                    {/* 👇 CLEAR BUTTON - Stop propagation */}
                     <button
                       type="button"
-                      onClick={handleClear}
-                      className="p-2 rounded-lg bg-slate-700/50 text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation(); // 👈 Prevent input trigger
+                        handleClear();
+                      }}
+                      className="p-2 rounded-lg bg-slate-700/50 text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors relative z-20"
                     >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
                 </motion.div>
               ) : (
-                // Empty State
+                // Empty State - No pointer-events-auto needed here
                 <motion.div
                   key="empty"
                   initial={{ opacity: 0, y: 10 }}
@@ -206,21 +263,11 @@ const FileInputField = ({
                 </motion.div>
               )}
             </AnimatePresence>
-
-            {/* Hidden Input */}
-            <input
-              type="file"
-              name={name}
-              accept={accept}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              {...register(name, { required })}
-              onChange={handleFileChange}
-            />
           </div>
         </motion.div>
       </label>
 
-      {/* Error Message */}
+      {/* Error Message - same as before */}
       <AnimatePresence>
         {error && (
           <motion.span
@@ -230,7 +277,7 @@ const FileInputField = ({
             className="text-xs text-rose-400 flex items-center gap-1.5"
           >
             <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-            {label} is required
+            {error.message || `${label} is required`}
           </motion.span>
         )}
       </AnimatePresence>

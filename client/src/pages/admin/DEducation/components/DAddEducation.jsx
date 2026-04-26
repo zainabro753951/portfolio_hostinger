@@ -1,6 +1,13 @@
-import React, { memo, useEffect, useState, useCallback } from "react";
+import React, {
+  memo,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import {
@@ -22,6 +29,8 @@ import {
   educFindById,
   clearFindedEduc,
 } from "../../../../features/educationSlice";
+import useScrollToRef from "../../../../hooks/useScrollToRef";
+import { safeParse } from "../../../../Utils/Utils";
 
 const DAddEducation = () => {
   const { id } = useParams();
@@ -29,6 +38,8 @@ const DAddEducation = () => {
   const prefersReducedMotion = useReducedMotion();
   const { educations, education } = useSelector((state) => state.education);
   const [isUpdate, setIsUpdate] = useState(false);
+  const updateEduRef = useRef(null);
+  const certificate = safeParse(education?.certificate);
 
   const defaultValues = {
     institutionName: "",
@@ -42,14 +53,18 @@ const DAddEducation = () => {
     eduDesc: "",
   };
 
+  const methods = useForm({
+    defaultValues,
+  });
+
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
-  } = useForm({
-    defaultValues,
-  });
+  } = methods;
 
   // Fetch education for edit
   useEffect(() => {
@@ -79,6 +94,9 @@ const DAddEducation = () => {
     }
   }, [id, education, reset]);
 
+  // ✅ Sirf tab scroll kare jab id  ho
+  useScrollToRef(updateEduRef, [id], { block: "nearest" }, !!id);
+
   const { mutate, isPending, isError, isSuccess, data, error } =
     useAddEducation();
 
@@ -89,13 +107,11 @@ const DAddEducation = () => {
       fd.append("educationId", isUpdate ? id : "");
       fd.append(
         "certificateOBJ",
-        isUpdate && education?.certificate
-          ? JSON.stringify(education?.certificate)
-          : "",
+        isUpdate && certificate ? JSON.stringify(certificate) : "",
       );
 
-      if (formData.certificate && formData.certificate[0]) {
-        fd.append("certificate", formData.certificate[0]);
+      if (formData.certificate instanceof File) {
+        fd.append("certificate", formData.certificate);
       }
 
       Object.entries(formData).forEach(([key, value]) => {
@@ -151,100 +167,101 @@ const DAddEducation = () => {
   `.trim();
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-      className="w-full  "
-    >
-      <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 sm:p-8 shadow-xl">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8 pb-4 border-b border-white/5">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/20">
-            <GraduationCap className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-              {isUpdate ? "Edit Education" : "Add Education"}
-            </h3>
-            <p className="text-slate-400 text-sm">
-              {isUpdate
-                ? "Update education details"
-                : "Add your academic background"}
-            </p>
-          </div>
-        </div>
-
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          encType="multipart/form-data"
-          className="w-full flex flex-col gap-6"
-        >
-          {/* Institution & Degree */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              label="Institution Name"
-              name="institutionName"
-              register={register}
-              errors={errors}
-              placeholder="e.g., Sindh Agricultural University"
-              icon={Building2}
-            />
-            <FormField
-              label="Degree"
-              name="degree"
-              register={register}
-              errors={errors}
-              placeholder="e.g., Bachelor of Computer Science"
-              icon={Award}
-            />
+    <FormProvider {...methods}>
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="w-full  "
+      >
+        <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 sm:p-8 shadow-xl">
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-8 pb-4 border-b border-white/5">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/20">
+              <GraduationCap className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                {isUpdate ? "Edit Education" : "Add Education"}
+              </h3>
+              <p className="text-slate-400 text-sm">
+                {isUpdate
+                  ? "Update education details"
+                  : "Add your academic background"}
+              </p>
+            </div>
           </div>
 
-          {/* Field & Grade */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              label="Field of Study"
-              name="fieldStudy"
-              register={register}
-              errors={errors}
-              placeholder="e.g., Information Technology"
-              icon={BookOpen}
-            />
-            <FormField
-              label="Grade / CGPA"
-              name="grade"
-              register={register}
-              errors={errors}
-              required={false}
-              placeholder="e.g., 3.8 CGPA"
-              icon={Award}
-            />
-          </div>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            encType="multipart/form-data"
+            ref={updateEduRef}
+            className="w-full flex flex-col gap-6"
+          >
+            {/* Institution & Degree */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                label="Institution Name"
+                name="institutionName"
+                register={register}
+                errors={errors}
+                placeholder="e.g., Sindh Agricultural University"
+                icon={Building2}
+              />
+              <FormField
+                label="Degree"
+                name="degree"
+                register={register}
+                errors={errors}
+                placeholder="e.g., Bachelor of Computer Science"
+                icon={Award}
+              />
+            </div>
 
-          {/* Years */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              label="Start Year"
-              name="startYear"
-              type="number"
-              register={register}
-              errors={errors}
-              placeholder="e.g., 2021"
-              icon={Calendar}
-            />
-            <FormField
-              label="End Year"
-              name="endYear"
-              type="number"
-              register={register}
-              errors={errors}
-              placeholder="e.g., 2025"
-              icon={Calendar}
-            />
-          </div>
+            {/* Field & Grade */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                label="Field of Study"
+                name="fieldStudy"
+                register={register}
+                errors={errors}
+                placeholder="e.g., Information Technology"
+                icon={BookOpen}
+              />
+              <FormField
+                label="Grade / CGPA"
+                name="grade"
+                register={register}
+                errors={errors}
+                required={false}
+                placeholder="e.g., 3.8 CGPA"
+                icon={Award}
+              />
+            </div>
 
-          {/* Location & Certificate */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Years */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                label="Start Year"
+                name="startYear"
+                type="number"
+                register={register}
+                errors={errors}
+                placeholder="e.g., 2021"
+                icon={Calendar}
+              />
+              <FormField
+                label="End Year"
+                name="endYear"
+                type="number"
+                register={register}
+                errors={errors}
+                placeholder="e.g., 2025"
+                icon={Calendar}
+              />
+            </div>
+
+            {/* Location & Certificate */}
             <FormField
               label="Location"
               name="location"
@@ -254,82 +271,82 @@ const DAddEducation = () => {
               placeholder="e.g., Tandojam, Sindh"
               icon={MapPin}
             />
+
             <FileInputField
               label="Upload Certificate (optional)"
               name="certificate"
-              register={register}
               error={errors["certificate"]}
-              existingFileUrl={education?.certificate?.url || ""}
+              existingFileUrl={certificate?.url || ""}
               required={false}
               accept="image/*,.pdf"
             />
-          </div>
 
-          {/* Description */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-slate-500" />
-              Description
-            </label>
-            <textarea
-              rows={5}
-              {...register("eduDesc", {
-                required: "Education description is required",
-                minLength: {
-                  value: 20,
-                  message: "Description must be at least 20 characters long",
-                },
-                maxLength: {
-                  value: 300,
-                  message: "Description cannot exceed 300 characters",
-                },
-                validate: {
-                  noNumbersOnly: (value) =>
-                    !/^\d+$/.test(value) ||
-                    "Description cannot contain only numbers",
-                  noSpecialCharsOnly: (value) =>
-                    !/^[^a-zA-Z0-9]+$/.test(value) ||
-                    "Description must contain letters or words",
-                },
-              })}
-              placeholder="Describe your coursework, achievements, or focus areas..."
-              className={inputClasses(errors.eduDesc)}
-            />
-            {errors.eduDesc && (
-              <p className="text-xs text-rose-400 flex items-center gap-1.5">
-                <span className="text-red-500">•</span>
-                {errors.eduDesc?.message}
-              </p>
-            )}
-          </div>
-
-          {/* Submit Button */}
-          <div className="w-full flex items-center justify-end pt-4">
-            <motion.button
-              type="submit"
-              disabled={isPending}
-              whileHover={
-                prefersReducedMotion || isPending ? {} : { scale: 1.02 }
-              }
-              whileTap={isPending ? {} : { scale: 0.98 }}
-              className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  {isUpdate ? "Updating..." : "Saving..."}
-                </>
-              ) : (
-                <>
-                  <Save className="w-5 h-5" />
-                  {isUpdate ? "Update Education" : "Add Education"}
-                </>
+            {/* Description */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-slate-500" />
+                Description
+              </label>
+              <textarea
+                rows={5}
+                {...register("eduDesc", {
+                  required: "Education description is required",
+                  minLength: {
+                    value: 20,
+                    message: "Description must be at least 20 characters long",
+                  },
+                  maxLength: {
+                    value: 300,
+                    message: "Description cannot exceed 300 characters",
+                  },
+                  validate: {
+                    noNumbersOnly: (value) =>
+                      !/^\d+$/.test(value) ||
+                      "Description cannot contain only numbers",
+                    noSpecialCharsOnly: (value) =>
+                      !/^[^a-zA-Z0-9]+$/.test(value) ||
+                      "Description must contain letters or words",
+                  },
+                })}
+                placeholder="Describe your coursework, achievements, or focus areas..."
+                className={inputClasses(errors.eduDesc)}
+              />
+              {errors.eduDesc && (
+                <p className="text-xs text-rose-400 flex items-center gap-1.5">
+                  <span className="text-red-500">•</span>
+                  {errors.eduDesc?.message}
+                </p>
               )}
-            </motion.button>
-          </div>
-        </form>
-      </div>
-    </motion.div>
+            </div>
+
+            {/* Submit Button */}
+            <div className="w-full flex items-center justify-end pt-4">
+              <motion.button
+                type="submit"
+                disabled={isPending}
+                whileHover={
+                  prefersReducedMotion || isPending ? {} : { scale: 1.02 }
+                }
+                whileTap={isPending ? {} : { scale: 0.98 }}
+                className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    {isUpdate ? "Updating..." : "Saving..."}
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5" />
+                    {isUpdate ? "Update Education" : "Add Education"}
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </form>
+        </div>
+      </motion.div>
+    </FormProvider>
   );
 };
 

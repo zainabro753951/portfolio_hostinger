@@ -1,29 +1,68 @@
-import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Github, Linkedin, Twitter, Instagram, Mail, MapPin, Phone } from 'lucide-react'
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import {
+  Github,
+  Linkedin,
+  Twitter,
+  Instagram,
+  Mail,
+  MapPin,
+  Phone,
+  Facebook,
+} from "lucide-react";
+import { useSelector } from "react-redux";
+import useCreatedAtSorted from "@/hooks/useCreatedAtSorted";
 
 const Footer = () => {
+  const { contact_info, site_info } = useSelector(
+    (state) => state.siteSettings,
+  );
+  const { services: sr } = useSelector((state) => state.service);
+  const { sortedData: sortedServices } = useCreatedAtSorted(sr);
+
+  const servicesCategory = sortedServices.map((item) => item?.category);
+
   const socialLinks = [
-    { icon: Github, href: '#', label: 'GitHub' },
-    { icon: Linkedin, href: '#', label: 'LinkedIn' },
-    { icon: Twitter, href: '#', label: 'Twitter' },
-    { icon: Instagram, href: '#', label: 'Instagram' },
-  ]
+    {
+      icon: Github,
+      href: contact_info?.github,
+      label: "GitHub",
+      color: "hover:text-gray-100",
+    },
+    {
+      icon: Linkedin,
+      href: contact_info?.linkedin,
+      label: "LinkedIn",
+      color: "hover:text-blue-400",
+    },
+    {
+      icon: Facebook,
+      href: contact_info?.facebook,
+      label: "Facebook",
+      color: "hover:text-sky-400",
+    },
+    {
+      icon: Instagram,
+      href: contact_info?.instagram,
+      label: "Instagram",
+      color: "hover:text-pink-400",
+    },
+  ];
 
   const quickLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'About', path: '/about' },
-    { name: 'Services', path: '/services' },
-    { name: 'Projects', path: '/projects' },
-    { name: 'Contact', path: '/contact' },
-  ]
+    { name: "Home", path: "/" },
+    { name: "About", path: "/about" },
+    { name: "Services", path: "/services" },
+    { name: "Projects", path: "/projects" },
+    { name: "Contact", path: "/contact" },
+  ];
 
-  const services = [
-    'Web Development',
-    'UI/UX Design',
-    'Motion Graphics',
-    'Brand Strategy',
-  ]
+  const servicesTitle = servicesCategory || [
+    "Web Development",
+    "UI/UX Design",
+    "Motion Graphics",
+    "Brand Strategy",
+  ];
 
   return (
     <footer className="relative bg-dark-charcoal pt-20 pb-8 overflow-hidden">
@@ -49,7 +88,7 @@ const Footer = () => {
               </span>
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed mb-6">
-              Crafting digital experiences that merge art with functionality. 
+              Crafting digital experiences that merge art with functionality.
               Let's build something amazing together.
             </p>
             <div className="flex gap-4">
@@ -102,7 +141,7 @@ const Footer = () => {
               Services
             </h3>
             <ul className="space-y-3">
-              {services.map((service) => (
+              {servicesTitle.map((service) => (
                 <li key={service}>
                   <span className="text-gray-400 text-sm">{service}</span>
                 </li>
@@ -123,17 +162,22 @@ const Footer = () => {
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <Mail size={18} className="text-neon-cyan mt-0.5" />
-                <span className="text-gray-400 text-sm">hello@portfolio.com</span>
+                <span className="text-gray-400 text-sm">
+                  {contact_info?.email || "zainabro886@gmail.com"}
+                </span>
               </li>
               <li className="flex items-start gap-3">
                 <Phone size={18} className="text-neon-cyan mt-0.5" />
-                <span className="text-gray-400 text-sm">+1 (555) 123-4567</span>
+                <span className="text-gray-400 text-sm">
+                  {contact_info?.contactPhone || "03032150993"}
+                </span>
               </li>
               <li className="flex items-start gap-3">
                 <MapPin size={18} className="text-neon-cyan mt-0.5" />
                 <span className="text-gray-400 text-sm">
-                  123 Creative Street<br />
-                  New York, NY 10001
+                  Tando Muhammad Khan
+                  <br />
+                  Sindh, Pakistan
                 </span>
               </li>
             </ul>
@@ -152,20 +196,26 @@ const Footer = () => {
           className="flex flex-col md:flex-row items-center justify-between gap-4"
         >
           <p className="text-gray-500 text-sm text-center md:text-left">
-            © {new Date().getFullYear()} Portfolio. All rights reserved.
+            {site_info?.footerText || "Portfolio. All rights reserved."}
           </p>
           <div className="flex gap-6">
-            <Link to="#" className="text-gray-500 hover:text-neon-cyan text-sm transition-colors">
+            <Link
+              to="#"
+              className="text-gray-500 hover:text-neon-cyan text-sm transition-colors"
+            >
               Privacy Policy
             </Link>
-            <Link to="#" className="text-gray-500 hover:text-neon-cyan text-sm transition-colors">
+            <Link
+              to="#"
+              className="text-gray-500 hover:text-neon-cyan text-sm transition-colors"
+            >
               Terms of Service
             </Link>
           </div>
         </motion.div>
       </div>
     </footer>
-  )
-}
+  );
+};
 
-export default Footer
+export default Footer;

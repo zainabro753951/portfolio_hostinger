@@ -2,9 +2,11 @@ import { motion } from "motion/react";
 import React, { memo } from "react";
 import { useSelector } from "react-redux";
 import FAQ from "./FAQ";
+import useCreatedAtSorted from "../../../../hooks/useCreatedAtSorted";
 
 const FAQTable = () => {
   const { FAQs } = useSelector((state) => state.FAQ);
+  const { sortedData: sortedFAQs } = useCreatedAtSorted(FAQs);
 
   // Animation variants for container
   const containerVariants = {
@@ -57,8 +59,8 @@ const FAQTable = () => {
             All FAQs
           </h2>
           <p className="text-slate-400 text-sm sm:text-base mt-1">
-            {FAQs?.length || 0} {FAQs?.length === 1 ? "question" : "questions"}{" "}
-            total
+            {sortedFAQs?.length || 0}{" "}
+            {sortedFAQs?.length === 1 ? "question" : "questions"} total
           </p>
         </div>
 
@@ -72,8 +74,8 @@ const FAQTable = () => {
         initial="hidden"
         animate="visible"
       >
-        {FAQs?.length > 0 ? (
-          FAQs.map((item, idx) => (
+        {sortedFAQs?.length > 0 ? (
+          sortedFAQs.map((item, idx) => (
             <FAQ faq={item} idx={idx} key={item.id || idx} />
           ))
         ) : (

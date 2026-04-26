@@ -5,6 +5,7 @@ import { ArrowDown, Sparkles } from "lucide-react";
 import heroImage from "../assets/images/hero-portrait.jpg";
 import HeroSkeleton from "./HeroSkeleton";
 import { useGSAP } from "@gsap/react";
+import { useSelector } from "react-redux";
 
 gsap.registerPlugin(useGSAP);
 
@@ -14,6 +15,7 @@ const Hero = ({ about }) => {
   const imageRef = useRef(null);
   const headingRef = useRef(null);
   const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
+  const { testimonials } = useSelector((state) => state.testimonial);
 
   useGSAP(
     () => {
@@ -249,9 +251,15 @@ const Hero = ({ about }) => {
             {/* Stats */}
             <div className="cta-buttons flex gap-8 mt-12 justify-center lg:justify-start">
               {[
-                { value: about?.experience, label: "Years Experience" },
-                { value: "50+", label: "Projects Completed" },
-                { value: "30+", label: "Happy Clients" },
+                { value: about?.experience || "5", label: "Years Experience" },
+                {
+                  value: about?.projectCounts?.publishedProjects || "5+",
+                  label: "Projects Completed",
+                },
+                {
+                  value: testimonials?.length || "5",
+                  label: "Happy Clients",
+                },
               ].map((stat, index) => (
                 <div key={index} className="text-center">
                   <div className="text-2xl sm:text-3xl font-display font-bold text-neon-cyan">

@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import api from "../api/axios";
 
 const deleteEntry = async ({ route, ids }) => {
-  const { data } = await axios.delete(route, {
+  const { data } = await api.delete(route, {
     data: { ids }, // DELETE requests mein body aise bhejte hain
   });
   return data;

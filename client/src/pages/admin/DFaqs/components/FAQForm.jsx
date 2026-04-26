@@ -1,22 +1,25 @@
-import React, { useEffect, useState, memo, useCallback } from "react";
+import React, { useEffect, useState, memo, useCallback, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { motion } from "motion/react";
-import { useParams } from "react-router-dom";
-import { clearExp, expFindById } from "../../../../features/experienceSlice";
-import { useAddFAQ } from "../../../../Queries/AddFAQ";
+import { useParams, useSearchParams } from "react-router-dom";
+import { clearExp, expFindById } from "@/features/experienceSlice";
+import { useAddFAQ } from "@/Queries/AddFAQ";
 import { glassToast } from "../../Components/ToastMessage";
 import FormField from "../../Components/FormField";
 import SelectField from "../../Components/OptionField";
 import { ThreeCircles } from "react-loader-spinner";
 import TextareaField from "../../Components/TextAreaField";
-import { clearFAQ, FAQFindById } from "../../../../features/FAQSlice";
+import { clearFAQ, FAQFindById } from "@/features/FAQSlice";
+import useScrollToRef from "@/hooks/useScrollToRef";
 
 const FAQForm = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const dispatch = useDispatch();
   const { FAQs, FAQ } = useSelector((state) => state.FAQ);
   const [isUpdate, setIsUpdate] = useState(false);
+  const updateForm = useRef(null);
 
   const defaultValues = {
     question: "",
@@ -54,6 +57,9 @@ const FAQForm = () => {
       setIsUpdate(true);
     }
   }, [id, FAQ, reset]);
+
+  // ✅ Sirf tab scroll kare jab id  ho
+  useScrollToRef(updateForm, [id], { block: "end" }, !!id);
 
   const { mutate, isPending, isError, isSuccess, data, error } = useAddFAQ();
 
@@ -120,6 +126,7 @@ const FAQForm = () => {
       <form
         onSubmit={handleSubmit(onSubmit)}
         encType="multipart/form-data"
+        ref={updateForm}
         className="w-full flex flex-col gap-4 sm:gap-5 md:gap-6"
       >
         {/* Row 1: Question & Status */}

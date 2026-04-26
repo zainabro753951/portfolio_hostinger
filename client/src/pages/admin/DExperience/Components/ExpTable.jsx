@@ -13,11 +13,31 @@ import {
   Wrench,
   FileText,
   Image as ImageIcon,
+  CalendarPlus,
+  CalendarCheck,
 } from "lucide-react";
 import { useDeleteEntryContext } from "../../../../context/DeleteEntry";
+import {
+  formatTimeAgo,
+  getFileIcon,
+  getFileNameFromUrl,
+} from "../../../../Utils/Utils";
+import useCreatedAtSorted from "../../../../hooks/useCreatedAtSorted";
 
 // Table row component
 const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
+  const companyLogo = useMemo(() =>
+    typeof item?.companyLogo === "string"
+      ? JSON.parse(item?.companyLogo)
+      : item?.companyLogo,
+  );
+
+  const createdAt = formatTimeAgo(item?.createdAt);
+  const updatedAt = formatTimeAgo(item?.updatedAt);
+  const imageName = getFileNameFromUrl(companyLogo?.url);
+  const { Icon: FileIcon, color: FileIconColor } = getFileIcon(imageName);
+
   const rowVariants = useMemo(
     () => ({
       hidden: { opacity: 0, x: -20 },
@@ -125,20 +145,119 @@ const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
         </div>
       </div>
 
+      {/* Created At */}
+      <div className="py-4 px-3 w-48 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <CalendarPlus className="w-4 h-4 text-slate-500 flex-shrink-0" />
+          <span className="text-slate-400 text-xs truncate">{createdAt}</span>
+        </div>
+      </div>
+
+      {/* Updated At */}
+      <div className="py-4 px-3 w-48 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <CalendarCheck className="w-4 h-4 text-slate-500 flex-shrink-0" />
+          <span className="text-slate-400 text-xs truncate">{updatedAt}</span>
+        </div>
+      </div>
+
       {/* Company Logo */}
       <div className="py-4 px-3 flex justify-center w-16 flex-shrink-0">
-        {item?.companyLogo?.url ? (
-          <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-800/50 border border-white/10 flex-shrink-0">
-            <img
-              src={item.companyLogo.url}
-              alt={item.company}
-              className="w-full h-full object-cover"
+        {companyLogo && companyLogo?.url ? (
+          <motion.a
+            href={`${backendUrl}${companyLogo.url}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            // ✅ Animation variants
+            variants={{
+              hidden: { opacity: 0.8 },
+              hover: {
+                scale: prefersReducedMotion ? 1 : 1.05,
+                borderColor: prefersReducedMotion
+                  ? FileIconColor
+                  : FileIconColor,
+                boxShadow: prefersReducedMotion
+                  ? "none"
+                  : `0 0 20px ${FileIconColor}40, 0 0 40px ${FileIconColor}20`,
+                transition: {
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 15,
+                  mass: 0.8,
+                },
+              },
+              tap: {
+                scale: prefersReducedMotion ? 1 : 0.95,
+                transition: { duration: 0.1 },
+              },
+            }}
+            initial="hidden"
+            whileHover="hover"
+            whileTap="tap"
+            // ✅ Static styles
+            className="w-12 h-12 rounded-lg flex items-center justify-center border  flex-shrink-0 cursor-pointer overflow-hidden relative group"
+            style={{
+              backgroundColor: FileIconColor + "20",
+              borderColor: FileIconColor,
+            }}
+          >
+            {/* ✅ Animated Icon with color shift */}
+            <motion.div
+              variants={{
+                hover: {
+                  rotate: prefersReducedMotion ? 0 : 15,
+                  scale: prefersReducedMotion ? 1 : 1.1,
+                },
+              }}
+              className="relative z-10"
+            >
+              <FileIcon
+                className="w-6 h-6 stroke-current transition-colors duration-300"
+                style={{
+                  color: FileIconColor,
+                  filter: prefersReducedMotion
+                    ? "none"
+                    : "drop-shadow(0 2px 4px rgba(0,0,0,0.2))",
+                }}
+              />
+            </motion.div>
+
+            {/* ✅ Animated background glow effect */}
+            <motion.div
+              className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              style={{
+                background: `radial-gradient(circle at center, ${FileIconColor}30 0%, transparent 70%)`,
+              }}
             />
-          </div>
+
+            {/* ✅ Subtle border pulse animation */}
+            <motion.div
+              className="absolute inset-0 rounded-lg border-2 opacity-0 group-hover:opacity-100"
+              style={{ borderColor: FileIconColor }}
+              initial={{ scale: 0.8, opacity: 0 }}
+              whileHover={{
+                scale: 1.2,
+                opacity: [0, 1, 0],
+                transition: {
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                },
+              }}
+            />
+
+            {/* ✅ Tooltip hint (optional) */}
+            <motion.span
+              className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 rounded text-xs font-medium text-white whitespace-nowrap bg-slate-900/90 backdrop-blur-sm border border-white/10 opacity-0 pointer-events-none"
+              initial={{ opacity: 0, y: 5 }}
+              whileHover={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              View Certificate ↗
+            </motion.span>
+          </motion.a>
         ) : (
-          <div className="w-10 h-10 rounded-lg bg-slate-800/50 flex items-center justify-center border border-white/10 flex-shrink-0">
-            <ImageIcon className="w-5 h-5 text-slate-600" />
-          </div>
+          <span className="text-slate-500 text-xs">No certificate</span>
         )}
       </div>
 
@@ -170,6 +289,9 @@ const ExpTable = () => {
   const { experiences } = useSelector((state) => state.experience);
   const { setRoute, setIsOpen, setQueryKey } = useDeleteEntryContext();
   const prefersReducedMotion = useReducedMotion();
+
+  // Experience sorted
+  const { sortedData: sortedExp } = useCreatedAtSorted(experiences);
 
   useEffect(() => {
     setQueryKey("experiences");
@@ -218,14 +340,14 @@ const ExpTable = () => {
             All Experience
           </h3>
           <p className="text-slate-500 text-xs sm:text-sm">
-            {experiences?.length || 0} entries
+            {sortedExp?.length || 0} entries
           </p>
         </div>
       </div>
 
       {/* Table Container with Horizontal Scroll */}
       <div className="overflow-x-auto custom-scrollbar">
-        <div className="min-w-[1400px]">
+        <div className="min-w-[1700px]">
           {/* Table Header - Fixed Layout */}
           <div className="flex items-center bg-white/[0.02] border-b border-white/10 text-xs font-semibold text-slate-400 uppercase tracking-wider sticky top-0 z-10">
             <div className="py-3 px-3 text-center w-16 flex-shrink-0">ID</div>
@@ -240,6 +362,10 @@ const ExpTable = () => {
             </div>
             <div className="py-3 px-3 w-48 flex-shrink-0">Technologies</div>
             <div className="py-3 px-3 flex-1 min-w-[200px]">Description</div>
+            {/* Created At */}
+            <div className="py-3 px-3 w-48 flex-shrink-0">Created At</div>
+            {/* Updated At */}
+            <div className="py-3 px-3 w-48 flex-shrink-0">Updated At</div>
             <div className="py-3 px-3 text-center w-16 flex-shrink-0">Logo</div>
             <div className="py-3 px-3 text-center w-24 flex-shrink-0">
               Actions
@@ -248,8 +374,8 @@ const ExpTable = () => {
 
           {/* Table Body */}
           <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
-            {experiences?.length > 0 ? (
-              experiences.map((item, index) => (
+            {sortedExp?.length > 0 ? (
+              sortedExp.map((item, index) => (
                 <ExpRow
                   key={item.id}
                   item={item}

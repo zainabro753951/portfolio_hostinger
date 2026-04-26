@@ -25,7 +25,7 @@ router.post(
 router.get("/message/get", SecureRoute, getMessage);
 
 // Delete Contact Messages
-router.post("/message/delete", SecureRoute, deleteContactMessages);
+router.delete("/message/delete", SecureRoute, deleteContactMessages);
 
 // mark as read
 router.post("/message/mark-as-read", SecureRoute, toggleReadStatus);

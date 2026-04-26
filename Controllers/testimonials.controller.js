@@ -47,27 +47,58 @@ export const addTestimonial = async (req, res) => {
 
   // Type conversion
   isUpdate = isUpdate === "true" || isUpdate === true;
-  clientImageOBJ =
-    typeof clientImageOBJ === "string"
-      ? safeParse(clientImageOBJ)
-      : clientImageOBJ;
+  testimonialID = isUpdate ? Number(testimonialID) || null : null;
+
+  // Safe parse clientImageOBJ
+  let parsedClientImage = null;
+  if (clientImageOBJ) {
+    parsedClientImage =
+      typeof clientImageOBJ === "string"
+        ? safeParse(clientImageOBJ)
+        : clientImageOBJ;
+  }
+
+  // Validate parsed image object structure
+  const validClientImage =
+    parsedClientImage && (parsedClientImage.url || parsedClientImage.key)
+      ? {
+          url: parsedClientImage.url || null,
+          key: parsedClientImage.key || null,
+        }
+      : null;
 
   let newFileKey = ""; // Tracking for rollback
+  let newFileUrl = "";
 
   try {
     // 1. Upload new image if provided (Local Storage)
-    let uploadResult = null;
     if (req.file) {
-      uploadResult = await uploadToLocal(req.file, "testimonials");
-      newFileKey = uploadResult?.key;
+      const uploadResult = await uploadToLocal(req.file, "testimonials");
+      console.log("Upload Result:", uploadResult);
+
+      newFileKey = uploadResult?.key || "";
+      newFileUrl = uploadResult?.url || "";
     }
 
-    const finalClientImage = {
-      url: uploadResult?.url || clientImageOBJ?.url || null,
-      key: uploadResult?.key || clientImageOBJ?.key || null,
-    };
+    // 2. Build final image object
+    // Priority: New upload > Existing image > null
+    const finalClientImage = newFileKey
+      ? { url: newFileUrl, key: newFileKey }
+      : validClientImage;
+
+    console.log("Final Client Image:", finalClientImage);
+    console.log("Existing Image Object:", validClientImage);
 
     if (isUpdate) {
+      // Validate testimonialID
+      if (!testimonialID) {
+        if (newFileKey) await deleteFromLocal(newFileKey);
+        return res.status(400).json({
+          success: false,
+          message: "Testimonial ID is required for update!",
+        });
+      }
+
       // Check existing record
       const [rows] = await pool.query(
         "SELECT clientImage FROM testimonials WHERE id = ?",
@@ -81,20 +112,28 @@ export const addTestimonial = async (req, res) => {
           .json({ success: false, message: "Testimonial not found!" });
       }
 
-      // Safe parse existing image
+      // Safe parse existing image from DB
       const existingImg =
         typeof rows[0].clientImage === "string"
           ? safeParse(rows[0].clientImage)
           : rows[0].clientImage;
 
-      // 2. Delete old image if a new one is uploaded
-      if (req.file && existingImg?.key) {
-        await deleteFromLocal(existingImg.key).catch((e) =>
-          console.error("Old file delete failed", e),
+      const validExistingImg =
+        existingImg && (existingImg.url || existingImg.key)
+          ? { url: existingImg.url, key: existingImg.key }
+          : null;
+
+      // 3. Delete old image if a new one is uploaded
+      if (req.file && validExistingImg?.key) {
+        await deleteFromLocal(validExistingImg.key).catch((e) =>
+          console.error("Old file delete failed:", e),
         );
       }
 
-      // 3. Perform update
+      // 4. If no new image uploaded, preserve existing image from DB
+      const imageToStore = finalClientImage || validExistingImg;
+
+      // 5. Perform update
       const [updateResult] = await pool.query(
         `UPDATE testimonials 
          SET clientName=?, designationRole=?, company=?, clientImage=?, ratting=?, projectId=?, testimonialDate=?, message=? 
@@ -103,9 +142,9 @@ export const addTestimonial = async (req, res) => {
           clientName,
           designationRole,
           company,
-          JSON.stringify(finalClientImage.key ? finalClientImage : null),
+          imageToStore ? JSON.stringify(imageToStore) : null,
           ratting,
-          projectId,
+          projectId || null,
           testimonialDate,
           message,
           testimonialID,
@@ -119,11 +158,13 @@ export const addTestimonial = async (req, res) => {
           .json({ success: false, message: "Update failed!" });
       }
 
-      return res
-        .status(200)
-        .json({ success: true, message: "Testimonial updated successfully." });
+      return res.status(200).json({
+        success: true,
+        message: "Testimonial updated successfully.",
+        data: { image: imageToStore },
+      });
     } else {
-      // 4. INSERT LOGIC
+      // 6. INSERT LOGIC
       const [insertResult] = await pool.query(
         `INSERT INTO testimonials 
          (clientName, designationRole, company, clientImage, ratting, projectId, testimonialDate, message) 
@@ -132,9 +173,9 @@ export const addTestimonial = async (req, res) => {
           clientName,
           designationRole,
           company,
-          JSON.stringify(finalClientImage.key ? finalClientImage : null),
+          finalClientImage ? JSON.stringify(finalClientImage) : null,
           ratting,
-          projectId,
+          projectId || null,
           testimonialDate,
           message,
         ],
@@ -147,16 +188,19 @@ export const addTestimonial = async (req, res) => {
           .json({ success: false, message: "Failed to add testimonial!" });
       }
 
-      return res
-        .status(201)
-        .json({ success: true, message: "Testimonial added successfully." });
+      return res.status(201).json({
+        success: true,
+        message: "Testimonial added successfully.",
+        data: { image: finalClientImage },
+      });
     }
   } catch (error) {
     console.error("Testimonial Error:", error);
-    if (newFileKey)
+    if (newFileKey) {
       await deleteFromLocal(newFileKey).catch((e) =>
-        console.error("Rollback failed", e),
+        console.error("Rollback failed:", e),
       );
+    }
     res.status(500).json({ success: false, message: "Internal Server Error!" });
   }
 };

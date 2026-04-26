@@ -1,41 +1,120 @@
 import { body, validationResult } from "express-validator";
 import pool from "../db.config.js";
 import { deleteFromLocal, uploadToLocal } from "../Utils/uploadToLocal.js"; // Updated Helpers
-import { safeParse } from "../Utils/SafeParser.js";
+import {
+  safeParse,
+  parseJSONArray,
+  extractValues,
+  normalizeBool,
+  normalizeNumber,
+} from "../Utils/SafeParser.js";
 
 export const serviceValidations = [
-  body("title").trim().notEmpty().withMessage("Title is required"),
-
-  body("shortDesc")
+  body("title")
     .trim()
     .notEmpty()
-    .withMessage("Service description is required"),
+    .withMessage("Title is required")
+    .isLength({ max: 200 })
+    .withMessage("Title must be at most 200 characters"),
+
+  body("slug")
+    .trim()
+    .notEmpty()
+    .withMessage("Slug is required")
+    .matches(/^[a-z0-9-]+$/)
+    .withMessage(
+      "Slug must contain only lowercase letters, numbers, and hyphens",
+    ),
+
+  body("shortDescription")
+    .trim()
+    .notEmpty()
+    .withMessage("Short description is required")
+    .isLength({ max: 500 })
+    .withMessage("Short description must be at most 500 characters"),
+
+  body("fullDescription")
+    .trim()
+    .notEmpty()
+    .withMessage("Full description is required"),
 
   body("category").notEmpty().withMessage("Category is required"),
+
+  body("status")
+    .optional()
+    .isIn(["draft", "active", "inactive"])
+    .withMessage("Status must be draft, active, or inactive"),
+
+  body("isFeatured")
+    .optional()
+    .custom((value) => {
+      const normalized = value === "true" || value === true;
+      return normalized === true || normalized === false;
+    })
+    .withMessage("isFeatured must be a boolean"),
 ];
 
+// Middleware to handle validation errors
+export const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      success: false,
+      errorCode: "VALIDATION_ERROR",
+      errors: errors.array().map((err) => ({
+        field: err.path,
+        message: err.msg,
+        value: err.value,
+      })),
+    });
+  }
+  next();
+};
+
+// ── ADD / UPDATE SERVICE ─────────────────────────────────────────
 export const addService = async (req, res) => {
+  // ── Extract all fields from req.body ───────────────────────────
   let {
     serviceId,
     isUpdate,
     serviceImageOBJ,
     title,
-    shortDesc,
-    status,
+    slug,
+    shortDescription,
+    fullDescription,
     category,
+    techStack,
+    features,
+    deliveryTime,
+    status,
+    isFeatured,
+    seoMetaTitle,
+    seoMetaDescription,
+    seoKeywords,
   } = req.body;
 
-  // Type Casting & Parsing
-  isUpdate = isUpdate === "true" || isUpdate === true;
-  serviceImageOBJ =
-    typeof serviceImageOBJ === "string"
-      ? safeParse(serviceImageOBJ)
-      : serviceImageOBJ;
+  console.log(req.body);
+  console.log(req.file);
+
+  // ── Type Casting & Parsing ─────────────────────────────────────
+  isUpdate = normalizeBool(isUpdate);
+  serviceImageOBJ = safeParse(serviceImageOBJ);
+
+  // Parse JSON arrays from FormData
+  const techStackArr = parseJSONArray(techStack);
+  const featuresArr = parseJSONArray(features);
+  const seoKeywordsArr = parseJSONArray(seoKeywords);
+
+  console.log(techStackArr);
+
+  // Normalize other fields
+  const normalizedStatus = status || "draft";
+  const normalizedFeatured = normalizeBool(isFeatured);
 
   let newFileKey = ""; // Track for rollback
 
   try {
-    // 1. Validation Check (Early Return)
+    // ── 1. Validation Check ──────────────────────────────────────
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -45,11 +124,11 @@ export const addService = async (req, res) => {
       });
     }
 
-    // 2. Upload Image if provided (Local)
+    // ── 2. Upload Image if provided ──────────────────────────────
     let uploadResult = null;
     if (req.file) {
       uploadResult = await uploadToLocal(req.file, "services");
-      newFileKey = uploadResult?.key;
+      newFileKey = uploadResult?.key || "";
     }
 
     const finalImageObj = {
@@ -57,8 +136,20 @@ export const addService = async (req, res) => {
       url: uploadResult?.url || serviceImageOBJ?.url || null,
     };
 
-    // --- UPDATE LOGIC ---
+    // ═════════════════════════════════════════════════════════════
+    // UPDATE LOGIC
+    // ═════════════════════════════════════════════════════════════
     if (isUpdate && serviceId) {
+      serviceId = parseInt(serviceId, 10);
+      if (isNaN(serviceId)) {
+        if (newFileKey) await deleteFromLocal(newFileKey);
+        return res.status(400).json({
+          success: false,
+          message: "Invalid service ID!",
+        });
+      }
+
+      // Check if service exists
       const [existing] = await pool.query(
         "SELECT serviceImage FROM services WHERE id = ?",
         [serviceId],
@@ -66,72 +157,141 @@ export const addService = async (req, res) => {
 
       if (existing.length === 0) {
         if (newFileKey) await deleteFromLocal(newFileKey);
-        return res
-          .status(404)
-          .json({ success: false, message: "Service not found!" });
+        return res.status(404).json({
+          success: false,
+          message: "Service not found!",
+        });
       }
 
       // Cleanup old image if replaced
-      if (req.file) {
-        const oldImg =
-          typeof existing[0].serviceImage === "string"
-            ? safeParse(existing[0].serviceImage)
-            : existing[0].serviceImage;
-        if (oldImg?.key) {
+      if (req.file && existing[0].serviceImage) {
+        const oldImg = safeParse(existing[0].serviceImage);
+        if (oldImg?.key && oldImg.key !== newFileKey) {
           await deleteFromLocal(oldImg.key).catch((e) =>
-            console.warn("Old image delete failed", e),
+            console.warn("⚠️ Old image delete failed:", e.message),
           );
         }
       }
 
+      // ── UPDATE DATABASE ────────────────────────────────────────
       await pool.query(
-        `UPDATE services SET title=?, shortDesc=?, category=?, serviceImage=?, status=?, updatedAt=NOW() WHERE id=?`,
+        `UPDATE services 
+         SET 
+           title = ?,
+           slug = ?,
+           shortDescription = ?,
+           fullDescription = ?,
+           category = ?,
+           techStack = ?,
+           features = ?,
+           deliveryTime = ?,
+           serviceImage = ?,
+           status = ?,
+           isFeatured = ?,
+           seoMetaTitle = ?,
+           seoMetaDescription = ?,
+           seoKeywords = ?
+         WHERE id = ?`,
         [
           title,
-          shortDesc,
+          slug,
+          shortDescription,
+          fullDescription,
           category,
+          JSON.stringify(techStackArr),
+          JSON.stringify(featuresArr),
+          deliveryTime || null,
           JSON.stringify(finalImageObj.key ? finalImageObj : null),
-          status || "draft",
+          normalizedStatus,
+          normalizedFeatured ? 1 : 0,
+          seoMetaTitle || null,
+          seoMetaDescription || null,
+          JSON.stringify(seoKeywordsArr),
           serviceId,
         ],
       );
 
-      return res
-        .status(200)
-        .json({ success: true, message: "Service updated successfully!" });
+      return res.status(200).json({
+        success: true,
+        message: "Service updated successfully!",
+        data: { id: serviceId },
+      });
     }
 
-    // --- INSERT LOGIC ---
+    // ═════════════════════════════════════════════════════════════
+    // INSERT LOGIC
+    // ═════════════════════════════════════════════════════════════
+
     // Check duplicate title
     const [duplicate] = await pool.query(
-      "SELECT id FROM services WHERE title = ?",
-      [title],
+      "SELECT id FROM services WHERE title = ? OR slug = ?",
+      [title, slug],
     );
+
     if (duplicate.length > 0) {
       if (newFileKey) await deleteFromLocal(newFileKey);
-      return res
-        .status(409)
-        .json({ success: false, message: "Service title already exists!" });
+      return res.status(409).json({
+        success: false,
+        message: "Service with this title or slug already exists!",
+      });
     }
 
+    // ── INSERT INTO DATABASE ───────────────────────────────────
     const [insertResult] = await pool.query(
-      "INSERT INTO services (title, shortDesc, category, serviceImage, status) VALUES (?, ?, ?, ?, ?)",
+      `INSERT INTO services (
+    title,
+    slug,
+    shortDescription,
+    fullDescription,
+    category,
+    techStack,
+    features,
+    deliveryTime,
+    serviceImage,
+    status,
+    isFeatured,
+    seoMetaTitle,
+    seoMetaDescription,
+    seoKeywords
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         title,
-        shortDesc,
+        slug,
+        shortDescription,
+        fullDescription,
         category,
+        JSON.stringify(techStackArr),
+        JSON.stringify(featuresArr),
+        deliveryTime || null,
         JSON.stringify(finalImageObj.key ? finalImageObj : null),
-        status || "draft",
+        normalizedStatus,
+        normalizedFeatured ? 1 : 0,
+        seoMetaTitle || null,
+        seoMetaDescription || null,
+        JSON.stringify(seoKeywordsArr),
       ],
     );
 
-    res
-      .status(201)
-      .json({ success: true, message: "Service added successfully!" });
+    return res.status(201).json({
+      success: true,
+      message: "Service added successfully!",
+      data: { id: insertResult.insertId },
+    });
   } catch (error) {
     console.error("❌ Service Controller Error:", error);
-    if (newFileKey) await deleteFromLocal(newFileKey); // Rollback on crash
-    res.status(500).json({ success: false, message: "Internal Server Error!" });
+
+    // Rollback: delete uploaded file on crash
+    if (newFileKey) {
+      await deleteFromLocal(newFileKey).catch((e) =>
+        console.warn("⚠️ Rollback delete failed:", e.message),
+      );
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error!",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
 };
 

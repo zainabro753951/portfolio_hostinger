@@ -14,7 +14,7 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
   connectTimeout: 10000, // 10 sec
-  timezone: "+05:00",
+  timezone: "Z", // Explicitly UTC (optional, default bhi UTC hota hai)
 });
 
 export default pool;
