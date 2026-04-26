@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useRef } from "react";
 import { motion } from "motion/react";
 import { Mail, MessageSquare, BarChart3, Eye } from "lucide-react";
 import ContactMessageHeader from "./components/ContactMessageHeader";
@@ -8,6 +8,7 @@ import DMessageView from "./components/DMessageView";
 import ReplyModal from "./components/ReplyModal";
 
 const DContactMessagePage = () => {
+  const MessageViewRef = useRef(null)
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -76,7 +77,7 @@ const DContactMessagePage = () => {
                 All Messages
               </h2>
             </div>
-            <CMTable />
+            <CMTable MessageViewRef={MessageViewRef} />
           </div>
 
           {/* Stats & View Section - Takes 1 column */}
@@ -100,7 +101,7 @@ const DContactMessagePage = () => {
                   Message Details
                 </h2>
               </div>
-              <DMessageView />
+              <DMessageView MessageViewRef={MessageViewRef} />
             </div>
           </div>
         </motion.div>

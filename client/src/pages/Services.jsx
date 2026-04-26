@@ -94,25 +94,29 @@ const ADDITIONAL_SERVICES = [
   {
     icon: Smartphone,
     title: "Mobile Development",
-    description: "Creating responsive mobile-first experiences and progressive web apps.",
+    description:
+      "Creating responsive mobile-first experiences and progressive web apps.",
     color: "from-pink-500 to-rose-500",
   },
   {
     icon: Globe,
     title: "SEO Optimization",
-    description: "Improving your website visibility and ranking on search engines.",
+    description:
+      "Improving your website visibility and ranking on search engines.",
     color: "from-cyan-400 to-blue-500",
   },
   {
     icon: Layers,
     title: "3D Design",
-    description: "Adding depth to your projects with stunning 3D elements and animations.",
+    description:
+      "Adding depth to your projects with stunning 3D elements and animations.",
     color: "from-indigo-500 to-purple-500",
   },
   {
     icon: Sparkles,
     title: "Consulting",
-    description: "Expert advice to help you make the right technical decisions.",
+    description:
+      "Expert advice to help you make the right technical decisions.",
     color: "from-orange-400 to-amber-500",
   },
 ];
@@ -121,35 +125,40 @@ const PROCESS_STEPS = [
   {
     number: "01",
     title: "Discovery",
-    description: "Understanding your goals, target audience, and project requirements through in-depth discussions.",
+    description:
+      "Understanding your goals, target audience, and project requirements through in-depth discussions.",
     icon: MessageCircle,
     duration: "1-2 Days",
   },
   {
     number: "02",
     title: "Strategy",
-    description: "Developing a comprehensive plan with timelines, milestones, and deliverables.",
+    description:
+      "Developing a comprehensive plan with timelines, milestones, and deliverables.",
     icon: Calendar,
     duration: "2-3 Days",
   },
   {
     number: "03",
     title: "Design",
-    description: "Creating wireframes, mockups, and prototypes to visualize the final product.",
+    description:
+      "Creating wireframes, mockups, and prototypes to visualize the final product.",
     icon: Palette,
     duration: "1-2 Weeks",
   },
   {
     number: "04",
     title: "Development",
-    description: "Building the solution with clean code and modern technologies.",
+    description:
+      "Building the solution with clean code and modern technologies.",
     icon: Code,
     duration: "2-4 Weeks",
   },
   {
     number: "05",
     title: "Launch",
-    description: "Deploying your project and ensuring everything runs smoothly.",
+    description:
+      "Deploying your project and ensuring everything runs smoothly.",
     icon: Shield,
     duration: "1 Day",
   },
@@ -174,13 +183,22 @@ const ServiceCard = ({ service, index }) => {
       className="group relative"
       style={{ perspective: "1000px" }}
     >
-      <div className={`relative p-8 rounded-3xl bg-gradient-to-br ${service.gradient} border border-white/10 hover:border-white/30 transition-all duration-500 h-full overflow-hidden backdrop-blur-sm`}>
+      <div
+        className={`relative p-8 rounded-3xl bg-gradient-to-br ${service.gradient} border border-white/10 hover:border-white/30 transition-all duration-500 h-full overflow-hidden backdrop-blur-sm`}
+      >
         {/* Animated Background */}
-        <div className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-br ${service.color} opacity-10 rounded-full blur-[80px] group-hover:opacity-25 transition-all duration-700 group-hover:scale-150`} />
-        
+        <div
+          className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-br ${service.color} opacity-10 rounded-full blur-[80px] group-hover:opacity-25 transition-all duration-700 group-hover:scale-150`}
+        />
+
         {/* Grid Pattern Overlay */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500" 
-          style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} 
+        <div
+          className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
+            backgroundSize: "24px 24px",
+          }}
         />
 
         {/* Icon */}
@@ -203,7 +221,7 @@ const ServiceCard = ({ service, index }) => {
         {/* Features List */}
         <ul className="space-y-3 mb-8 relative z-10">
           {service.features.map((feature, fIndex) => (
-            <motion.li 
+            <motion.li
               key={fIndex}
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -217,7 +235,9 @@ const ServiceCard = ({ service, index }) => {
               >
                 <Check size={12} className="text-white" />
               </motion.div>
-              <span className="text-gray-300 text-sm group-hover/item:text-white transition-colors">{feature}</span>
+              <span className="text-gray-300 text-sm group-hover/item:text-white transition-colors">
+                {feature}
+              </span>
             </motion.li>
           ))}
         </ul>
@@ -233,7 +253,10 @@ const ServiceCard = ({ service, index }) => {
             animate={{ x: [0, 5, 0] }}
             transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
           >
-            <ArrowRight size={18} className="group-hover/btn:text-white transition-colors" />
+            <ArrowRight
+              size={18}
+              className="group-hover/btn:text-white transition-colors"
+            />
           </motion.div>
         </motion.button>
       </div>
@@ -244,19 +267,19 @@ const ServiceCard = ({ service, index }) => {
 // ✅ Optimized: Process Step Component
 const ProcessStep = ({ step, index, isLast }) => {
   const item = {
-  hidden: { opacity: 0, x: -50 },
-  show: { opacity: 1, x: 0 }
-};
+    hidden: { opacity: 0, x: -50 },
+    show: { opacity: 1, x: 0 },
+  };
   return (
     <motion.div
-  variants={item}
+      variants={item}
       whileHover={{ x: 10 }}
-transition={{
-  duration: 0.6,
-  ease: "easeOut"
-}}
+      transition={{
+        duration: 0.6,
+        ease: "easeOut",
+      }}
       className="relative flex items-start gap-6 group"
->
+    >
       {/* Connector Line */}
       {!isLast && (
         <div className="absolute left-8 top-16 w-0.5 h-16 bg-gradient-to-b from-cyan-400 to-transparent opacity-30" />
@@ -282,11 +305,13 @@ transition={{
           </div>
         </div>
         <p className="text-gray-400 leading-relaxed">{step.description}</p>
-        
+
         {/* Step Icon */}
         <div className="mt-4 flex items-center gap-2">
           <step.icon size={18} className="text-cyan-400" />
-          <span className="text-xs text-cyan-400 font-medium uppercase tracking-wider">Step {step.number}</span>
+          <span className="text-xs text-cyan-400 font-medium uppercase tracking-wider">
+            Step {step.number}
+          </span>
         </div>
       </div>
     </motion.div>
@@ -306,8 +331,10 @@ const AdditionalServiceCard = ({ service, index }) => {
     >
       <div className="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10 hover:border-cyan-400/30 text-center transition-all duration-300 h-full overflow-hidden">
         {/* Hover Glow */}
-        <div className={`absolute inset-0 bg-gradient-to-br ${service.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
-        
+        <div
+          className={`absolute inset-0 bg-gradient-to-br ${service.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}
+        />
+
         <motion.div
           whileHover={{ rotate: 360 }}
           transition={{ duration: 0.6 }}
@@ -318,7 +345,9 @@ const AdditionalServiceCard = ({ service, index }) => {
         <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-cyan-400 transition-colors relative z-10">
           {service.title}
         </h3>
-        <p className="text-gray-400 text-sm relative z-10">{service.description}</p>
+        <p className="text-gray-400 text-sm relative z-10">
+          {service.description}
+        </p>
       </div>
     </motion.div>
   );
@@ -327,13 +356,13 @@ const AdditionalServiceCard = ({ service, index }) => {
 const Services = () => {
   const containerRef = useRef(null);
   const container = {
-  hidden: {},
-  show: {
-    transition: {
-      staggerChildren: 0.2
-    }
-  }
-};
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: 0.2,
+      },
+    },
+  };
 
   // ✅ Optimized: GSAP with proper cleanup
   useGSAP(
@@ -352,7 +381,7 @@ const Services = () => {
         },
       });
     },
-    { scope: containerRef }
+    { scope: containerRef },
   );
 
   return (
@@ -363,7 +392,10 @@ const Services = () => {
           <div className="absolute inset-0">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-cyan-500/10" />
             <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[120px] animate-pulse" />
-            <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: "1s" }} />
+            <div
+              className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[120px] animate-pulse"
+              style={{ animationDelay: "1s" }}
+            />
           </div>
 
           <div className="max-w-7xl mx-auto px-6 lg:px-8 relative">
@@ -436,7 +468,11 @@ const Services = () => {
 
             <div className="grid lg:grid-cols-2 gap-8">
               {MAIN_SERVICES.map((service, index) => (
-                <ServiceCard key={service.title} service={service} index={index} />
+                <ServiceCard
+                  key={service.title}
+                  service={service}
+                  index={index}
+                />
               ))}
             </div>
           </div>
@@ -458,14 +494,17 @@ const Services = () => {
                 More Services
               </span>
               <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-white">
-                Additional{" "}
-                <span className="text-cyan-400">Offerings</span>
+                Additional <span className="text-cyan-400">Offerings</span>
               </h2>
             </motion.div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {ADDITIONAL_SERVICES.map((service, index) => (
-                <AdditionalServiceCard key={service.title} service={service} index={index} />
+                <AdditionalServiceCard
+                  key={service.title}
+                  service={service}
+                  index={index}
+                />
               ))}
             </div>
           </div>
@@ -491,21 +530,24 @@ const Services = () => {
                 </span>
               </h2>
               <p className="text-gray-400 max-w-2xl mx-auto">
-                A proven process that ensures every project is delivered on time,
-                within budget, and exceeds expectations.
+                A proven process that ensures every project is delivered on
+                time, within budget, and exceeds expectations.
               </p>
             </motion.div>
 
-            <motion.div className="space-y-8" variants={container}
-  initial="hidden"
-  whileInView="show"
-  viewport={{ once: true }}>
+            <motion.div
+              className="space-y-8"
+              variants={container}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true }}
+            >
               {PROCESS_STEPS.map((step, index) => (
-                <ProcessStep 
-                  key={step.number} 
-                  step={step} 
-                  index={index} 
-                  isLast={index === PROCESS_STEPS.length - 1} 
+                <ProcessStep
+                  key={step.number}
+                  step={step}
+                  index={index}
+                  isLast={index === PROCESS_STEPS.length - 1}
                 />
               ))}
             </motion.div>
@@ -536,7 +578,10 @@ const Services = () => {
               </p>
 
               <motion.button
-                whileHover={{ scale: 1.05, boxShadow: "0 0 40px rgba(34, 211, 238, 0.3)" }}
+                whileHover={{
+                  scale: 1.05,
+                  boxShadow: "0 0 40px rgba(34, 211, 238, 0.3)",
+                }}
                 whileTap={{ scale: 0.95 }}
                 className="px-10 py-4 rounded-full bg-white text-gray-900 font-bold text-lg relative overflow-hidden group"
               >

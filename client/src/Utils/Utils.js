@@ -471,3 +471,22 @@ export const getFileNameFromUrl = (url) => {
 export const safeParse = (obj) => {
   return typeof obj === "string" ? JSON.parse(obj) : obj;
 };
+
+export const scrollToRef = (ref, options = {}) => {
+  // ✅ Safety: ref exist karta hai?
+  if (!ref?.current) {
+    console.warn("⚠️ scrollToRef: ref.current is null or undefined");
+    return;
+  }
+
+  // ✅ Default options merge
+  const scrollOptions = {
+    behavior: "smooth",
+    block: "nearest", // ✅ "nearest" better UX for partial visibility
+    inline: "nearest",
+    ...options,
+  };
+
+  // ✅ Execute scroll
+  ref.current.scrollIntoView(scrollOptions);
+};

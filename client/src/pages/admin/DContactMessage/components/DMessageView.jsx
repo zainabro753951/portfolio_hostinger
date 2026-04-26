@@ -1,4 +1,5 @@
-import React, { useEffect, memo, useCallback } from "react";
+// src/components/admin/DMessage/components/DMessageView.jsx
+import React, { useEffect, memo, useCallback, useRef } from "react";
 import { motion } from "motion/react";
 import {
   Reply,
@@ -13,7 +14,6 @@ import {
   User,
   Hash,
   CheckCircle2,
-  XCircle,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useDeleteEntryContext } from "../../../../context/DeleteEntry";
@@ -26,10 +26,14 @@ import { store } from "../../../../app/store";
 import { glassToast } from "../../Components/ToastMessage";
 import { useMarkAsRead } from "../../../../Queries/MarkAsRead";
 
-const DMessageView = () => {
+const DMessageView = ({ MessageViewRef }) => {
   const { viewMessage } = useSelector((state) => state.contactMessages);
   const { setRoute, setIds, setQueryKey, setIsOpen } = useDeleteEntryContext();
   const dispatch = useDispatch();
+
+  // ✅ Refs to prevent double execution
+  const hasShownSuccess = useRef(false);
+  const lastMarkedId = useRef(null);
 
   useEffect(() => {
     setQueryKey("contactMessages");
@@ -41,6 +45,7 @@ const DMessageView = () => {
     isSuccess,
     data,
     error,
+    reset, // ✅ RTK Query reset function
   } = useMarkAsRead();
 
   // Delete handler
@@ -59,8 +64,6 @@ const DMessageView = () => {
         return;
       }
 
-      console.log(updatedIds);
-
       setIds(updatedIds);
       setRoute("/message/delete");
       setQueryKey("contactMessages");
@@ -69,7 +72,7 @@ const DMessageView = () => {
     [dispatch, setIds, setIsOpen, setRoute, setQueryKey],
   );
 
-  // Mark as read handler
+  // ✅ Mark as read - with user action tracking
   const setMarkAsRead = useCallback(
     (id = null) => {
       dispatch(setSelectedIds(id));
@@ -88,6 +91,10 @@ const DMessageView = () => {
         return;
       }
 
+      // ✅ Track that user initiated this action
+      lastMarkedId.current = updatedIds[0];
+      hasShownSuccess.current = false;
+
       markAsRead(updatedIds);
     },
     [dispatch, markAsRead],
@@ -102,18 +109,49 @@ const DMessageView = () => {
     dispatch(openReplyModal());
   }, [viewMessage, dispatch]);
 
-  // Toast feedback
+  // ✅ FIXED: Success/Error handling with proper guards
   useEffect(() => {
-    if (isSuccess && data) {
+    // ✅ Only handle if mutation was triggered by user AND not already shown
+    if (isSuccess && data && lastMarkedId.current && !hasShownSuccess.current) {
+      hasShownSuccess.current = true;
       glassToast.success(data?.message);
-      dispatch(updateMessageStatus({ id: viewMessage?.id, status: "read" }));
+
+      // ✅ Only update the specific message that was marked
+      if (viewMessage?.id === lastMarkedId.current) {
+        dispatch(
+          updateMessageStatus({
+            id: lastMarkedId.current,
+            status: "read",
+          }),
+        );
+      }
+
+      // ✅ Reset mutation state to prevent re-trigger
+      setTimeout(() => {
+        reset();
+        lastMarkedId.current = null;
+      }, 100);
     }
-    if (isError && error) {
+
+    // ✅ Error handling (also guarded)
+    if (isError && error && !hasShownSuccess.current) {
+      hasShownSuccess.current = true;
       glassToast.error(
         error?.response?.data?.message || "Failed to mark as read",
       );
+      setTimeout(() => {
+        reset();
+        lastMarkedId.current = null;
+      }, 100);
     }
-  }, [isSuccess, isError, data, error, dispatch, viewMessage]);
+
+    // ✅ Cleanup: Reset flags when viewMessage changes
+    return () => {
+      if (viewMessage?.id !== lastMarkedId.current) {
+        hasShownSuccess.current = false;
+      }
+    };
+  }, [isSuccess, isError, data, error, dispatch, viewMessage?.id, reset]);
 
   // Format date
   const fullDateTime = viewMessage?.createdAt
@@ -127,16 +165,12 @@ const DMessageView = () => {
       })
     : "";
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
     show: {
       opacity: 1,
       y: 0,
-      transition: {
-        duration: 0.5,
-        ease: [0.25, 0.46, 0.45, 0.94],
-      },
+      transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
     },
   };
 
@@ -145,7 +179,8 @@ const DMessageView = () => {
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="w-full "
+      className="w-full"
+      ref={MessageViewRef}
     >
       <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 sm:p-8 shadow-xl">
         {viewMessage ? (
@@ -178,8 +213,7 @@ const DMessageView = () => {
                   whileTap={{ scale: 0.95 }}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600/30 to-green-600/30 border border-emerald-500/40 text-emerald-300 hover:from-emerald-500/50 hover:to-green-500/50 hover:text-white transition-all duration-300 text-sm font-medium"
                 >
-                  <Reply className="w-4 h-4" />
-                  Reply
+                  <Reply className="w-4 h-4" /> Reply
                 </motion.button>
 
                 <motion.button
@@ -188,8 +222,7 @@ const DMessageView = () => {
                   whileTap={{ scale: 0.95 }}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600/30 to-blue-600/30 border border-cyan-500/40 text-cyan-300 hover:from-cyan-500/50 hover:to-blue-500/50 hover:text-white transition-all duration-300 text-sm font-medium"
                 >
-                  <MailCheck className="w-4 h-4" />
-                  Mark Read
+                  <MailCheck className="w-4 h-4" /> Mark Read
                 </motion.button>
 
                 <motion.button
@@ -198,8 +231,7 @@ const DMessageView = () => {
                   whileTap={{ scale: 0.95 }}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600/30 to-red-600/30 border border-rose-500/40 text-rose-300 hover:from-rose-500/50 hover:to-red-500/50 hover:text-white transition-all duration-300 text-sm font-medium"
                 >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
+                  <Trash2 className="w-4 h-4" /> Delete
                 </motion.button>
               </div>
             </div>
@@ -242,39 +274,32 @@ const DMessageView = () => {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t border-white/10">
               <div className="p-4 rounded-xl bg-slate-800/30 border border-white/5">
                 <div className="flex items-center gap-2 text-slate-500 text-xs mb-1">
-                  <MapPin className="w-3 h-3" />
-                  Location
+                  <MapPin className="w-3 h-3" /> Location
                 </div>
                 <span className="text-sm text-slate-300">
                   {viewMessage?.city || "Unknown"},{" "}
                   {viewMessage?.country || "Unknown"}
                 </span>
               </div>
-
               <div className="p-4 rounded-xl bg-slate-800/30 border border-white/5">
                 <div className="flex items-center gap-2 text-slate-500 text-xs mb-1">
-                  <Globe className="w-3 h-3" />
-                  IP Address
+                  <Globe className="w-3 h-3" /> IP Address
                 </div>
                 <span className="text-sm text-slate-300 font-mono">
                   {viewMessage?.ipAddress || "Not tracked"}
                 </span>
               </div>
-
               <div className="p-4 rounded-xl bg-slate-800/30 border border-white/5">
                 <div className="flex items-center gap-2 text-slate-500 text-xs mb-1">
-                  <Wifi className="w-3 h-3" />
-                  ISP
+                  <Wifi className="w-3 h-3" /> ISP
                 </div>
                 <span className="text-sm text-slate-300">
                   {viewMessage?.isp || "Unknown"}
                 </span>
               </div>
-
               <div className="p-4 rounded-xl bg-slate-800/30 border border-white/5">
                 <div className="flex items-center gap-2 text-slate-500 text-xs mb-1">
-                  <Hash className="w-3 h-3" />
-                  Coordinates
+                  <Hash className="w-3 h-3" /> Coordinates
                 </div>
                 <span className="text-sm text-slate-300 font-mono">
                   {viewMessage?.latitude && viewMessage?.longitude

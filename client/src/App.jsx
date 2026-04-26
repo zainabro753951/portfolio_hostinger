@@ -34,7 +34,6 @@ const throttle = (func, limit) => {
 function App() {
   // 🎯 Ultra-selective auth check
   const isAuth = useSelector((state) => state.adminAuth?.isAuth, shallowEqual);
-
   const location = useLocation();
 
   // 🚀 Throttled ScrollTrigger refresh
@@ -83,7 +82,7 @@ function App() {
               </Route>
             ))}
 
-            {/* 🔑 Admin Login */}
+            {/* 🔑 Admin Login - Bina kisi data fetch ke */}
             <Route path="/admin/login" element={loginElement} />
 
             {/* 🔒 Admin Protected */}

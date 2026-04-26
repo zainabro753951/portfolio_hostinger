@@ -22,10 +22,11 @@ import {
   contactMsgFindById,
   selectAllMessages,
   toggleSelectMessage,
-} from "../../../../features/messageSlice";
-import { useDeleteEntryContext } from "../../../../context/DeleteEntry";
+} from "@/features/messageSlice";
+import { useDeleteEntryContext } from "@/context/DeleteEntry";
+import { scrollToRef } from "@/Utils/Utils";
 
-const CMTable = () => {
+const CMTable = ({ MessageViewRef }) => {
   const { contactCurrentMessages, currentPageMsgsCounts } = useSelector(
     (state) => state.contactMessages,
   );
@@ -66,6 +67,10 @@ const CMTable = () => {
   const handleViewMessage = useCallback(
     (id) => {
       dispatch(contactMsgFindById(id));
+      // 2. ✅ Manual scroll (next tick - DOM update ka wait)
+      requestAnimationFrame(() => {
+        scrollToRef(MessageViewRef, { block: "nearest" });
+      });
     },
     [dispatch],
   );
