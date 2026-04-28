@@ -1,23 +1,35 @@
-// src/components/AdminDataInitializer.jsx
-import { useEffect } from "react";
+import { useEffect, useRef, useCallback } from "react";
+import { useDispatch, batch } from "react-redux";
 import { useGetActivities } from "../Queries/GetRecentyActivity";
-import { useGetMessage } from "../Queries/GetMessage"; // Admin-only
-import { useDispatch } from "react-redux";
+import { useGetMessage } from "../Queries/GetMessage";
 import { fetchActivities } from "../features/recentActivitySlice";
 import { addContactMessages } from "../features/messageSlice";
 
 const AdminDataInitializer = ({ children }) => {
   const dispatch = useDispatch();
+  const processedActivities = useRef(false);
+  const processedMessages = useRef(false);
 
-  const activitiesQuery = useGetActivities();
-  const messagesQuery = useGetMessage(); // Sirf admin ke liye
+  const activitiesQuery = useGetActivities(undefined, {
+    refetchOnMountOrArgChange: false,
+    skip: false,
+  });
 
-  useEffect(() => {
-    // 🔹 Activities handling
+  const messagesQuery = useGetMessage(undefined, {
+    refetchOnMountOrArgChange: false,
+    skip: false,
+  });
+
+  // 🎯 Stable activities handler
+  const handleActivities = useCallback(() => {
+    if (processedActivities.current) return;
+
     if (activitiesQuery.isError) {
-      const status = activitiesQuery.error?.response?.status;
+      const status =
+        activitiesQuery.error?.status ||
+        activitiesQuery.error?.response?.status;
+
       if (status === 401 || status === 403) {
-        // Auth error - silently ignore, admin nahi hai
         dispatch(fetchActivities({ isLoading: false, isError: false }));
       } else {
         dispatch(
@@ -25,15 +37,17 @@ const AdminDataInitializer = ({ children }) => {
             isError: true,
             errorMessage:
               activitiesQuery.error?.response?.data?.message ||
-              activitiesQuery.error?.message,
+              activitiesQuery.error?.message ||
+              "Failed to load activities",
             isLoading: false,
           }),
         );
       }
+      processedActivities.current = true;
       return;
     }
 
-    if (activitiesQuery.data?.activities) {
+    if (activitiesQuery.data?.activities && !activitiesQuery.isLoading) {
       dispatch(
         fetchActivities({
           activities: activitiesQuery.data.activities,
@@ -42,10 +56,19 @@ const AdminDataInitializer = ({ children }) => {
           errorMessage: "",
         }),
       );
+      processedActivities.current = true;
     }
+  }, [activitiesQuery, dispatch]);
 
-    // 🔹 Messages handling (admin-only)
-    if (messagesQuery.isSuccess && messagesQuery.data?.data) {
+  // 🎯 Stable messages handler
+  const handleMessages = useCallback(() => {
+    if (processedMessages.current) return;
+
+    if (
+      messagesQuery.isSuccess &&
+      messagesQuery.data?.data &&
+      !messagesQuery.isLoading
+    ) {
       const d = messagesQuery.data;
       dispatch(
         addContactMessages({
@@ -57,16 +80,26 @@ const AdminDataInitializer = ({ children }) => {
           isLoading: false,
         }),
       );
+      processedMessages.current = true;
     }
 
-    // Auth error on messages - silently skip
     if (messagesQuery.isError) {
-      const status = messagesQuery.error?.response?.status;
+      const status =
+        messagesQuery.error?.status || messagesQuery.error?.response?.status;
       if (status === 401 || status === 403) {
         dispatch(addContactMessages({ isLoading: false, isError: false }));
       }
+      processedMessages.current = true;
     }
-  }, [activitiesQuery, messagesQuery, dispatch]);
+  }, [messagesQuery, dispatch]);
+
+  // 🚀 Run handlers in batched effect
+  useEffect(() => {
+    batch(() => {
+      handleActivities();
+      handleMessages();
+    });
+  }, [handleActivities, handleMessages]);
 
   return children;
 };

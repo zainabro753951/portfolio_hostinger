@@ -1,4 +1,4 @@
-import { memo, useMemo, useEffect, Suspense } from "react";
+import { memo, useMemo, useEffect, Suspense, lazy } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useSelector, shallowEqual } from "react-redux";
 import { gsap } from "gsap";
@@ -31,8 +31,37 @@ const throttle = (func, limit) => {
   };
 };
 
+// 🎯 Skeleton Loader Component
+const AppSkeleton = memo(() => (
+  <div
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "#0a0a0f",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 9999,
+    }}
+  >
+    <div
+      style={{
+        width: 48,
+        height: 48,
+        border: "3px solid rgba(139, 92, 246, 0.2)",
+        borderTopColor: "#8b5cf6",
+        borderRadius: "50%",
+        animation: "spin 0.8s linear infinite",
+      }}
+    />
+    <style>{`
+      @keyframes spin { to { transform: rotate(360deg); } }
+    `}</style>
+  </div>
+));
+AppSkeleton.displayName = "AppSkeleton";
+
 function App() {
-  // 🎯 Ultra-selective auth check
   const isAuth = useSelector((state) => state.adminAuth?.isAuth, shallowEqual);
   const location = useLocation();
 
@@ -42,7 +71,7 @@ function App() {
 
     const throttledRefresh = throttle(() => {
       ScrollTrigger.refresh();
-    }, 150);
+    }, 200);
 
     window.addEventListener("resize", throttledRefresh, { passive: true });
 
@@ -60,32 +89,48 @@ function App() {
     [isAuth],
   );
 
+  // 🎯 Memoized user routes to prevent re-renders
+  const userRoutesElements = useMemo(
+    () =>
+      userRoutes.map((route) => (
+        <Route key={route.path} path={route.path} element={route.element}>
+          {route?.children?.map((childRoute) => (
+            <Route
+              key={`${route.path}-${childRoute.path || "index"}`}
+              index={childRoute.index}
+              path={childRoute.path}
+              element={childRoute.element}
+            />
+          ))}
+        </Route>
+      )),
+    [],
+  );
+
+  // 🎯 Memoized admin routes
+  const adminRoutesElements = useMemo(
+    () =>
+      adminRoutes.map(({ path, elem }) => (
+        <Route key={path} path={path} element={elem} />
+      )),
+    [],
+  );
+
   return (
     <div className="noise-overlay">
       <ScrollToTop />
       <MetaUpdater />
 
       <AppInitializer>
-        <Suspense fallback={{}}>
+        <Suspense fallback={<AppSkeleton />}>
           <Routes location={location}>
-            {/* 🌍 User Routes - Spread directly, not as array */}
-            {userRoutes.map((route) => (
-              <Route key={route.path} path={route.path} element={route.element}>
-                {route?.children?.map((childRoute) => (
-                  <Route
-                    key={`${route.path}-${childRoute.path || "index"}`}
-                    index={childRoute.index}
-                    path={childRoute.path}
-                    element={childRoute.element}
-                  />
-                ))}
-              </Route>
-            ))}
+            {/* 🌍 User Routes */}
+            {userRoutesElements}
 
-            {/* 🔑 Admin Login - Bina kisi data fetch ke */}
+            {/* 🔑 Admin Login */}
             <Route path="/admin/login" element={loginElement} />
 
-            {/* 🔒 Admin Protected */}
+            {/* 🔒 Admin Protected Routes */}
             <Route
               path="/admin"
               element={
@@ -99,9 +144,7 @@ function App() {
               }
             >
               <Route index element={<DHomeCards />} />
-              {adminRoutes.map(({ path, elem }) => (
-                <Route key={path} path={path} element={elem} />
-              ))}
+              {adminRoutesElements}
             </Route>
 
             {/* 🔄 Catch all */}
