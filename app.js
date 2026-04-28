@@ -102,6 +102,14 @@ app.use(
 );
 
 /* =========================
+    Allow Images For Cross Browser
+============================*/
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  next();
+});
+
+/* =========================
    Static Uploads
 ========================= */
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
