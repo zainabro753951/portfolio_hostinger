@@ -58,26 +58,6 @@ app.disable("x-powered-by");
 app.use(compression());
 
 /* =========================
-   Cors Configuration 
-========================= */
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // allow requests with no origin (like mobile apps, curl)
-      if (!origin) return callback(null, true);
-
-      if (process.env.FRONTEND_URLS.split(",").includes(origin)) {
-        return callback(null, true);
-      } else {
-        return callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-  }),
-);
-
-/* =========================
    Logger
 ========================= */
 app.use(
@@ -106,6 +86,22 @@ if (!isProduction) {
       credentials: true,
     }),
   );
+} else {
+  app.use(
+    cors({
+      origin: function (origin, callback) {
+        // allow requests with no origin (like mobile apps, curl)
+        if (!origin) return callback(null, true);
+
+        if (process.env.FRONTEND_URLS.split(",").includes(origin)) {
+          return callback(null, true);
+        } else {
+          return callback(new Error("Not allowed by CORS"));
+        }
+      },
+      credentials: true,
+    }),
+  );
 }
 
 /* =========================
@@ -125,7 +121,9 @@ app.use(
     Allow Images For Cross Browser
 ============================*/
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  if (req.hostname === "zaincode.io") {
+    return res.redirect(301, `https://www.zaincode.io${req.url}`);
+  }
   next();
 });
 
