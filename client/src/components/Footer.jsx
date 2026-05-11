@@ -1,67 +1,56 @@
-import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import {
-  Github,
-  Linkedin,
-  Twitter,
-  Instagram,
-  Mail,
-  MapPin,
-  Phone,
-  Facebook,
-} from "lucide-react";
-import { useSelector } from "react-redux";
-import useCreatedAtSorted from "@/hooks/useCreatedAtSorted";
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Github, Linkedin, Twitter, Instagram, Mail, MapPin, Phone, Facebook } from 'lucide-react';
+import { useSelector } from 'react-redux';
+import useCreatedAtSorted from '@/hooks/useCreatedAtSorted';
 
 const Footer = () => {
-  const { contact_info, site_info } = useSelector(
-    (state) => state.siteSettings,
-  );
+  const { contact_info, site_info } = useSelector((state) => state.siteSettings);
   const { services: sr } = useSelector((state) => state.service);
   const { sortedData: sortedServices } = useCreatedAtSorted(sr);
 
-  const servicesCategory = sortedServices.map((item) => item?.category);
+  const servicesTitleDB = sortedServices.map((item) => item?.title);
 
   const socialLinks = [
     {
       icon: Github,
       href: contact_info?.github,
-      label: "GitHub",
-      color: "hover:text-gray-100",
+      label: 'GitHub',
+      color: 'hover:text-gray-100',
     },
     {
       icon: Linkedin,
       href: contact_info?.linkedin,
-      label: "LinkedIn",
-      color: "hover:text-blue-400",
+      label: 'LinkedIn',
+      color: 'hover:text-blue-400',
     },
     {
       icon: Facebook,
       href: contact_info?.facebook,
-      label: "Facebook",
-      color: "hover:text-sky-400",
+      label: 'Facebook',
+      color: 'hover:text-sky-400',
     },
     {
       icon: Instagram,
       href: contact_info?.instagram,
-      label: "Instagram",
-      color: "hover:text-pink-400",
+      label: 'Instagram',
+      color: 'hover:text-pink-400',
     },
   ];
 
   const quickLinks = [
-    { name: "Home", path: "/" },
-    { name: "About", path: "/about" },
-    { name: "Services", path: "/services" },
-    { name: "Projects", path: "/projects" },
-    { name: "Contact", path: "/contact" },
+    { name: 'Home', path: '/' },
+    { name: 'About', path: '/about' },
+    { name: 'Services', path: '/services' },
+    { name: 'Projects', path: '/projects' },
+    { name: 'Contact', path: '/contact' },
   ];
 
-  const servicesTitle = servicesCategory || [
-    "Web Development",
-    "UI/UX Design",
-    "Motion Graphics",
-    "Brand Strategy",
+  const servicesTitle = servicesTitleDB || [
+    'Web Development',
+    'UI/UX Design',
+    'Motion Graphics',
+    'Brand Strategy',
   ];
 
   return (
@@ -88,8 +77,8 @@ const Footer = () => {
               </span>
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed mb-6">
-              Crafting digital experiences that merge art with functionality.
-              Let's build something amazing together.
+              Crafting digital experiences that merge art with functionality. Let's build something
+              amazing together.
             </p>
             <div className="flex gap-4">
               {socialLinks.map((social) => (
@@ -113,9 +102,7 @@ const Footer = () => {
             transition={{ duration: 0.6, delay: 0.1 }}
             viewport={{ once: true }}
           >
-            <h3 className="text-white font-display font-semibold text-lg mb-6">
-              Quick Links
-            </h3>
+            <h3 className="text-white font-display font-semibold text-lg mb-6">Quick Links</h3>
             <ul className="space-y-3">
               {quickLinks.map((link) => (
                 <li key={link.name}>
@@ -137,12 +124,10 @@ const Footer = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             viewport={{ once: true }}
           >
-            <h3 className="text-white font-display font-semibold text-lg mb-6">
-              Services
-            </h3>
+            <h3 className="text-white font-display font-semibold text-lg mb-6">Services</h3>
             <ul className="space-y-3">
-              {servicesTitle.map((service) => (
-                <li key={service}>
+              {servicesTitle.map((service, idx) => (
+                <li key={idx}>
                   <span className="text-gray-400 text-sm">{service}</span>
                 </li>
               ))}
@@ -156,20 +141,18 @@ const Footer = () => {
             transition={{ duration: 0.6, delay: 0.3 }}
             viewport={{ once: true }}
           >
-            <h3 className="text-white font-display font-semibold text-lg mb-6">
-              Get In Touch
-            </h3>
+            <h3 className="text-white font-display font-semibold text-lg mb-6">Get In Touch</h3>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <Mail size={18} className="text-neon-cyan mt-0.5" />
                 <span className="text-gray-400 text-sm">
-                  {contact_info?.email || "zainabro886@gmail.com"}
+                  {contact_info?.email || 'zainabro886@gmail.com'}
                 </span>
               </li>
               <li className="flex items-start gap-3">
                 <Phone size={18} className="text-neon-cyan mt-0.5" />
                 <span className="text-gray-400 text-sm">
-                  {contact_info?.contactPhone || "03032150993"}
+                  {contact_info?.contactPhone || '03032150993'}
                 </span>
               </li>
               <li className="flex items-start gap-3">
@@ -196,19 +179,13 @@ const Footer = () => {
           className="flex flex-col md:flex-row items-center justify-between gap-4"
         >
           <p className="text-gray-500 text-sm text-center md:text-left">
-            {site_info?.footerText || "Portfolio. All rights reserved."}
+            {site_info?.footerText || 'Portfolio. All rights reserved.'}
           </p>
           <div className="flex gap-6">
-            <Link
-              to="#"
-              className="text-gray-500 hover:text-neon-cyan text-sm transition-colors"
-            >
+            <Link to="#" className="text-gray-500 hover:text-neon-cyan text-sm transition-colors">
               Privacy Policy
             </Link>
-            <Link
-              to="#"
-              className="text-gray-500 hover:text-neon-cyan text-sm transition-colors"
-            >
+            <Link to="#" className="text-gray-500 hover:text-neon-cyan text-sm transition-colors">
               Terms of Service
             </Link>
           </div>

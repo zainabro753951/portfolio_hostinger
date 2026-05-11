@@ -1,24 +1,27 @@
-import { useRef, useMemo } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { motion, LazyMotion, domAnimation } from "motion/react";
+import { safeParse, SERVICE_COLOR_PALETTES } from '@/Utils/Utils.js';
+import { useGSAP } from '@gsap/react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
+  ArrowRight,
+  Calendar,
+  Check,
+  Clock,
   Code,
-  Palette,
-  Zap,
-  TrendingUp,
-  Smartphone,
   Globe,
   Layers,
-  Sparkles,
-  ArrowRight,
-  Check,
   MessageCircle,
-  Calendar,
-  Clock,
+  Palette,
   Shield,
-} from "lucide-react";
-import { useGSAP } from "@gsap/react";
+  Smartphone,
+  Sparkles,
+  TrendingUp,
+  Zap,
+} from 'lucide-react';
+import { domAnimation, LazyMotion, motion } from 'motion/react';
+import { useRef } from 'react';
+import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -26,162 +29,152 @@ gsap.registerPlugin(ScrollTrigger);
 const MAIN_SERVICES = [
   {
     icon: Code,
-    title: "Web Development",
+    title: 'Web Development',
     description:
-      "Building fast, responsive, and scalable web applications using modern technologies like React, Next.js, and Node.js.",
+      'Building fast, responsive, and scalable web applications using modern technologies like React, Next.js, and Node.js.',
     features: [
-      "Custom Web Applications",
-      "E-commerce Solutions",
-      "CMS Integration",
-      "API Development",
-      "Performance Optimization",
+      'Custom Web Applications',
+      'E-commerce Solutions',
+      'CMS Integration',
+      'API Development',
+      'Performance Optimization',
     ],
-    color: "from-blue-500 to-cyan-400",
-    gradient: "from-blue-500/20 to-cyan-400/20",
-    iconBg: "bg-blue-500",
+    color: 'from-blue-500 to-cyan-400',
+    gradient: 'from-blue-500/20 to-cyan-400/20',
+    iconBg: 'bg-blue-500',
   },
   {
     icon: Palette,
-    title: "UI/UX Design",
+    title: 'UI/UX Design',
     description:
-      "Creating intuitive and visually stunning user interfaces that provide exceptional user experiences.",
-    features: [
-      "User Research",
-      "Wireframing",
-      "Prototyping",
-      "Visual Design",
-      "Design Systems",
-    ],
-    color: "from-purple-500 to-pink-500",
-    gradient: "from-purple-500/20 to-pink-500/20",
-    iconBg: "bg-purple-500",
+      'Creating intuitive and visually stunning user interfaces that provide exceptional user experiences.',
+    features: ['User Research', 'Wireframing', 'Prototyping', 'Visual Design', 'Design Systems'],
+    color: 'from-purple-500 to-pink-500',
+    gradient: 'from-purple-500/20 to-pink-500/20',
+    iconBg: 'bg-purple-500',
   },
   {
     icon: Zap,
-    title: "Motion Graphics",
+    title: 'Motion Graphics',
     description:
-      "Bringing designs to life with smooth animations and engaging interactions that captivate users.",
+      'Bringing designs to life with smooth animations and engaging interactions that captivate users.',
     features: [
-      "Micro-interactions",
-      "Page Transitions",
-      "Scroll Animations",
-      "Loading Animations",
-      "Lottie Animations",
+      'Micro-interactions',
+      'Page Transitions',
+      'Scroll Animations',
+      'Loading Animations',
+      'Lottie Animations',
     ],
-    color: "from-yellow-400 to-orange-500",
-    gradient: "from-yellow-400/20 to-orange-500/20",
-    iconBg: "bg-yellow-400",
+    color: 'from-yellow-400 to-orange-500',
+    gradient: 'from-yellow-400/20 to-orange-500/20',
+    iconBg: 'bg-yellow-400',
   },
   {
     icon: TrendingUp,
-    title: "Brand Strategy",
+    title: 'Brand Strategy',
     description:
-      "Developing comprehensive brand identities that stand out and resonate with your target audience.",
+      'Developing comprehensive brand identities that stand out and resonate with your target audience.',
     features: [
-      "Brand Identity",
-      "Logo Design",
-      "Brand Guidelines",
-      "Marketing Materials",
-      "Social Media Design",
+      'Brand Identity',
+      'Logo Design',
+      'Brand Guidelines',
+      'Marketing Materials',
+      'Social Media Design',
     ],
-    color: "from-green-400 to-emerald-500",
-    gradient: "from-green-400/20 to-emerald-500/20",
-    iconBg: "bg-green-400",
+    color: 'from-green-400 to-emerald-500',
+    gradient: 'from-green-400/20 to-emerald-500/20',
+    iconBg: 'bg-green-400',
   },
 ];
 
 const ADDITIONAL_SERVICES = [
   {
     icon: Smartphone,
-    title: "Mobile Development",
-    description:
-      "Creating responsive mobile-first experiences and progressive web apps.",
-    color: "from-pink-500 to-rose-500",
+    title: 'Mobile Development',
+    description: 'Creating responsive mobile-first experiences and progressive web apps.',
+    color: 'from-pink-500 to-rose-500',
   },
   {
     icon: Globe,
-    title: "SEO Optimization",
-    description:
-      "Improving your website visibility and ranking on search engines.",
-    color: "from-cyan-400 to-blue-500",
+    title: 'SEO Optimization',
+    description: 'Improving your website visibility and ranking on search engines.',
+    color: 'from-cyan-400 to-blue-500',
   },
   {
     icon: Layers,
-    title: "3D Design",
-    description:
-      "Adding depth to your projects with stunning 3D elements and animations.",
-    color: "from-indigo-500 to-purple-500",
+    title: '3D Design',
+    description: 'Adding depth to your projects with stunning 3D elements and animations.',
+    color: 'from-indigo-500 to-purple-500',
   },
   {
     icon: Sparkles,
-    title: "Consulting",
-    description:
-      "Expert advice to help you make the right technical decisions.",
-    color: "from-orange-400 to-amber-500",
+    title: 'Consulting',
+    description: 'Expert advice to help you make the right technical decisions.',
+    color: 'from-orange-400 to-amber-500',
   },
 ];
 
 const PROCESS_STEPS = [
   {
-    number: "01",
-    title: "Discovery",
+    number: '01',
+    title: 'Discovery',
     description:
-      "Understanding your goals, target audience, and project requirements through in-depth discussions.",
+      'Understanding your goals, target audience, and project requirements through in-depth discussions.',
     icon: MessageCircle,
-    duration: "1-2 Days",
+    duration: '1-2 Days',
   },
   {
-    number: "02",
-    title: "Strategy",
-    description:
-      "Developing a comprehensive plan with timelines, milestones, and deliverables.",
+    number: '02',
+    title: 'Strategy',
+    description: 'Developing a comprehensive plan with timelines, milestones, and deliverables.',
     icon: Calendar,
-    duration: "2-3 Days",
+    duration: '2-3 Days',
   },
   {
-    number: "03",
-    title: "Design",
-    description:
-      "Creating wireframes, mockups, and prototypes to visualize the final product.",
+    number: '03',
+    title: 'Design',
+    description: 'Creating wireframes, mockups, and prototypes to visualize the final product.',
     icon: Palette,
-    duration: "1-2 Weeks",
+    duration: '1-2 Weeks',
   },
   {
-    number: "04",
-    title: "Development",
-    description:
-      "Building the solution with clean code and modern technologies.",
+    number: '04',
+    title: 'Development',
+    description: 'Building the solution with clean code and modern technologies.',
     icon: Code,
-    duration: "2-4 Weeks",
+    duration: '2-4 Weeks',
   },
   {
-    number: "05",
-    title: "Launch",
-    description:
-      "Deploying your project and ensuring everything runs smoothly.",
+    number: '05',
+    title: 'Launch',
+    description: 'Deploying your project and ensuring everything runs smoothly.',
     icon: Shield,
-    duration: "1 Day",
+    duration: '1 Day',
   },
 ];
 
 const BENEFITS = [
-  { icon: Clock, text: "On-time Delivery" },
-  { icon: Shield, text: "Quality Assurance" },
-  { icon: MessageCircle, text: "24/7 Support" },
-  { icon: Zap, text: "Fast Turnaround" },
+  { icon: Clock, text: 'On-time Delivery' },
+  { icon: Shield, text: 'Quality Assurance' },
+  { icon: MessageCircle, text: '24/7 Support' },
+  { icon: Zap, text: 'Fast Turnaround' },
 ];
 
 // ✅ Optimized: Service Card Component
 const ServiceCard = ({ service, index }) => {
+  const features = safeParse(service?.features);
+  const serviceImage = safeParse(service?.serviceImage);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 60, rotateX: 15 }}
       whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
-      transition={{ delay: index * 0.15, duration: 0.7, ease: "easeOut" }}
-      viewport={{ once: true, margin: "-50px" }}
+      transition={{ delay: index * 0.15, duration: 0.7, ease: 'easeOut' }}
+      viewport={{ once: true, margin: '-50px' }}
       whileHover={{ y: -12, transition: { duration: 0.3 } }}
       className="group relative"
-      style={{ perspective: "1000px" }}
+      style={{ perspective: '1000px' }}
     >
       <div
         className={`relative p-8 rounded-3xl bg-gradient-to-br ${service.gradient} border border-white/10 hover:border-white/30 transition-all duration-500 h-full overflow-hidden backdrop-blur-sm`}
@@ -195,9 +188,8 @@ const ServiceCard = ({ service, index }) => {
         <div
           className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500"
           style={{
-            backgroundImage:
-              "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
-            backgroundSize: "24px 24px",
+            backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+            backgroundSize: '24px 24px',
           }}
         />
 
@@ -205,22 +197,24 @@ const ServiceCard = ({ service, index }) => {
         <motion.div
           whileHover={{ rotate: 360, scale: 1.1 }}
           transition={{ duration: 0.6 }}
-          className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${service.color} flex items-center justify-center mb-6 shadow-lg relative z-10`}
+          className={`w-16 h-16 rounded-2xl bg-gradient-to-r  flex items-center justify-center mb-6 shadow-lg relative z-10 overflow-hidden`}
         >
-          <service.icon size={32} className="text-white" />
+          <img
+            className="w-full h-full object-cover"
+            src={`${backendUrl}${serviceImage?.url}`}
+            alt=""
+          />
         </motion.div>
 
         {/* Content */}
         <h3 className="text-2xl font-bold text-white mb-4 relative z-10 group-hover:text-cyan-400 transition-colors duration-300">
           {service.title}
         </h3>
-        <p className="text-gray-400 mb-6 leading-relaxed relative z-10">
-          {service.description}
-        </p>
+        <p className="text-gray-400 mb-6 leading-relaxed relative z-10">{service.description}</p>
 
         {/* Features List */}
         <ul className="space-y-3 mb-8 relative z-10">
-          {service.features.map((feature, fIndex) => (
+          {features.map((feature, fIndex) => (
             <motion.li
               key={fIndex}
               initial={{ opacity: 0, x: -20 }}
@@ -243,22 +237,21 @@ const ServiceCard = ({ service, index }) => {
         </ul>
 
         {/* CTA */}
-        <motion.button
-          whileHover={{ x: 8 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex items-center gap-2 text-cyan-400 font-semibold group/btn relative z-10"
-        >
-          <span>Learn More</span>
-          <motion.div
-            animate={{ x: [0, 5, 0] }}
-            transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+        <Link to={`/services/${service?.slug}`}>
+          <motion.button
+            whileHover={{ x: 8 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-2 text-cyan-400 font-semibold group/btn relative z-10"
           >
-            <ArrowRight
-              size={18}
-              className="group-hover/btn:text-white transition-colors"
-            />
-          </motion.div>
-        </motion.button>
+            <span>Learn More</span>
+            <motion.div
+              animate={{ x: [0, 5, 0] }}
+              transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+            >
+              <ArrowRight size={18} className="group-hover/btn:text-white transition-colors" />
+            </motion.div>
+          </motion.button>
+        </Link>
       </div>
     </motion.div>
   );
@@ -276,7 +269,7 @@ const ProcessStep = ({ step, index, isLast }) => {
       whileHover={{ x: 10 }}
       transition={{
         duration: 0.6,
-        ease: "easeOut",
+        ease: 'easeOut',
       }}
       className="relative flex items-start gap-6 group"
     >
@@ -345,15 +338,24 @@ const AdditionalServiceCard = ({ service, index }) => {
         <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-cyan-400 transition-colors relative z-10">
           {service.title}
         </h3>
-        <p className="text-gray-400 text-sm relative z-10">
-          {service.description}
-        </p>
+        <p className="text-gray-400 text-sm relative z-10">{service.description}</p>
       </div>
     </motion.div>
   );
 };
 
 const Services = () => {
+  const { services: sc } = useSelector((state) => state.service);
+
+  const services = sc.map((service, idx) => {
+    const palette = SERVICE_COLOR_PALETTES[idx % SERVICE_COLOR_PALETTES.length];
+
+    return {
+      ...service,
+      ...palette,
+    };
+  });
+
   const containerRef = useRef(null);
   const container = {
     hidden: {},
@@ -368,21 +370,23 @@ const Services = () => {
   useGSAP(
     () => {
       // Benefits animation
-      gsap.from(".benefit-item", {
+      gsap.from('.benefit-item', {
         y: 30,
         opacity: 0,
         duration: 0.6,
         stagger: 0.1,
-        ease: "power3.out",
+        ease: 'power3.out',
         scrollTrigger: {
-          trigger: ".benefits-section",
-          start: "top 85%",
+          trigger: '.benefits-section',
+          start: 'top 85%',
           once: true,
         },
       });
     },
-    { scope: containerRef },
+    { scope: containerRef }
   );
+
+  console.log(services);
 
   return (
     <LazyMotion features={domAnimation}>
@@ -394,7 +398,7 @@ const Services = () => {
             <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[120px] animate-pulse" />
             <div
               className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[120px] animate-pulse"
-              style={{ animationDelay: "1s" }}
+              style={{ animationDelay: '1s' }}
             />
           </div>
 
@@ -402,7 +406,7 @@ const Services = () => {
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
               className="text-center"
             >
               <motion.span
@@ -414,14 +418,14 @@ const Services = () => {
                 What I Offer
               </motion.span>
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 text-white">
-                My{" "}
+                My{' '}
                 <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
                   Services
                 </span>
               </h1>
               <p className="text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">
-                Comprehensive digital solutions tailored to your needs. From
-                concept to launch, I'll help you build something amazing.
+                Comprehensive digital solutions tailored to your needs. From concept to launch, I'll
+                help you build something amazing.
               </p>
             </motion.div>
           </div>
@@ -435,7 +439,7 @@ const Services = () => {
                 <motion.div
                   key={index}
                   className="benefit-item flex items-center justify-center gap-3 text-gray-300"
-                  whileHover={{ scale: 1.05, color: "#22d3ee" }}
+                  whileHover={{ scale: 1.05, color: '#22d3ee' }}
                 >
                   <benefit.icon size={20} className="text-cyan-400" />
                   <span className="font-medium">{benefit.text}</span>
@@ -459,7 +463,7 @@ const Services = () => {
                 Core Services
               </span>
               <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-white">
-                How Can I{" "}
+                How Can I{' '}
                 <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                   Help You
                 </span>
@@ -467,12 +471,8 @@ const Services = () => {
             </motion.div>
 
             <div className="grid lg:grid-cols-2 gap-8">
-              {MAIN_SERVICES.map((service, index) => (
-                <ServiceCard
-                  key={service.title}
-                  service={service}
-                  index={index}
-                />
+              {services.map((service, index) => (
+                <ServiceCard key={service.title} service={service} index={index} />
               ))}
             </div>
           </div>
@@ -500,11 +500,7 @@ const Services = () => {
 
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {ADDITIONAL_SERVICES.map((service, index) => (
-                <AdditionalServiceCard
-                  key={service.title}
-                  service={service}
-                  index={index}
-                />
+                <AdditionalServiceCard key={service.title} service={service} index={index} />
               ))}
             </div>
           </div>
@@ -524,14 +520,14 @@ const Services = () => {
                 My Process
               </span>
               <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-white">
-                How I{" "}
+                How I{' '}
                 <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
                   Work
                 </span>
               </h2>
               <p className="text-gray-400 max-w-2xl mx-auto">
-                A proven process that ensures every project is delivered on
-                time, within budget, and exceeds expectations.
+                A proven process that ensures every project is delivered on time, within budget, and
+                exceeds expectations.
               </p>
             </motion.div>
 
@@ -567,20 +563,20 @@ const Services = () => {
               viewport={{ once: true }}
             >
               <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 text-white">
-                Ready to Start Your{" "}
+                Ready to Start Your{' '}
                 <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                   Project?
                 </span>
               </h2>
               <p className="text-gray-300 text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
-                Let's discuss how I can help bring your vision to life. Get in
-                touch for a free consultation.
+                Let's discuss how I can help bring your vision to life. Get in touch for a free
+                consultation.
               </p>
 
               <motion.button
                 whileHover={{
                   scale: 1.05,
-                  boxShadow: "0 0 40px rgba(34, 211, 238, 0.3)",
+                  boxShadow: '0 0 40px rgba(34, 211, 238, 0.3)',
                 }}
                 whileTap={{ scale: 0.95 }}
                 className="px-10 py-4 rounded-full bg-white text-gray-900 font-bold text-lg relative overflow-hidden group"
@@ -588,7 +584,7 @@ const Services = () => {
                 <span className="relative z-10 ">Get a Free Quote</span>
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-500"
-                  initial={{ x: "-100%" }}
+                  initial={{ x: '-100%' }}
                   whileHover={{ x: 0 }}
                   transition={{ duration: 0.3 }}
                 />

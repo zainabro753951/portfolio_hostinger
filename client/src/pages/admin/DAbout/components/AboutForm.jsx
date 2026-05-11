@@ -1,30 +1,33 @@
-import React, { useEffect, useState, useCallback, memo } from "react";
-import { useForm } from "react-hook-form";
-import { motion } from "motion/react";
 import {
-  User,
-  Briefcase,
+  AlignLeft,
   Award,
+  Briefcase,
+  Camera,
   Clock,
   FileText,
-  AlignLeft,
   ImageIcon,
   Loader2,
   Save,
+  User,
   X,
-  Camera,
-} from "lucide-react";
-import { useSelector } from "react-redux";
-import FormField from "../../Components/FormField";
-import TextareaField from "../../Components/TextAreaField";
-import { useAddAbout } from "../../../../Queries/AddAbout";
-import { glassToast } from "../../Components/ToastMessage";
+} from 'lucide-react';
+import { motion } from 'motion/react';
+import { memo, useCallback, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { useSelector } from 'react-redux';
+import { useAddAbout } from '../../../../Queries/AddAbout';
+import FormField from '../../Components/FormField';
+import TextareaField from '../../Components/TextAreaField';
+import { glassToast } from '../../Components/ToastMessage';
 
 const AboutForm = () => {
   const { data: about } = useSelector((state) => state.about);
   const [aboutPreview, setAboutPreview] = useState(null);
+  const [poseImagePreview, setPoseImagePreview] = useState(null);
   const [isUpdate, setIsUpdate] = useState(false);
   const [isAboutImageRemoved, setIsAboutImageRemoved] = useState(false);
+  const [isPoseImageRemoved, setIsPoseImageRemoved] = useState(false);
+  console.log(about);
 
   const {
     register,
@@ -35,34 +38,41 @@ const AboutForm = () => {
     formState: { errors },
   } = useForm({
     defaultValues: {
-      fullName: "",
-      shortRole: "",
-      successNote: "",
-      experience: "",
-      shortDesc: "",
-      longDesc: "",
+      fullName: '',
+      shortRole: '',
+      successNote: '',
+      experience: '',
+      shortDesc: '',
+      longDesc: '',
       aboutImage: null,
+      poseImage: null,
     },
   });
 
-  const aboutImage = watch("aboutImage");
+  const aboutImage = watch('aboutImage');
+  const poseImage = watch('poseImage');
 
   // Prefill when data comes from Redux
   useEffect(() => {
     if (about && Object.keys(about).length > 0) {
       reset({
-        fullName: about?.fullName || "",
-        shortRole: about?.shortRole || "",
-        successNote: about?.successNote || "",
-        experience: about?.experience || "",
-        shortDesc: about?.shortDesc || "",
-        longDesc: about?.longDesc || "",
+        fullName: about?.fullName || '',
+        shortRole: about?.shortRole || '',
+        successNote: about?.successNote || '',
+        experience: about?.experience || '',
+        shortDesc: about?.shortDesc || '',
+        longDesc: about?.longDesc || '',
       });
 
       setAboutPreview(
         about?.aboutImage
           ? `${import.meta.env.VITE_BACKEND_URL_FOR_IMAGE}${about?.aboutImage?.url}`
-          : null,
+          : null
+      );
+      setPoseImagePreview(
+        about?.poseImage
+          ? `${import.meta.env.VITE_BACKEND_URL_FOR_IMAGE}${about?.poseImage?.url}`
+          : null
       );
       setIsUpdate(true);
     }
@@ -73,7 +83,12 @@ const AboutForm = () => {
       setAboutPreview(URL.createObjectURL(aboutImage[0]));
       setIsAboutImageRemoved(false);
     }
-  }, [aboutImage]);
+
+    if (poseImage && poseImage?.[0]) {
+      setPoseImagePreview(URL.createObjectURL(poseImage[0]));
+      setIsPoseImageRemoved(false);
+    }
+  }, [aboutImage, poseImage]);
 
   const { mutate, isPending, isError, isSuccess, data, error } = useAddAbout();
 
@@ -82,47 +97,57 @@ const AboutForm = () => {
     (formData) => {
       const fd = new FormData();
 
-      fd.append("isUpdate", isUpdate ? "true" : "false");
-      fd.append("fullName", formData.fullName);
-      fd.append("shortRole", formData.shortRole);
-      fd.append("successNote", formData.successNote);
-      fd.append("experience", formData.experience);
-      fd.append("shortDesc", formData.shortDesc);
-      fd.append("longDesc", formData.longDesc);
-      fd.append("isAboutImageRemoved", JSON.stringify(isAboutImageRemoved));
+      fd.append('isUpdate', isUpdate ? 'true' : 'false');
+      fd.append('fullName', formData.fullName);
+      fd.append('shortRole', formData.shortRole);
+      fd.append('successNote', formData.successNote);
+      fd.append('experience', formData.experience);
+      fd.append('shortDesc', formData.shortDesc);
+      fd.append('longDesc', formData.longDesc);
+      fd.append('isAboutImageRemoved', JSON.stringify(isAboutImageRemoved));
+      fd.append('isPoseImageRemoved', JSON.stringify(isPoseImageRemoved));
 
-      // Handle image
+      // Handle About image
       if (formData.aboutImage && formData.aboutImage[0]) {
-        fd.append("aboutImage", formData.aboutImage[0]);
+        fd.append('aboutImage', formData.aboutImage[0]);
       }
 
-      fd.append(
-        "aboutImageOBJ",
-        about?.aboutImage ? JSON.stringify(about.aboutImage) : "null",
-      );
+      // Handle Pose image
+      if (formData.poseImage && formData.poseImage[0]) {
+        fd.append('poseImage', formData.poseImage[0]);
+      }
+
+      fd.append('aboutImageOBJ', about?.aboutImage ? JSON.stringify(about.aboutImage) : 'null');
+
+      fd.append('poseImageOBJ', about?.poseImage ? JSON.stringify(about.poseImage) : 'null');
 
       mutate(fd);
     },
-    [isUpdate, isAboutImageRemoved, about, mutate],
+    [isUpdate, isAboutImageRemoved, isPoseImageRemoved, about, mutate]
   );
 
   // Toast Feedback
   useEffect(() => {
     if (isSuccess && data) {
-      glassToast.success(data?.message || "About info saved successfully!");
+      glassToast.success(data?.message || 'About info saved successfully!');
     }
     if (isError && error) {
-      glassToast.error(
-        error?.response?.data?.message || "Something went wrong",
-      );
+      glassToast.error(error?.response?.data?.message || 'Something went wrong');
     }
   }, [isSuccess, isError, data, error]);
 
   // Remove image handler
   const handleRemoveImage = useCallback(() => {
-    setValue("aboutImage", null);
+    setValue('aboutImage', null);
     setAboutPreview(null);
     setIsAboutImageRemoved(true);
+  }, [setValue]);
+
+  // Remove pose image handler
+  const handleRemovePoseImage = useCallback(() => {
+    setValue('poseImage', null);
+    setPoseImagePreview(null);
+    setIsPoseImageRemoved(true);
   }, [setValue]);
 
   // Animation variants
@@ -167,9 +192,7 @@ const AboutForm = () => {
               About / Profile
             </h1>
             <p className="text-slate-400 text-sm sm:text-base mt-1">
-              {isUpdate
-                ? "Update your profile information"
-                : "Create your profile"}
+              {isUpdate ? 'Update your profile information' : 'Create your profile'}
             </p>
           </div>
         </div>
@@ -181,13 +204,11 @@ const AboutForm = () => {
         className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8"
       >
         {/* Profile Image Section */}
-        <motion.div variants={itemVariants} className="lg:col-span-1">
-          <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 shadow-xl">
+        <motion.div variants={itemVariants} className="lg:col-span-1 flex flex-col gap-4">
+          <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 shadow-xl ">
             <div className="flex items-center gap-2 mb-6">
               <ImageIcon className="w-5 h-5 text-cyan-400" />
-              <h2 className="text-lg font-semibold text-white">
-                Profile Image
-              </h2>
+              <h2 className="text-lg font-semibold text-white">Profile Image</h2>
             </div>
 
             {/* Image Preview */}
@@ -198,7 +219,7 @@ const AboutForm = () => {
                     <img
                       src={aboutPreview}
                       className="w-full h-full object-cover"
-                      alt="Profile"
+                      alt="Pose Image"
                     />
                     {/* Hover Overlay */}
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -229,7 +250,7 @@ const AboutForm = () => {
                     name="aboutImage"
                     accept="image/*"
                     onClick={() => setIsAboutImageRemoved(false)}
-                    {...register("aboutImage")}
+                    {...register('aboutImage')}
                     hidden
                   />
                 </div>
@@ -247,9 +268,74 @@ const AboutForm = () => {
               </div>
 
               {errors.aboutImage && (
-                <p className="text-rose-400 text-sm text-center">
-                  {errors.aboutImage.message}
-                </p>
+                <p className="text-rose-400 text-sm text-center">{errors.aboutImage.message}</p>
+              )}
+            </div>
+          </div>
+          <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 shadow-xl">
+            <div className="flex items-center gap-2 mb-6">
+              <ImageIcon className="w-5 h-5 text-cyan-400" />
+              <h2 className="text-lg font-semibold text-white">Pose Image</h2>
+            </div>
+
+            {/* Image Preview */}
+            <div className="flex flex-col items-center gap-6">
+              <div className="relative w-48 h-48 sm:w-56 sm:h-56 rounded-full border-4 border-cyan-400/30 overflow-hidden bg-slate-800/50 flex items-center justify-center group">
+                {poseImagePreview ? (
+                  <>
+                    <img
+                      src={poseImagePreview}
+                      className="w-full h-full object-cover"
+                      alt="Profile"
+                    />
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Camera className="w-8 h-8 text-white" />
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center p-4">
+                    <User className="w-16 h-16 text-slate-600 mx-auto mb-2" />
+                    <p className="text-sm text-slate-500">No image uploaded</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3">
+                <div>
+                  <label
+                    htmlFor="poseImage"
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium cursor-pointer hover:shadow-lg hover:shadow-cyan-500/25 transition-all text-sm"
+                  >
+                    <Camera className="w-4 h-4" />
+                    Upload
+                  </label>
+                  <input
+                    type="file"
+                    id="poseImage"
+                    name="poseImage"
+                    accept="image/*"
+                    onClick={() => setIsAboutImageRemoved(false)}
+                    {...register('poseImage')}
+                    hidden
+                  />
+                </div>
+
+                {poseImagePreview && (
+                  <button
+                    type="button"
+                    onClick={handleRemovePoseImage}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800/50 border border-white/10 text-slate-300 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/30 transition-all text-sm"
+                  >
+                    <X className="w-4 h-4" />
+                    Remove
+                  </button>
+                )}
+              </div>
+
+              {errors.poseImage && (
+                <p className="text-rose-400 text-sm text-center">{errors.poseImage.message}</p>
               )}
             </div>
           </div>
@@ -260,9 +346,7 @@ const AboutForm = () => {
           <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 sm:p-8 shadow-xl">
             <div className="flex items-center gap-2 mb-6">
               <FileText className="w-5 h-5 text-cyan-400" />
-              <h2 className="text-lg font-semibold text-white">
-                Profile Details
-              </h2>
+              <h2 className="text-lg font-semibold text-white">Profile Details</h2>
             </div>
 
             <div className="space-y-5">
@@ -348,7 +432,7 @@ const AboutForm = () => {
                   ) : (
                     <>
                       <Save className="w-5 h-5" />
-                      {isUpdate ? "Update Profile" : "Save Profile"}
+                      {isUpdate ? 'Update Profile' : 'Save Profile'}
                     </>
                   )}
                 </motion.button>

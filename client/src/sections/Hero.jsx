@@ -1,26 +1,26 @@
-import { useRef, useMemo, useCallback, memo } from "react";
-import { gsap } from "gsap";
-import { motion } from "motion/react";
-import { ArrowDown, Sparkles } from "lucide-react";
-import heroImage from "../assets/images/hero-portrait.jpg";
-import { useGSAP } from "@gsap/react";
-import { useSelector, shallowEqual } from "react-redux";
-import LazyImage from "../components/LazyImage";
+import { useGSAP } from '@gsap/react';
+import { gsap } from 'gsap';
+import { ArrowDown, Sparkles } from 'lucide-react';
+import { motion } from 'motion/react';
+import { memo, useCallback, useMemo, useRef } from 'react';
+import { shallowEqual, useSelector } from 'react-redux';
+import heroImage from '../assets/images/hero-portrait.jpg';
+import LazyImage from '../components/LazyImage';
 
 gsap.registerPlugin(useGSAP);
 
 // 🎯 Keywords for highlighting
 const HIGHLIGHT_KEYWORDS = [
-  { word: "Developer", className: "text-neon-blue" },
-  { word: "Designer", className: "text-neon-purple" },
-  { word: "Engineer", className: "text-neon-cyan" },
+  { word: 'Developer', className: 'text-neon-blue' },
+  { word: 'Designer', className: 'text-neon-purple' },
+  { word: 'Engineer', className: 'text-neon-cyan' },
 ];
 
 // 🎯 Stats fallback
 const DEFAULT_STATS = [
-  { value: "5", label: "Years Experience" },
-  { value: "5+", label: "Projects Completed" },
-  { value: "5", label: "Happy Clients" },
+  { value: '5', label: 'Years Experience' },
+  { value: '5+', label: 'Projects Completed' },
+  { value: '5', label: 'Happy Clients' },
 ];
 
 const Hero = memo(({ about }) => {
@@ -31,10 +31,7 @@ const Hero = memo(({ about }) => {
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
 
-  const { testimonials } = useSelector(
-    (state) => state.testimonial,
-    shallowEqual,
-  );
+  const { testimonials } = useSelector((state) => state.testimonial, shallowEqual);
 
   // 🛡️ Safe image URL construction
   const imageUrl = useMemo(() => {
@@ -45,8 +42,8 @@ const Hero = memo(({ about }) => {
     if (/^https?:\/\//i.test(url)) return url;
     // Otherwise prepend backend URL
     if (backendUrl) {
-      const base = backendUrl.replace(/\/+$/, "");
-      const path = url.replace(/^\/+/, "");
+      const base = backendUrl.replace(/\/+$/, '');
+      const path = url.replace(/^\/+/, '');
       return `${base}/${path}`;
     }
     return url;
@@ -54,8 +51,7 @@ const Hero = memo(({ about }) => {
 
   // 🎯 Heading text with safe fallback
   const headingText = useMemo(() => {
-    const firstName =
-      about?.fullName?.split(" ")[0]?.toUpperCase() || "DEVELOPER";
+    const firstName = about?.fullName?.split(' ')[0]?.toUpperCase() || 'DEVELOPER';
     return `HI, I'M ${firstName}`;
   }, [about?.fullName]);
 
@@ -64,7 +60,7 @@ const Hero = memo(({ about }) => {
     () => {
       if (!about) return;
 
-      const chars = headingRef.current?.querySelectorAll(".char");
+      const chars = headingRef.current?.querySelectorAll('.char');
       if (chars?.length) {
         gsap.fromTo(
           chars,
@@ -74,22 +70,22 @@ const Hero = memo(({ about }) => {
             opacity: 1,
             duration: 1.2,
             stagger: 0.05,
-            ease: "power4.out",
+            ease: 'power4.out',
             delay: 0.3,
-          },
+          }
         );
       }
 
       gsap.fromTo(
-        ".hero-subheading",
+        '.hero-subheading',
         { y: 30, opacity: 0 },
-        { y: 0, opacity: 1, duration: 1, delay: 0.6 },
+        { y: 0, opacity: 1, duration: 1, delay: 0.6 }
       );
 
       gsap.fromTo(
-        ".hero-description",
+        '.hero-description',
         { y: 30, opacity: 0 },
-        { y: 0, opacity: 1, duration: 1, delay: 0.8 },
+        { y: 0, opacity: 1, duration: 1, delay: 0.8 }
       );
 
       gsap.fromTo(
@@ -101,23 +97,23 @@ const Hero = memo(({ about }) => {
           scale: 1,
           duration: 1.5,
           delay: 0.4,
-          ease: "power3.out",
-        },
+          ease: 'power3.out',
+        }
       );
 
       // Ambient animations
-      gsap.to(".gradient-orb", {
+      gsap.to('.gradient-orb', {
         scale: 1.2,
         duration: 4,
         repeat: -1,
         yoyo: true,
-        ease: "sine.inOut",
+        ease: 'sine.inOut',
       });
     },
     {
       scope: heroRef,
       dependencies: [about],
-    },
+    }
   );
 
   // 🎯 Text highlighting
@@ -127,8 +123,8 @@ const Hero = memo(({ about }) => {
     let parts = [text];
     HIGHLIGHT_KEYWORDS.forEach(({ word, className }) => {
       parts = parts.flatMap((part) => {
-        if (typeof part !== "string") return [part];
-        return part.split(new RegExp(`(${word})`, "gi")).map((chunk, idx) => {
+        if (typeof part !== 'string') return [part];
+        return part.split(new RegExp(`(${word})`, 'gi')).map((chunk, idx) => {
           if (chunk.toLowerCase() === word.toLowerCase()) {
             return (
               <span key={`${word}-${idx}`} className={className}>
@@ -158,7 +154,7 @@ const Hero = memo(({ about }) => {
         rotateY: x * 15,
         rotateX: -y * 15,
         duration: 0.5,
-        ease: "power2.out",
+        ease: 'power2.out',
       });
 
       mouseTimeoutRef.current = null;
@@ -176,7 +172,7 @@ const Hero = memo(({ about }) => {
       rotateY: 0,
       rotateX: 0,
       duration: 0.5,
-      ease: "power2.out",
+      ease: 'power2.out',
     });
   }, []);
 
@@ -188,8 +184,7 @@ const Hero = memo(({ about }) => {
         label: DEFAULT_STATS[0].label,
       },
       {
-        value:
-          about?.projectCounts?.publishedProjects || DEFAULT_STATS[1].value,
+        value: about?.projectCounts?.publishedProjects || DEFAULT_STATS[1].value,
         label: DEFAULT_STATS[1].label,
       },
       {
@@ -197,35 +192,24 @@ const Hero = memo(({ about }) => {
         label: DEFAULT_STATS[2].label,
       },
     ],
-    [
-      about?.experience,
-      about?.projectCounts?.publishedProjects,
-      testimonials?.length,
-    ],
+    [about?.experience, about?.projectCounts?.publishedProjects, testimonials?.length]
   );
 
   // 🎯 Render heading characters
   const renderHeadingChars = useMemo(() => {
-    return headingText.split("").map((char, index) => {
+    return headingText.split('').map((char, index) => {
       const isHighlight = index > 6;
       return (
         <span
           key={`char-${index}`}
           className="char inline-block"
           style={{
-            color:
-              char === " "
-                ? "transparent"
-                : isHighlight
-                  ? "#00d4ff"
-                  : "#ffffff",
-            textShadow: isHighlight
-              ? "0 0 30px rgba(0, 212, 255, 0.5)"
-              : "none",
-            willChange: "transform, opacity",
+            color: char === ' ' ? 'transparent' : isHighlight ? '#00d4ff' : '#ffffff',
+            textShadow: isHighlight ? '0 0 30px rgba(0, 212, 255, 0.5)' : 'none',
+            willChange: 'transform, opacity',
           }}
         >
-          {char === " " ? "\u00A0" : char}
+          {char === ' ' ? '\u00A0' : char}
         </span>
       );
     });
@@ -261,7 +245,7 @@ const Hero = memo(({ about }) => {
       </div>
 
       <div className="relative max-w-7xl mx-auto px-6 lg:px-8 py-32">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-15 items-center">
           {/* 📝 Text Content */}
           <div className="text-center lg:text-left z-10">
             {/* Badge */}
@@ -273,7 +257,7 @@ const Hero = memo(({ about }) => {
             >
               <Sparkles size={16} className="text-neon-cyan" />
               <span className="text-sm text-gray-300">
-                {about?.successNote || "Available for work"}
+                {about?.successNote || 'Available for work'}
               </span>
             </motion.div>
 
@@ -287,13 +271,13 @@ const Hero = memo(({ about }) => {
 
             {/* Subheading */}
             <p className="hero-subheading text-xl sm:text-2xl text-gray-400 mb-4 font-light">
-              {highlightText(about?.shortRole) || "Full Stack Developer"}
+              {highlightText(about?.shortRole) || 'Full Stack Developer'}
             </p>
 
             {/* Description */}
             <p className="hero-description text-gray-500 max-w-lg mx-auto lg:mx-0 mb-10">
               {about?.shortDesc ||
-                "I craft digital experiences that merge art with functionality. Specializing in modern web development and stunning UI/UX design."}
+                'I craft digital experiences that merge art with functionality. Specializing in modern web development and stunning UI/UX design.'}
             </p>
 
             {/* CTA Buttons */}
@@ -305,14 +289,11 @@ const Hero = memo(({ about }) => {
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   Explore My Work
-                  <ArrowDown
-                    size={18}
-                    className="group-hover:translate-y-1 transition-transform"
-                  />
+                  <ArrowDown size={18} className="group-hover:translate-y-1 transition-transform" />
                 </span>
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-neon-purple to-neon-cyan"
-                  initial={{ x: "100%" }}
+                  initial={{ x: '100%' }}
                   whileHover={{ x: 0 }}
                   transition={{ duration: 0.3 }}
                 />
@@ -346,19 +327,15 @@ const Hero = memo(({ about }) => {
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
           >
-            <div
-              ref={imageRef}
-              className="relative"
-              style={{ transformStyle: "preserve-3d" }}
-            >
+            <div ref={imageRef} className="relative" style={{ transformStyle: 'preserve-3d' }}>
               {/* Glow Effect */}
               <div className="absolute -inset-4 bg-gradient-to-r from-neon-blue via-neon-purple to-neon-cyan rounded-3xl opacity-30 blur-2xl pointer-events-none" />
 
               {/* Image Container */}
-              <div className="relative rounded-3xl overflow-hidden border border-white/10">
+              <div className="relative rounded-3xl overflow-hidden border w-full max-h-[650px] border-white/10">
                 <LazyImage
                   src={imageUrl}
-                  alt={`${about?.fullName || "Developer"} Portrait`}
+                  alt={`${about?.fullName || 'Developer'} Portrait`}
                   fallback={heroImage}
                   animation="flip"
                   duration={1.2}
@@ -367,12 +344,11 @@ const Hero = memo(({ about }) => {
                   crossOrigin={true}
                   className="relative rounded-3xl overflow-hidden"
                   objectFit="cover"
+                  objectPosition={'bottom'}
                   placeholderColor="#0a0a0f"
-                  onLoad={() =>
-                    console.log("✅ Hero image loaded successfully")
-                  }
+                  onLoad={() => console.log('✅ Hero image loaded successfully')}
                   onError={(e) => {
-                    console.error("❌ Hero image failed:", e);
+                    console.error('❌ Hero image` failed:', e);
                     // Force fallback on error
                     if (imageRef.current) {
                       gsap.to(imageRef.current, { opacity: 1, duration: 0.3 });
@@ -410,9 +386,7 @@ const Hero = memo(({ about }) => {
                 className="absolute -right-4 top-20 glass rounded-2xl p-4 border border-white/10 hidden lg:block"
               >
                 <div className="text-center">
-                  <div className="text-3xl font-display font-bold text-neon-purple">
-                    100%
-                  </div>
+                  <div className="text-3xl font-display font-bold text-neon-purple">100%</div>
                   <div className="text-gray-400 text-sm">Satisfaction</div>
                 </div>
               </motion.div>
@@ -438,6 +412,6 @@ const Hero = memo(({ about }) => {
   );
 });
 
-Hero.displayName = "Hero";
+Hero.displayName = 'Hero';
 
 export default Hero;

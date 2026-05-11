@@ -1,7 +1,7 @@
-import { useRef, useState, useEffect, useCallback, memo } from "react";
-import { gsap } from "gsap";
-import { useGSAP } from "@gsap/react";
-import PropTypes from "prop-types";
+import { useGSAP } from '@gsap/react';
+import { gsap } from 'gsap';
+import PropTypes from 'prop-types';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 gsap.registerPlugin(useGSAP);
 
@@ -9,19 +9,19 @@ gsap.registerPlugin(useGSAP);
 const ANIMATION_PRESETS = {
   fade: {
     from: { opacity: 0, scale: 1 },
-    to: { opacity: 1, scale: 1, ease: "power2.out" },
+    to: { opacity: 1, scale: 1, ease: 'power2.out' },
   },
   slide: {
     from: { y: 40, opacity: 0, scale: 1 },
-    to: { y: 0, opacity: 1, scale: 1, ease: "power3.out" },
+    to: { y: 0, opacity: 1, scale: 1, ease: 'power3.out' },
   },
   scale: {
     from: { scale: 0.85, opacity: 0 },
-    to: { scale: 1, opacity: 1, ease: "back.out(1.2)" },
+    to: { scale: 1, opacity: 1, ease: 'back.out(1.2)' },
   },
   flip: {
     from: { rotateY: 90, opacity: 0, scale: 1 },
-    to: { rotateY: 0, opacity: 1, scale: 1, ease: "power3.out" },
+    to: { rotateY: 0, opacity: 1, scale: 1, ease: 'power3.out' },
   },
   none: {
     from: { opacity: 1 },
@@ -31,7 +31,7 @@ const ANIMATION_PRESETS = {
 
 // 🛡️ URL sanitizer
 const sanitizeUrl = (url) => {
-  if (!url || typeof url !== "string") return null;
+  if (!url || typeof url !== 'string') return null;
   const trimmed = url.trim();
   if (/^(javascript|data|vbscript):/i.test(trimmed)) return null;
   return trimmed;
@@ -39,20 +39,20 @@ const sanitizeUrl = (url) => {
 
 const LazyImage = ({
   src,
-  alt = "Image",
+  alt = 'Image',
   fallback,
-  animation = "fade",
+  animation = 'fade',
   duration = 0.8,
   delay = 0,
   onLoad,
   onError,
-  className = "",
+  className = '',
   style = {},
   eager = false,
   crossOrigin = true,
-  placeholderColor = "#1a1a2e",
-  objectFit = "cover",
-  objectPosition = "center",
+  placeholderColor = '#1a1a2e',
+  objectFit = 'cover',
+  objectPosition = 'center',
   ...rest
 }) => {
   const imgRef = useRef(null);
@@ -76,7 +76,7 @@ const LazyImage = ({
           observer.disconnect();
         }
       },
-      { rootMargin: "150px", threshold: 0 },
+      { rootMargin: '150px', threshold: 0 }
     );
 
     if (containerRef.current) {
@@ -120,15 +120,9 @@ const LazyImage = ({
   const handleError = useCallback(
     (e) => {
       loadAttemptRef.current += 1;
-      console.warn(
-        `Image load attempt ${loadAttemptRef.current} failed: ${currentSrc}`,
-      );
+      console.warn(`Image load attempt ${loadAttemptRef.current} failed: ${currentSrc}`);
 
-      if (
-        loadAttemptRef.current === 1 &&
-        fallback &&
-        sanitizeUrl(fallback) !== currentSrc
-      ) {
+      if (loadAttemptRef.current === 1 && fallback && sanitizeUrl(fallback) !== currentSrc) {
         const sanitizedFallback = sanitizeUrl(fallback);
         if (sanitizedFallback) {
           setCurrentSrc(sanitizedFallback);
@@ -142,13 +136,13 @@ const LazyImage = ({
       hasAnimatedRef.current = false;
       onError?.(e);
     },
-    [currentSrc, fallback, onError],
+    [currentSrc, fallback, onError]
   );
 
   // 🎨 GSAP Animation - FIXED: No CSS opacity conflict
   useGSAP(
     () => {
-      if (!isLoaded || !imgRef.current || animation === "none") return;
+      if (!isLoaded || !imgRef.current || animation === 'none') return;
       if (hasAnimatedRef.current) return; // Prevent double animation
 
       const preset = ANIMATION_PRESETS[animation];
@@ -160,16 +154,16 @@ const LazyImage = ({
       // Animate to final state
       gsap.to(imgRef.current, {
         ...preset.to,
-        duration: animation === "flip" ? duration * 1.5 : duration,
+        duration: animation === 'flip' ? duration * 1.5 : duration,
         delay,
-        clearProps: "all", // FIXED: Clear ALL props after animation
+        clearProps: 'all', // FIXED: Clear ALL props after animation
         onComplete: () => {
           hasAnimatedRef.current = true;
           // Ensure final state is clean
           gsap.set(imgRef.current, {
             opacity: 1,
-            transform: "none",
-            visibility: "visible",
+            transform: 'none',
+            visibility: 'visible',
           });
         },
       });
@@ -177,18 +171,18 @@ const LazyImage = ({
     {
       scope: containerRef,
       dependencies: [isLoaded],
-    },
+    }
   );
 
   // 🛡️ Preload for eager images
   useEffect(() => {
     if (!eager || !currentSrc) return;
 
-    const link = document.createElement("link");
-    link.rel = "preload";
-    link.as = "image";
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
     link.href = currentSrc;
-    if (crossOrigin) link.crossOrigin = "anonymous";
+    if (crossOrigin) link.crossOrigin = 'anonymous';
     document.head.appendChild(link);
 
     return () => {
@@ -201,11 +195,7 @@ const LazyImage = ({
     if (!imgRef.current || !currentSrc) return;
 
     // Check if already loaded (cached)
-    if (
-      imgRef.current.complete &&
-      imgRef.current.naturalWidth > 0 &&
-      !isLoaded
-    ) {
+    if (imgRef.current.complete && imgRef.current.naturalWidth > 0 && !isLoaded) {
       setIsLoaded(true);
     }
   }, [currentSrc, isLoaded]);
@@ -238,8 +228,8 @@ const LazyImage = ({
               ${placeholderColor}ee 50%,
               ${placeholderColor} 75%
             )`,
-            backgroundSize: "200% 100%",
-            animation: "shimmer 1.5s infinite",
+            backgroundSize: '200% 100%',
+            animation: 'shimmer 1.5s infinite',
           }}
         />
       )}
@@ -269,16 +259,16 @@ const LazyImage = ({
         ref={imgRef}
         src={currentSrc}
         alt={alt}
-        loading={eager ? "eager" : "lazy"}
-        crossOrigin={crossOrigin ? "anonymous" : undefined}
+        loading={eager ? 'eager' : 'lazy'}
+        crossOrigin={crossOrigin ? 'anonymous' : undefined}
         decoding="async"
-        fetchPriority={eager ? "high" : "auto"}
-        className="w-full h-full"
+        fetchPriority={eager ? 'high' : 'auto'}
+        className="w-full h-full "
         style={{
           objectFit,
           objectPosition,
           opacity: 0, // Start hidden, GSAP will animate this
-          visibility: "visible",
+          visibility: 'visible',
         }}
         onLoad={handleLoad}
         onError={handleError}
@@ -300,7 +290,7 @@ LazyImage.propTypes = {
   src: PropTypes.string,
   alt: PropTypes.string,
   fallback: PropTypes.string,
-  animation: PropTypes.oneOf(["fade", "slide", "scale", "flip", "none"]),
+  animation: PropTypes.oneOf(['fade', 'slide', 'scale', 'flip', 'none']),
   duration: PropTypes.number,
   delay: PropTypes.number,
   onLoad: PropTypes.func,
@@ -310,13 +300,7 @@ LazyImage.propTypes = {
   eager: PropTypes.bool,
   crossOrigin: PropTypes.bool,
   placeholderColor: PropTypes.string,
-  objectFit: PropTypes.oneOf([
-    "cover",
-    "contain",
-    "fill",
-    "none",
-    "scale-down",
-  ]),
+  objectFit: PropTypes.oneOf(['cover', 'contain', 'fill', 'none', 'scale-down']),
   objectPosition: PropTypes.string,
 };
 

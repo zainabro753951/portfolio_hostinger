@@ -1,43 +1,33 @@
-import React, {
-  memo,
-  useEffect,
-  useRef,
-  useState,
-  useCallback,
-  useMemo,
-} from "react";
-import { motion, useReducedMotion } from "motion/react";
 import {
-  Upload,
-  Link,
-  Globe,
-  Trash2,
-  Code2,
-  Tags,
-  FolderOpen,
-  FileText,
-  Image,
-  Plus,
-  X,
-  Check,
   AlertCircle,
-} from "lucide-react";
-import { useFieldArray, useForm } from "react-hook-form";
-import { useDispatch, useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
-import DAddProjectHeader from "./components/DAddProjectHeader";
-import { mutateProject } from "../../../Queries/AddProject";
-import { glassToast } from "../Components/ToastMessage";
-import { clearProject, projectFindById } from "../../../features/projectSlice";
-import RichTextEditor from "../Components/RichText";
-import FormSection from "../Components/FormSection";
-import ChipInput from "../Components/ChipInput";
+  Code2,
+  FileText,
+  FolderOpen,
+  Globe,
+  Image,
+  Link,
+  Tags,
+  Trash2,
+  Upload,
+} from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { useDispatch, useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
+import { clearProject, projectFindById } from '../../../features/projectSlice';
+import { mutateProject } from '../../../Queries/AddProject';
+import ChipInput from '../Components/ChipInput';
+import FormSection from '../Components/FormSection';
+import RichTextEditor from '../Components/RichText';
+import { glassToast } from '../Components/ToastMessage';
+import DAddProjectHeader from './components/DAddProjectHeader';
 
 // Form field base classes - converted from template literal to object
 const fieldClasses = {
-  base: "w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-500 outline-none transition-all duration-300",
-  focus: "focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20",
-  hover: "hover:border-white/20 hover:bg-slate-800/70",
+  base: 'w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-500 outline-none transition-all duration-300',
+  focus: 'focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20',
+  hover: 'hover:border-white/20 hover:bg-slate-800/70',
 };
 
 const fieldBase = `${fieldClasses.base} ${fieldClasses.focus} ${fieldClasses.hover}`;
@@ -93,11 +83,7 @@ const ImageUploadSection = memo(
 
         <div className="relative h-48 rounded-xl overflow-hidden bg-slate-800/30 border border-white/10 flex items-center justify-center">
           {previewSrc ? (
-            <img
-              src={previewSrc}
-              alt={title}
-              className="object-cover w-full h-full"
-            />
+            <img src={previewSrc} alt={title} className="object-cover w-full h-full" />
           ) : (
             <div className="text-center text-slate-500">
               <Image className="w-12 h-12 mx-auto mb-2 opacity-50" />
@@ -138,10 +124,10 @@ const ImageUploadSection = memo(
         />
       </div>
     );
-  },
+  }
 );
 
-ImageUploadSection.displayName = "ImageUploadSection";
+ImageUploadSection.displayName = 'ImageUploadSection';
 
 const DAddProjectPage = () => {
   const { id } = useParams();
@@ -168,19 +154,19 @@ const DAddProjectPage = () => {
   // Default form values
   const defaultValues = useMemo(
     () => ({
-      title: "",
-      slug: "",
-      shortDesc: "",
-      repoLink: "",
-      liveDemo: "",
-      category: "",
-      status: "draft",
+      title: '',
+      slug: '',
+      shortDesc: '',
+      repoLink: '',
+      liveDemo: '',
+      category: '',
+      status: 'draft',
       featured: false,
-      visibility: "public",
-      estTime: "",
-      seoTitle: "",
-      metaDesc: "",
-      canonicalUrl: "",
+      visibility: 'public',
+      estTime: '',
+      seoTitle: '',
+      metaDesc: '',
+      canonicalUrl: '',
       techStack: [],
       tag: [],
       metaKeywords: [],
@@ -188,7 +174,7 @@ const DAddProjectPage = () => {
       ogProjectImage: null,
       gallery: [],
     }),
-    [],
+    []
   );
 
   // Form setup
@@ -205,12 +191,12 @@ const DAddProjectPage = () => {
   } = useForm({ defaultValues });
 
   // Watch fields
-  const heroImage = watch("heroImage");
-  const ogProjectImage = watch("ogProjectImage");
-  const gallery = watch("gallery");
-  const seoTitle = watch("seoTitle", "");
-  const metaDesc = watch("metaDesc", "");
-  const title = watch("title", "");
+  const heroImage = watch('heroImage');
+  const ogProjectImage = watch('ogProjectImage');
+  const gallery = watch('gallery');
+  const seoTitle = watch('seoTitle', '');
+  const metaDesc = watch('metaDesc', '');
+  const title = watch('title', '');
 
   // Field arrays
   const {
@@ -219,7 +205,7 @@ const DAddProjectPage = () => {
     remove: removeTech,
   } = useFieldArray({
     control,
-    name: "techStack",
+    name: 'techStack',
   });
   const {
     fields: tagFields,
@@ -227,7 +213,7 @@ const DAddProjectPage = () => {
     remove: removeTag,
   } = useFieldArray({
     control,
-    name: "tag",
+    name: 'tag',
   });
   const {
     fields: metaKeywordsFields,
@@ -235,7 +221,7 @@ const DAddProjectPage = () => {
     remove: removeMetaKeywords,
   } = useFieldArray({
     control,
-    name: "metaKeywords",
+    name: 'metaKeywords',
   });
 
   // Fetch project effect
@@ -267,13 +253,13 @@ const DAddProjectPage = () => {
       setOutput(project?.content || null);
       setHeroPreviewSrc(
         project?.heroImage?.url
-          ? `${backendUrl}/${project.heroImage.url.replace(/^\/+/, "")}`
-          : null,
+          ? `${backendUrl}/${project.heroImage.url.replace(/^\/+/, '')}`
+          : null
       );
       setOgPreviewSrc(
         project?.ogProjectImage?.url
-          ? `${backendUrl}/${project.ogProjectImage.url.replace(/^\/+/, "")}`
-          : null,
+          ? `${backendUrl}/${project.ogProjectImage.url.replace(/^\/+/, '')}`
+          : null
       );
       setIsHeroImageRemoved(false);
       setIsOgImageRemoved(false);
@@ -289,9 +275,7 @@ const DAddProjectPage = () => {
       heroUrl = URL.createObjectURL(heroImage[0]);
       setHeroPreviewSrc(heroUrl);
     } else if (!isHeroImageRemoved && project?.heroImage?.url) {
-      setHeroPreviewSrc(
-        `${backendUrl}/${project.heroImage.url.replace(/^\/+/, "")}`,
-      );
+      setHeroPreviewSrc(`${backendUrl}/${project.heroImage.url.replace(/^\/+/, '')}`);
     } else {
       setHeroPreviewSrc(null);
     }
@@ -300,9 +284,7 @@ const DAddProjectPage = () => {
       ogUrl = URL.createObjectURL(ogProjectImage[0]);
       setOgPreviewSrc(ogUrl);
     } else if (!isOgImageRemoved && project?.ogProjectImage?.url) {
-      setOgPreviewSrc(
-        `${backendUrl}/${project.ogProjectImage.url.replace(/^\/+/, "")}`,
-      );
+      setOgPreviewSrc(`${backendUrl}/${project.ogProjectImage.url.replace(/^\/+/, '')}`);
     } else {
       setOgPreviewSrc(null);
     }
@@ -311,25 +293,18 @@ const DAddProjectPage = () => {
       if (heroUrl) URL.revokeObjectURL(heroUrl);
       if (ogUrl) URL.revokeObjectURL(ogUrl);
     };
-  }, [
-    heroImage,
-    ogProjectImage,
-    isHeroImageRemoved,
-    isOgImageRemoved,
-    project,
-    backendUrl,
-  ]);
+  }, [heroImage, ogProjectImage, isHeroImageRemoved, isOgImageRemoved, project, backendUrl]);
 
   // Auto-generate slug
   useEffect(() => {
-    if (!isSlugEdited.current && title.trim() !== "") {
+    if (!isSlugEdited.current && title.trim() !== '') {
       const slug = title
         .toLowerCase()
         .trim()
-        .replace(/[^a-z0-9\s-]/g, " ")
-        .replace(/\s+/g, "-")
-        .replace(/-+/g, "-");
-      setValue("slug", slug);
+        .replace(/[^a-z0-9\s-]/g, ' ')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+      setValue('slug', slug);
     }
   }, [title, setValue]);
 
@@ -342,28 +317,24 @@ const DAddProjectPage = () => {
 
       if (!trimmedValue) {
         setError(fieldName, {
-          type: "required",
+          type: 'required',
           message: `${fieldName} is required`,
         });
         return;
       }
       if (trimmedValue.length < minLength) {
         setError(fieldName, {
-          type: "minLength",
+          type: 'minLength',
           message: `${fieldName} must be at least ${minLength} chars`,
         });
         return;
       }
       // ✅ FIXED: Check f.name || f.value for both structures
       if (
-        fields.some(
-          (f) =>
-            (f.name || f.value || "").toLowerCase() ===
-            trimmedValue.toLowerCase(),
-        )
+        fields.some((f) => (f.name || f.value || '').toLowerCase() === trimmedValue.toLowerCase())
       ) {
         setError(fieldName, {
-          type: "duplicate",
+          type: 'duplicate',
           message: `This ${fieldName} already exists`,
         });
         return;
@@ -371,39 +342,33 @@ const DAddProjectPage = () => {
 
       append({ name: trimmedValue });
       if (inputElement) {
-        inputElement.value = "";
+        inputElement.value = '';
         inputElement.focus();
       }
     },
-    [clearErrors, setError],
+    [clearErrors, setError]
   );
 
   // ── Updated chip handlers ──────────────────────────────────────
   const addTech = useCallback(
     (value, inputElement) => {
-      addChip(value, inputElement, "techStack", techFields, appendTech);
+      addChip(value, inputElement, 'techStack', techFields, appendTech);
     },
-    [addChip, techFields, appendTech],
+    [addChip, techFields, appendTech]
   );
 
   const addTag = useCallback(
     (value, inputElement) => {
-      addChip(value, inputElement, "tag", tagFields, appendTag);
+      addChip(value, inputElement, 'tag', tagFields, appendTag);
     },
-    [addChip, tagFields, appendTag],
+    [addChip, tagFields, appendTag]
   );
 
   const addMetaKeyword = useCallback(
     (value, inputElement) => {
-      addChip(
-        value,
-        inputElement,
-        "metaKeywords",
-        metaKeywordsFields,
-        appendMetaKeywords,
-      );
+      addChip(value, inputElement, 'metaKeywords', metaKeywordsFields, appendMetaKeywords);
     },
-    [addChip, metaKeywordsFields, appendMetaKeywords],
+    [addChip, metaKeywordsFields, appendMetaKeywords]
   );
 
   // Gallery preview
@@ -411,20 +376,17 @@ const DAddProjectPage = () => {
     if (isGalleryRemoved) return [];
     if (gallery?.length > 0) {
       return Array.from(gallery).map((file) =>
-        file instanceof File ? URL.createObjectURL(file) : file,
+        file instanceof File ? URL.createObjectURL(file) : file
       );
     }
     if (project?.gallery?.length > 0) {
-      return project.gallery.map(
-        (g) => `${backendUrl}/${g.url.replace(/^\/+/, "")}`,
-      );
+      return project.gallery.map((g) => `${backendUrl}/${g.url.replace(/^\/+/, '')}`);
     }
     return [];
   }, [gallery, isGalleryRemoved, project, backendUrl]);
 
   // Mutation
-  const { mutate, isSuccess, isPending, isError, data, error } =
-    mutateProject();
+  const { mutate, isSuccess, isPending, isError, data, error } = mutateProject();
 
   // Submit handler
   const onSubmit = useCallback(
@@ -432,75 +394,56 @@ const DAddProjectPage = () => {
       const formData = new FormData();
 
       // Append basic fields
-      formData.append("title", data.title);
-      formData.append("slug", data.slug);
-      formData.append("shortDesc", data.shortDesc);
-      formData.append("content", output || "");
-      formData.append("repoLink", data.repoLink || "");
-      formData.append("liveDemo", data.liveDemo || "");
+      formData.append('title', data.title);
+      formData.append('slug', data.slug);
+      formData.append('shortDesc', data.shortDesc);
+      formData.append('content', output || '');
+      formData.append('repoLink', data.repoLink || '');
+      formData.append('liveDemo', data.liveDemo || '');
 
       // Files
-      if (data.heroImage?.[0]) formData.append("heroImage", data.heroImage[0]);
-      if (data.ogProjectImage?.[0])
-        formData.append("ogProjectImage", data.ogProjectImage[0]);
-      Array.from(data.gallery || []).forEach((file) =>
-        formData.append("gallery", file),
-      );
+      if (data.heroImage?.[0]) formData.append('heroImage', data.heroImage[0]);
+      if (data.ogProjectImage?.[0]) formData.append('ogProjectImage', data.ogProjectImage[0]);
+      Array.from(data.gallery || []).forEach((file) => formData.append('gallery', file));
 
       // Flags
-      formData.append("isHeroImageRemoved", JSON.stringify(isHeroImageRemoved));
-      formData.append("isOgImageRemoved", JSON.stringify(isOgImageRemoved));
-      formData.append("isGalleryRemoved", JSON.stringify(isGalleryRemoved));
+      formData.append('isHeroImageRemoved', JSON.stringify(isHeroImageRemoved));
+      formData.append('isOgImageRemoved', JSON.stringify(isOgImageRemoved));
+      formData.append('isGalleryRemoved', JSON.stringify(isGalleryRemoved));
 
       // Existing data
-      formData.append(
-        "heroImageOBJ",
-        JSON.stringify(project?.heroImage || null),
-      );
-      formData.append(
-        "ogProjectImageOBJ",
-        JSON.stringify(project?.ogProjectImage || null),
-      );
-      formData.append("galleryOBJS", JSON.stringify(project?.gallery || []));
+      formData.append('heroImageOBJ', JSON.stringify(project?.heroImage || null));
+      formData.append('ogProjectImageOBJ', JSON.stringify(project?.ogProjectImage || null));
+      formData.append('galleryOBJS', JSON.stringify(project?.gallery || []));
 
       // Arrays
-      formData.append("techStack", JSON.stringify(data.techStack));
-      formData.append("tag", JSON.stringify(data.tag));
-      formData.append("metaKeywords", JSON.stringify(data.metaKeywords));
+      formData.append('techStack', JSON.stringify(data.techStack));
+      formData.append('tag', JSON.stringify(data.tag));
+      formData.append('metaKeywords', JSON.stringify(data.metaKeywords));
 
       // Other fields
-      formData.append("category", data.category);
-      formData.append("status", data.status);
-      formData.append("featured", data.featured);
-      formData.append("visibility", data.visibility);
-      formData.append("estTime", data.estTime);
-      formData.append("seoTitle", data.seoTitle);
-      formData.append("metaDesc", data.metaDesc);
-      formData.append("canonicalUrl", data.canonicalUrl);
-      formData.append("projectId", project?.id || "");
+      formData.append('category', data.category);
+      formData.append('status', data.status);
+      formData.append('featured', data.featured);
+      formData.append('visibility', data.visibility);
+      formData.append('estTime', data.estTime);
+      formData.append('seoTitle', data.seoTitle);
+      formData.append('metaDesc', data.metaDesc);
+      formData.append('canonicalUrl', data.canonicalUrl);
+      formData.append('projectId', project?.id || '');
 
       mutate(formData);
     },
-    [
-      output,
-      isHeroImageRemoved,
-      isOgImageRemoved,
-      isGalleryRemoved,
-      project,
-      mutate,
-    ],
+    [output, isHeroImageRemoved, isOgImageRemoved, isGalleryRemoved, project, mutate]
   );
 
   // Toast effects
   useEffect(() => {
     if (isSuccess) {
-      glassToast(data?.message, "success");
+      glassToast(data?.message, 'success');
     }
     if (isError) {
-      glassToast(
-        error?.response?.data?.message || "An error occurred",
-        "error",
-      );
+      glassToast(error?.response?.data?.message || 'An error occurred', 'error');
     }
   }, [isSuccess, isError, data, error]);
 
@@ -521,15 +464,13 @@ const DAddProjectPage = () => {
           <FormSection title="Basic Information" icon={FileText}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">
-                  Project Title
-                </label>
+                <label className="text-sm font-medium text-slate-300">Project Title</label>
                 <input
-                  {...register("title", {
-                    required: "Project title is required",
+                  {...register('title', {
+                    required: 'Project title is required',
                     minLength: {
                       value: 5,
-                      message: "Title must be at least 5 characters",
+                      message: 'Title must be at least 5 characters',
                     },
                   })}
                   placeholder="Enter project title"
@@ -544,37 +485,29 @@ const DAddProjectPage = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">
-                  Slug
-                </label>
+                <label className="text-sm font-medium text-slate-300">Slug</label>
                 <input
-                  {...register("slug", {
-                    required: "Slug is required",
+                  {...register('slug', {
+                    required: 'Slug is required',
                     pattern: {
                       value: /^[a-z0-9-]+$/,
-                      message: "Only lowercase letters, numbers, and hyphens",
+                      message: 'Only lowercase letters, numbers, and hyphens',
                     },
                   })}
                   placeholder="project-slug"
                   className={fieldBase}
                 />
-                <small className="text-slate-500 text-xs">
-                  Auto-generated from title
-                </small>
-                {errors.slug && (
-                  <p className="text-rose-400 text-xs">{errors.slug.message}</p>
-                )}
+                <small className="text-slate-500 text-xs">Auto-generated from title</small>
+                {errors.slug && <p className="text-rose-400 text-xs">{errors.slug.message}</p>}
               </div>
             </div>
 
             <div className="space-y-2 mt-4">
-              <label className="text-sm font-medium text-slate-300">
-                Short Description
-              </label>
+              <label className="text-sm font-medium text-slate-300">Short Description</label>
               <textarea
-                {...register("shortDesc", {
-                  required: "Short description is required",
-                  minLength: { value: 50, message: "Minimum 50 characters" },
+                {...register('shortDesc', {
+                  required: 'Short description is required',
+                  minLength: { value: 50, message: 'Minimum 50 characters' },
                   maxLength: {
                     value: SHORT_DESC_LIMIT,
                     message: `Maximum ${SHORT_DESC_LIMIT} characters`,
@@ -586,9 +519,7 @@ const DAddProjectPage = () => {
                 maxLength={SHORT_DESC_LIMIT}
               />
               {errors.shortDesc && (
-                <p className="text-rose-400 text-xs">
-                  {errors.shortDesc.message}
-                </p>
+                <p className="text-rose-400 text-xs">{errors.shortDesc.message}</p>
               )}
             </div>
           </FormSection>
@@ -602,20 +533,18 @@ const DAddProjectPage = () => {
                 </label>
                 <input
                   type="url"
-                  {...register("repoLink", {
-                    required: "Repository link is required",
+                  {...register('repoLink', {
+                    required: 'Repository link is required',
                     pattern: {
                       value: /^https?:\/\/.+/,
-                      message: "Must be a valid URL",
+                      message: 'Must be a valid URL',
                     },
                   })}
                   placeholder="https://github.com/username/repo"
                   className={fieldBase}
                 />
                 {errors.repoLink && (
-                  <p className="text-rose-400 text-xs">
-                    {errors.repoLink.message}
-                  </p>
+                  <p className="text-rose-400 text-xs">{errors.repoLink.message}</p>
                 )}
               </div>
 
@@ -626,7 +555,7 @@ const DAddProjectPage = () => {
                 </label>
                 <input
                   type="url"
-                  {...register("liveDemo")}
+                  {...register('liveDemo')}
                   placeholder="https://your-demo.com"
                   className={fieldBase}
                 />
@@ -643,7 +572,7 @@ const DAddProjectPage = () => {
               previewSrc={heroPreviewSrc}
               onRemove={() => {
                 setHeroPreviewSrc(null);
-                setValue("heroImage", null);
+                setValue('heroImage', null);
                 setIsHeroImageRemoved(true);
               }}
               inputId="heroImage"
@@ -696,7 +625,7 @@ const DAddProjectPage = () => {
                   whileTap={{ scale: 0.98 }}
                   type="button"
                   onClick={() => {
-                    setValue("gallery", []);
+                    setValue('gallery', []);
                     setIsGalleryRemoved(true);
                   }}
                   className="py-2.5 px-4 rounded-xl bg-slate-800/50 border border-white/10 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors text-sm font-medium"
@@ -710,7 +639,7 @@ const DAddProjectPage = () => {
                 accept="image/*"
                 multiple
                 className="hidden"
-                {...register("gallery")}
+                {...register('gallery')}
               />
             </div>
           </FormSection>
@@ -751,87 +680,60 @@ const DAddProjectPage = () => {
           <FormSection title="Project Settings" icon={FolderOpen}>
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">
-                  Category
-                </label>
-                <select
-                  {...register("category", { required: true })}
-                  className={fieldBase}
-                >
+                <label className="text-sm font-medium text-slate-300">Category</label>
+                <select {...register('category', { required: true })} className={fieldBase}>
                   <option value="">Select Category</option>
                   <option value="ui design">UI Design</option>
-                  <option value="frontend development">
-                    Frontend Development
-                  </option>
+                  <option value="frontend development">Frontend Development</option>
                   <option value="react projects">React Projects</option>
                   <option value="open source">Open Source</option>
                 </select>
-                {errors.category && (
-                  <p className="text-rose-400 text-xs">Required</p>
-                )}
+                {errors.category && <p className="text-rose-400 text-xs">Required</p>}
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">
-                  Status
-                </label>
-                <select
-                  {...register("status", { required: true })}
-                  className={fieldBase}
-                >
+                <label className="text-sm font-medium text-slate-300">Status</label>
+                <select {...register('status', { required: true })} className={fieldBase}>
                   <option value="">Select Status</option>
                   <option value="published">Published</option>
                   <option value="draft">Draft</option>
                 </select>
-                {errors.status && (
-                  <p className="text-rose-400 text-xs">Required</p>
-                )}
+                {errors.status && <p className="text-rose-400 text-xs">Required</p>}
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">
-                  Visibility
-                </label>
-                <select
-                  {...register("visibility", { required: true })}
-                  className={fieldBase}
-                >
+                <label className="text-sm font-medium text-slate-300">Visibility</label>
+                <select {...register('visibility', { required: true })} className={fieldBase}>
                   <option value="">Select Visibility</option>
                   <option value="public">Public</option>
                   <option value="unlisted">Unlisted</option>
                   <option value="private">Private</option>
                 </select>
-                {errors.visibility && (
-                  <p className="text-rose-400 text-xs">Required</p>
-                )}
+                {errors.visibility && <p className="text-rose-400 text-xs">Required</p>}
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">
-                  Estimated Time
-                </label>
+                <label className="text-sm font-medium text-slate-300">Estimated Time</label>
                 <input
-                  {...register("estTime", {
-                    required: "Required",
+                  {...register('estTime', {
+                    required: 'Required',
                     pattern: {
                       value: /^[1-9]\d*$/,
-                      message: "Positive integer only",
+                      message: 'Positive integer only',
                     },
                   })}
                   placeholder="e.g. 3 days"
                   className={fieldBase}
                 />
                 {errors.estTime && (
-                  <p className="text-rose-400 text-xs">
-                    {errors.estTime.message}
-                  </p>
+                  <p className="text-rose-400 text-xs">{errors.estTime.message}</p>
                 )}
               </div>
 
               <label className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/30 border border-white/5 cursor-pointer hover:bg-slate-800/50 transition-colors">
                 <input
                   type="checkbox"
-                  {...register("featured")}
+                  {...register('featured')}
                   className="w-5 h-5 rounded border-slate-600 text-cyan-500 focus:ring-cyan-500/20 bg-slate-700"
                 />
                 <span className="text-sm text-slate-300">Mark as Featured</span>
@@ -843,15 +745,15 @@ const DAddProjectPage = () => {
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-300">
-                  SEO Title{" "}
+                  SEO Title{' '}
                   <span className="text-slate-500">
                     ({seoTitle.length}/{SEO_TITLE_LIMIT})
                   </span>
                 </label>
                 <input
-                  {...register("seoTitle", {
-                    required: "Required",
-                    minLength: { value: 5, message: "Min 5 chars" },
+                  {...register('seoTitle', {
+                    required: 'Required',
+                    minLength: { value: 5, message: 'Min 5 chars' },
                     maxLength: {
                       value: SEO_TITLE_LIMIT,
                       message: `Max ${SEO_TITLE_LIMIT} chars`,
@@ -862,23 +764,21 @@ const DAddProjectPage = () => {
                   className={fieldBase}
                 />
                 {errors.seoTitle && (
-                  <p className="text-rose-400 text-xs">
-                    {errors.seoTitle.message}
-                  </p>
+                  <p className="text-rose-400 text-xs">{errors.seoTitle.message}</p>
                 )}
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-300">
-                  Meta Description{" "}
+                  Meta Description{' '}
                   <span className="text-slate-500">
                     ({metaDesc.length}/{META_DESC_LIMIT})
                   </span>
                 </label>
                 <textarea
-                  {...register("metaDesc", {
-                    required: "Required",
-                    minLength: { value: 10, message: "Min 10 chars" },
+                  {...register('metaDesc', {
+                    required: 'Required',
+                    minLength: { value: 10, message: 'Min 10 chars' },
                     maxLength: {
                       value: META_DESC_LIMIT,
                       message: `Max ${META_DESC_LIMIT} chars`,
@@ -890,9 +790,7 @@ const DAddProjectPage = () => {
                   className={`${fieldBase} resize-none`}
                 />
                 {errors.metaDesc && (
-                  <p className="text-rose-400 text-xs">
-                    {errors.metaDesc.message}
-                  </p>
+                  <p className="text-rose-400 text-xs">{errors.metaDesc.message}</p>
                 )}
               </div>
 
@@ -908,32 +806,26 @@ const DAddProjectPage = () => {
               />
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">
-                  Canonical URL
-                </label>
+                <label className="text-sm font-medium text-slate-300">Canonical URL</label>
                 <input
                   type="url"
-                  {...register("canonicalUrl", {
-                    required: "Required",
+                  {...register('canonicalUrl', {
+                    required: 'Required',
                     pattern: {
                       value: /^https?:\/\/.+/,
-                      message: "Valid URL required",
+                      message: 'Valid URL required',
                     },
                   })}
                   placeholder="https://yoursite.com/project"
                   className={fieldBase}
                 />
                 {errors.canonicalUrl && (
-                  <p className="text-rose-400 text-xs">
-                    {errors.canonicalUrl.message}
-                  </p>
+                  <p className="text-rose-400 text-xs">{errors.canonicalUrl.message}</p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">
-                  OG Image
-                </label>
+                <label className="text-sm font-medium text-slate-300">OG Image</label>
                 <div className="relative h-32 rounded-xl overflow-hidden bg-slate-800/30 border border-white/10 flex items-center justify-center">
                   {ogPreviewSrc ? (
                     <img
@@ -953,9 +845,7 @@ const DAddProjectPage = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     htmlFor="ogProjectImage"
-                    onClick={() =>
-                      isOgImageRemoved && setIsOgImageRemoved(false)
-                    }
+                    onClick={() => isOgImageRemoved && setIsOgImageRemoved(false)}
                     className="flex-1 cursor-pointer py-2 px-3 rounded-lg bg-slate-800/50 border border-white/10 text-white text-center text-xs hover:bg-slate-700/50 transition-colors"
                   >
                     Upload OG
@@ -965,7 +855,7 @@ const DAddProjectPage = () => {
                     whileTap={{ scale: 0.98 }}
                     type="button"
                     onClick={() => {
-                      setValue("ogProjectImage", null);
+                      setValue('ogProjectImage', null);
                       setOgPreviewSrc(null);
                       setIsOgImageRemoved(true);
                     }}
@@ -979,7 +869,7 @@ const DAddProjectPage = () => {
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  {...register("ogProjectImage")}
+                  {...register('ogProjectImage')}
                 />
               </div>
             </div>
