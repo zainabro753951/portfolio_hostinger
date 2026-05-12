@@ -1,30 +1,17 @@
-import React, { memo, useEffect, useCallback, useMemo } from "react";
-import { color, motion, useReducedMotion } from "motion/react";
-import {
-  Pencil,
-  Trash2,
-  GraduationCap,
-  Building2,
-  Calendar,
-} from "lucide-react";
-import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
-import { useDeleteEntryContext } from "../../../../context/DeleteEntry";
-import {
-  formatDateTime,
-  formatTimeAgo,
-  getFileIcon,
-  getFileNameFromUrl,
-} from "../../../../Utils/Utils";
-import useCreatedAtSorted from "../../../../hooks/useCreatedAtSorted";
+import { Building2, Calendar, GraduationCap, Pencil, Trash2 } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
+import { useDeleteEntryContext } from '../../../../context/DeleteEntryProvider';
+import useCreatedAtSorted from '../../../../hooks/useCreatedAtSorted';
+import { formatTimeAgo, getFileIcon, getFileNameFromUrl } from '../../../../Utils/Utils';
 
 // Table row component
 const EduRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
   // Component ke andar (jahaan prefersReducedMotion use ho raha hai)
   const certificate =
-    typeof item?.certificate === "string"
-      ? JSON.parse(item?.certificate)
-      : item?.certificate;
+    typeof item?.certificate === 'string' ? JSON.parse(item?.certificate) : item?.certificate;
   // ✅ Check: certificate exist karta hai AND usme atleast 1 property hai
   const isCertificate = certificate && Object.keys(certificate).length > 0;
   const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
@@ -49,7 +36,7 @@ const EduRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
         },
       },
     }),
-    [index],
+    [index]
   );
 
   return (
@@ -67,7 +54,7 @@ const EduRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="font-semibold text-white text-base truncate">
-              {item?.institutionName || "Institution Name"}
+              {item?.institutionName || 'Institution Name'}
             </h3>
             <p className="text-slate-400 text-sm mt-0.5">
               {item.degree} - {item.fieldStudy}
@@ -93,14 +80,12 @@ const EduRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
               hidden: { opacity: 0.8 },
               hover: {
                 scale: prefersReducedMotion ? 1 : 1.05,
-                borderColor: prefersReducedMotion
-                  ? FileIconColor
-                  : FileIconColor,
+                borderColor: prefersReducedMotion ? FileIconColor : FileIconColor,
                 boxShadow: prefersReducedMotion
-                  ? "none"
+                  ? 'none'
                   : `0 0 20px ${FileIconColor}40, 0 0 40px ${FileIconColor}20`,
                 transition: {
-                  type: "spring",
+                  type: 'spring',
                   stiffness: 400,
                   damping: 15,
                   mass: 0.8,
@@ -117,7 +102,7 @@ const EduRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
             // ✅ Static styles
             className="w-12 h-12 rounded-lg flex items-center justify-center border  flex-shrink-0 cursor-pointer overflow-hidden relative group"
             style={{
-              backgroundColor: FileIconColor + "20",
+              backgroundColor: FileIconColor + '20',
               borderColor: FileIconColor,
             }}
           >
@@ -135,9 +120,7 @@ const EduRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
                 className="w-6 h-6 stroke-current transition-colors duration-300"
                 style={{
                   color: FileIconColor,
-                  filter: prefersReducedMotion
-                    ? "none"
-                    : "drop-shadow(0 2px 4px rgba(0,0,0,0.2))",
+                  filter: prefersReducedMotion ? 'none' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
                 }}
               />
             </motion.div>
@@ -161,7 +144,7 @@ const EduRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
                 transition: {
                   duration: 1.5,
                   repeat: Infinity,
-                  ease: "easeInOut",
+                  ease: 'easeInOut',
                 },
               }}
             />
@@ -183,20 +166,14 @@ const EduRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
 
       {/* ✅ Created At Column */}
       <div className="py-4 px-4">
-        <span
-          className="text-slate-300 text-xs font-medium"
-          title={item?.createdAt}
-        >
+        <span className="text-slate-300 text-xs font-medium" title={item?.createdAt}>
           {createdAtRelative}
         </span>
       </div>
 
       {/* ✅ Updated At Column */}
       <div className="py-4 px-4">
-        <span
-          className="text-slate-300 text-xs font-medium"
-          title={item?.updatedAt}
-        >
+        <span className="text-slate-300 text-xs font-medium" title={item?.updatedAt}>
           {updatedAtRelative}
         </span>
       </div>
@@ -223,7 +200,7 @@ const EduRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
   );
 });
 
-EduRow.displayName = "EduRow";
+EduRow.displayName = 'EduRow';
 
 const DEduTable = () => {
   const { educations } = useSelector((state) => state.education);
@@ -234,16 +211,16 @@ const DEduTable = () => {
   const { sortedData: sortedEdu } = useCreatedAtSorted(educations);
 
   useEffect(() => {
-    setQueryKey("educations");
+    setQueryKey('educations');
   }, [setQueryKey]);
 
   const handleDelete = useCallback(
     (id) => {
       setRoute(`/education/delete/${id}`);
       setIsOpen(true);
-      setQueryKey("educations");
+      setQueryKey('educations');
     },
-    [setRoute, setIsOpen, setQueryKey],
+    [setRoute, setIsOpen, setQueryKey]
   );
 
   const containerVariants = useMemo(
@@ -260,7 +237,7 @@ const DEduTable = () => {
         },
       },
     }),
-    [],
+    []
   );
 
   return (
@@ -276,12 +253,8 @@ const DEduTable = () => {
           <GraduationCap className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-            All Education
-          </h3>
-          <p className="text-slate-500 text-xs sm:text-sm">
-            {sortedEdu?.length || 0} entries
-          </p>
+          <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">All Education</h3>
+          <p className="text-slate-500 text-xs sm:text-sm">{sortedEdu?.length || 0} entries</p>
         </div>
       </div>
 
@@ -323,9 +296,7 @@ const DEduTable = () => {
               <GraduationCap className="w-8 h-8 text-slate-600" />
             </div>
             <p className="text-slate-500 text-sm">No education entries found</p>
-            <p className="text-slate-600 text-xs mt-1">
-              Add your first education entry
-            </p>
+            <p className="text-slate-600 text-xs mt-1">Add your first education entry</p>
           </div>
         )}
       </div>

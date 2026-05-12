@@ -1,9 +1,8 @@
-import { AnimatePresence, motion } from "motion/react";
-import React, { useState, memo, useCallback } from "react";
-import { FaEdit, FaTrashAlt } from "react-icons/fa";
-import { useDeleteEntryContext } from "../../../../context/DeleteEntry";
-import { Link } from "react-router-dom";
-import { useEffect } from "react";
+import { AnimatePresence, motion } from 'motion/react';
+import { memo, useCallback, useEffect, useState } from 'react';
+import { FaEdit, FaTrashAlt } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
+import { useDeleteEntryContext } from '../../../../context/DeleteEntryProvider';
 
 // Memoized action button component for better performance
 const ActionButton = memo(
@@ -51,21 +50,17 @@ const ActionButton = memo(
         {content}
       </button>
     );
-  },
+  }
 );
 
-ActionButton.displayName = "ActionButton";
+ActionButton.displayName = 'ActionButton';
 
 const FAQ = ({ faq, idx }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const {
-    setRoute,
-    setIsOpen: setDeleteOpen,
-    setQueryKey,
-  } = useDeleteEntryContext();
+  const { setRoute, setIsOpen: setDeleteOpen, setQueryKey } = useDeleteEntryContext();
 
   useEffect(() => {
-    setQueryKey("FAQs");
+    setQueryKey('FAQs');
   }, [setQueryKey]);
 
   // Memoized toggle function
@@ -77,7 +72,7 @@ const FAQ = ({ faq, idx }) => {
   const handleDelete = useCallback(() => {
     setDeleteOpen(true);
     setRoute(`/faq/delete/${faq?.id}`);
-    setQueryKey("FAQs");
+    setQueryKey('FAQs');
   }, [setDeleteOpen, setRoute, setQueryKey, faq?.id]);
 
   return (
@@ -106,7 +101,7 @@ const FAQ = ({ faq, idx }) => {
       <div
         onClick={toggleFAQ}
         onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
+          if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             toggleFAQ();
           }
@@ -145,9 +140,9 @@ const FAQ = ({ faq, idx }) => {
               border backdrop-blur-sm
               transition-all duration-300
               ${
-                faq.status.toLowerCase() === "published"
-                  ? "bg-cyan-500/15 text-cyan-300 border-cyan-400/30 shadow-[0_0_10px_rgba(34,211,238,0.2)]"
-                  : "bg-amber-500/15 text-amber-300 border-amber-400/30 shadow-[0_0_10px_rgba(251,191,36,0.2)]"
+                faq.status.toLowerCase() === 'published'
+                  ? 'bg-cyan-500/15 text-cyan-300 border-cyan-400/30 shadow-[0_0_10px_rgba(34,211,238,0.2)]'
+                  : 'bg-amber-500/15 text-amber-300 border-amber-400/30 shadow-[0_0_10px_rgba(251,191,36,0.2)]'
               }
             `}
           >
@@ -195,7 +190,7 @@ const FAQ = ({ faq, idx }) => {
           <motion.div
             key="answer"
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
+            animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{
               duration: 0.35,

@@ -1,36 +1,29 @@
-import React, { memo, useEffect, useCallback, useMemo } from "react";
-import { useSelector } from "react-redux";
-import { motion, useReducedMotion } from "motion/react";
-import { Link } from "react-router-dom";
 import {
-  Pencil,
-  Trash2,
   Briefcase,
   Building2,
   Calendar,
-  Clock,
-  CheckCircle2,
-  Wrench,
-  FileText,
-  Image as ImageIcon,
-  CalendarPlus,
   CalendarCheck,
-} from "lucide-react";
-import { useDeleteEntryContext } from "../../../../context/DeleteEntry";
-import {
-  formatTimeAgo,
-  getFileIcon,
-  getFileNameFromUrl,
-} from "../../../../Utils/Utils";
-import useCreatedAtSorted from "../../../../hooks/useCreatedAtSorted";
+  CalendarPlus,
+  CheckCircle2,
+  Clock,
+  FileText,
+  Pencil,
+  Trash2,
+  Wrench,
+} from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
+import { useDeleteEntryContext } from '../../../../context/DeleteEntryProvider';
+import useCreatedAtSorted from '../../../../hooks/useCreatedAtSorted';
+import { formatTimeAgo, getFileIcon, getFileNameFromUrl } from '../../../../Utils/Utils';
 
 // Table row component
 const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
   const companyLogo = useMemo(() =>
-    typeof item?.companyLogo === "string"
-      ? JSON.parse(item?.companyLogo)
-      : item?.companyLogo,
+    typeof item?.companyLogo === 'string' ? JSON.parse(item?.companyLogo) : item?.companyLogo
   );
 
   const createdAt = formatTimeAgo(item?.createdAt);
@@ -51,15 +44,15 @@ const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
         },
       },
     }),
-    [index],
+    [index]
   );
 
   const formatDate = (date) => {
-    if (!date) return "N/A";
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+    if (!date) return 'N/A';
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
     });
   };
 
@@ -81,9 +74,7 @@ const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
       <div className="py-4 px-3 w-48 flex-shrink-0">
         <div className="flex items-center gap-2">
           <Briefcase className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-          <span className="font-medium text-white truncate">
-            {item?.position}
-          </span>
+          <span className="font-medium text-white truncate">{item?.position}</span>
         </div>
       </div>
 
@@ -129,9 +120,7 @@ const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
       <div className="py-4 px-3 w-48 flex-shrink-0">
         <div className="flex items-center gap-2">
           <Wrench className="w-4 h-4 text-slate-500 flex-shrink-0" />
-          <span className="text-slate-400 text-xs truncate">
-            {item?.technologies || "N/A"}
-          </span>
+          <span className="text-slate-400 text-xs truncate">{item?.technologies || 'N/A'}</span>
         </div>
       </div>
 
@@ -140,7 +129,7 @@ const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
         <div className="flex items-start gap-2">
           <FileText className="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" />
           <p className="text-slate-400 text-xs line-clamp-2 break-words">
-            {item?.description || "No description"}
+            {item?.description || 'No description'}
           </p>
         </div>
       </div>
@@ -173,14 +162,12 @@ const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
               hidden: { opacity: 0.8 },
               hover: {
                 scale: prefersReducedMotion ? 1 : 1.05,
-                borderColor: prefersReducedMotion
-                  ? FileIconColor
-                  : FileIconColor,
+                borderColor: prefersReducedMotion ? FileIconColor : FileIconColor,
                 boxShadow: prefersReducedMotion
-                  ? "none"
+                  ? 'none'
                   : `0 0 20px ${FileIconColor}40, 0 0 40px ${FileIconColor}20`,
                 transition: {
-                  type: "spring",
+                  type: 'spring',
                   stiffness: 400,
                   damping: 15,
                   mass: 0.8,
@@ -197,7 +184,7 @@ const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
             // ✅ Static styles
             className="w-12 h-12 rounded-lg flex items-center justify-center border  flex-shrink-0 cursor-pointer overflow-hidden relative group"
             style={{
-              backgroundColor: FileIconColor + "20",
+              backgroundColor: FileIconColor + '20',
               borderColor: FileIconColor,
             }}
           >
@@ -215,9 +202,7 @@ const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
                 className="w-6 h-6 stroke-current transition-colors duration-300"
                 style={{
                   color: FileIconColor,
-                  filter: prefersReducedMotion
-                    ? "none"
-                    : "drop-shadow(0 2px 4px rgba(0,0,0,0.2))",
+                  filter: prefersReducedMotion ? 'none' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
                 }}
               />
             </motion.div>
@@ -241,7 +226,7 @@ const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
                 transition: {
                   duration: 1.5,
                   repeat: Infinity,
-                  ease: "easeInOut",
+                  ease: 'easeInOut',
                 },
               }}
             />
@@ -283,7 +268,7 @@ const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
   );
 });
 
-ExpRow.displayName = "ExpRow";
+ExpRow.displayName = 'ExpRow';
 
 const ExpTable = () => {
   const { experiences } = useSelector((state) => state.experience);
@@ -294,16 +279,16 @@ const ExpTable = () => {
   const { sortedData: sortedExp } = useCreatedAtSorted(experiences);
 
   useEffect(() => {
-    setQueryKey("experiences");
+    setQueryKey('experiences');
   }, [setQueryKey]);
 
   const handleDelete = useCallback(
     (id) => {
       setRoute(`/experience/delete/${id}`);
       setIsOpen(true);
-      setQueryKey("experiences");
+      setQueryKey('experiences');
     },
-    [setRoute, setIsOpen, setQueryKey],
+    [setRoute, setIsOpen, setQueryKey]
   );
 
   const containerVariants = useMemo(
@@ -320,7 +305,7 @@ const ExpTable = () => {
         },
       },
     }),
-    [],
+    []
   );
 
   return (
@@ -336,12 +321,8 @@ const ExpTable = () => {
           <Briefcase className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-            All Experience
-          </h3>
-          <p className="text-slate-500 text-xs sm:text-sm">
-            {sortedExp?.length || 0} entries
-          </p>
+          <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">All Experience</h3>
+          <p className="text-slate-500 text-xs sm:text-sm">{sortedExp?.length || 0} entries</p>
         </div>
       </div>
 
@@ -354,12 +335,8 @@ const ExpTable = () => {
             <div className="py-3 px-3 w-48 flex-shrink-0">Position</div>
             <div className="py-3 px-3 w-40 flex-shrink-0">Company</div>
             <div className="py-3 px-3 text-center w-28 flex-shrink-0">Type</div>
-            <div className="py-3 px-3 text-center w-28 flex-shrink-0">
-              Started
-            </div>
-            <div className="py-3 px-3 text-center w-28 flex-shrink-0">
-              Ended
-            </div>
+            <div className="py-3 px-3 text-center w-28 flex-shrink-0">Started</div>
+            <div className="py-3 px-3 text-center w-28 flex-shrink-0">Ended</div>
             <div className="py-3 px-3 w-48 flex-shrink-0">Technologies</div>
             <div className="py-3 px-3 flex-1 min-w-[200px]">Description</div>
             {/* Created At */}
@@ -367,9 +344,7 @@ const ExpTable = () => {
             {/* Updated At */}
             <div className="py-3 px-3 w-48 flex-shrink-0">Updated At</div>
             <div className="py-3 px-3 text-center w-16 flex-shrink-0">Logo</div>
-            <div className="py-3 px-3 text-center w-24 flex-shrink-0">
-              Actions
-            </div>
+            <div className="py-3 px-3 text-center w-24 flex-shrink-0">Actions</div>
           </div>
 
           {/* Table Body */}
@@ -389,12 +364,8 @@ const ExpTable = () => {
                 <div className="w-16 h-16 rounded-2xl bg-slate-800/50 flex items-center justify-center mx-auto mb-4">
                   <Briefcase className="w-8 h-8 text-slate-600" />
                 </div>
-                <p className="text-slate-500 text-sm">
-                  No experience entries found
-                </p>
-                <p className="text-slate-600 text-xs mt-1">
-                  Add your first work experience
-                </p>
+                <p className="text-slate-500 text-sm">No experience entries found</p>
+                <p className="text-slate-600 text-xs mt-1">Add your first work experience</p>
               </div>
             )}
           </div>

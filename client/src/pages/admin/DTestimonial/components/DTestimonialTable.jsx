@@ -1,38 +1,33 @@
-import React, { useEffect, useState, memo, useCallback } from "react";
-import { motion, useReducedMotion } from "motion/react";
 import {
-  Pencil,
-  Trash2,
-  User,
   Briefcase,
   Building2,
-  Star,
-  FolderKanban,
   Calendar,
-  MessageSquare,
-  Image as ImageIcon,
   Clock,
+  FolderKanban,
+  Image as ImageIcon,
+  MessageSquare,
+  Pencil,
   Quote,
-} from "lucide-react";
-import { Link } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { projectFindById } from "../../../../features/projectSlice";
-import { useDeleteEntryContext } from "../../../../context/DeleteEntry";
-import useCreatedAtSorted from "../../../../hooks/useCreatedAtSorted";
-import {
-  formatTimeAgo,
-  getFileIcon,
-  getFileNameFromUrl,
-  safeParse,
-} from "../../../../Utils/Utils";
+  Star,
+  Trash2,
+  User,
+} from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
+import { memo, useCallback, useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
+import { useDeleteEntryContext } from '../../../../context/DeleteEntryProvider';
+import { projectFindById } from '../../../../features/projectSlice';
+import useCreatedAtSorted from '../../../../hooks/useCreatedAtSorted';
+import { formatTimeAgo, getFileIcon, getFileNameFromUrl, safeParse } from '../../../../Utils/Utils';
 
 const DTestimonialTable = () => {
   const dispatch = useDispatch();
   const prefersReducedMotion = useReducedMotion();
   const { testimonials } = useSelector((state) => state.testimonial);
   const { project } = useSelector((state) => state.projects);
-  let projectId = "";
-  const [projectTitle, setProjectTitle] = useState("");
+  let projectId = '';
+  const [projectTitle, setProjectTitle] = useState('');
   const { setRoute, setIsOpen, setQueryKey } = useDeleteEntryContext();
   const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
 
@@ -40,7 +35,7 @@ const DTestimonialTable = () => {
 
   // Set query key for delete context
   useEffect(() => {
-    setQueryKey("testimonials");
+    setQueryKey('testimonials');
   }, [setQueryKey]);
 
   // Fetch project by testimonial's projectId
@@ -55,7 +50,7 @@ const DTestimonialTable = () => {
     if (project?.title) {
       setProjectTitle(project.title);
     } else {
-      setProjectTitle("");
+      setProjectTitle('');
     }
   }, [project]);
 
@@ -81,7 +76,7 @@ const DTestimonialTable = () => {
           <Star
             key={i}
             className={`w-3 h-3 sm:w-4 sm:h-4 ${
-              i < stars ? "fill-amber-400 text-amber-400" : "text-slate-600"
+              i < stars ? 'fill-amber-400 text-amber-400' : 'text-slate-600'
             }`}
           />
         ))}
@@ -91,26 +86,21 @@ const DTestimonialTable = () => {
 
   // Table headers configuration
   const headers = [
-    { key: "clientName", label: "Client Name", icon: User },
-    { key: "designationRole", label: "Designation", icon: Briefcase },
-    { key: "company", label: "Company", icon: Building2 },
-    { key: "ratting", label: "Rating", icon: Star },
-    { key: "projectTitle", label: "Project", icon: FolderKanban },
-    { key: "testimonialDate", label: "Date", icon: Calendar },
-    { key: "message", label: "Message", icon: MessageSquare },
-    { key: "clientImage", label: "Profile", icon: ImageIcon },
-    { key: "createdAt", label: "Created", icon: Clock },
-    { key: "updatedAt", label: "Updated", icon: Clock },
-    { key: "actions", label: "Actions", icon: null },
+    { key: 'clientName', label: 'Client Name', icon: User },
+    { key: 'designationRole', label: 'Designation', icon: Briefcase },
+    { key: 'company', label: 'Company', icon: Building2 },
+    { key: 'ratting', label: 'Rating', icon: Star },
+    { key: 'projectTitle', label: 'Project', icon: FolderKanban },
+    { key: 'testimonialDate', label: 'Date', icon: Calendar },
+    { key: 'message', label: 'Message', icon: MessageSquare },
+    { key: 'clientImage', label: 'Profile', icon: ImageIcon },
+    { key: 'createdAt', label: 'Created', icon: Clock },
+    { key: 'updatedAt', label: 'Updated', icon: Clock },
+    { key: 'actions', label: 'Actions', icon: null },
   ];
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-      className="w-full "
-    >
+    <motion.div variants={containerVariants} initial="hidden" animate="show" className="w-full ">
       <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 sm:p-8 shadow-xl">
         {/* Header */}
         <div className="flex items-center gap-3 mb-8 pb-4 border-b border-white/5">
@@ -122,9 +112,8 @@ const DTestimonialTable = () => {
               All Testimonials
             </h3>
             <p className="text-slate-400 text-sm">
-              {testimonials?.length || 0}{" "}
-              {testimonials?.length === 1 ? "testimonial" : "testimonials"}{" "}
-              found
+              {testimonials?.length || 0}{' '}
+              {testimonials?.length === 1 ? 'testimonial' : 'testimonials'} found
             </p>
           </div>
         </div>
@@ -143,9 +132,7 @@ const DTestimonialTable = () => {
                       className="py-4 px-3 text-left text-xs sm:text-sm font-semibold text-cyan-300 uppercase tracking-wider"
                     >
                       <div className="flex items-center gap-2">
-                        {head.icon && (
-                          <head.icon className="w-4 h-4 text-cyan-400" />
-                        )}
+                        {head.icon && <head.icon className="w-4 h-4 text-cyan-400" />}
                         {head.label}
                       </div>
                     </th>
@@ -161,10 +148,9 @@ const DTestimonialTable = () => {
                     const updatedAt = formatTimeAgo(item?.updatedAt);
                     const clientImage = safeParse(item?.clientImage);
                     const fileName = getFileNameFromUrl(clientImage?.url);
-                    const { Icon: FileIcon, color: FileIconColor } =
-                      getFileIcon(fileName);
+                    const { Icon: FileIcon, color: FileIconColor } = getFileIcon(fileName);
 
-                    projectId = item?.projectId || "";
+                    projectId = item?.projectId || '';
 
                     return (
                       <motion.tr
@@ -178,8 +164,7 @@ const DTestimonialTable = () => {
                         <td className="py-4 px-3">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 text-xs font-bold">
-                              {item?.clientName?.charAt(0)?.toUpperCase() ||
-                                "?"}
+                              {item?.clientName?.charAt(0)?.toUpperCase() || '?'}
                             </div>
                             <span className="text-sm text-white font-medium">
                               {item?.clientName}
@@ -189,35 +174,25 @@ const DTestimonialTable = () => {
 
                         {/* Designation */}
                         <td className="py-4 px-3">
-                          <span className="text-sm text-slate-300">
-                            {item?.designationRole}
-                          </span>
+                          <span className="text-sm text-slate-300">{item?.designationRole}</span>
                         </td>
 
                         {/* Company */}
                         <td className="py-4 px-3">
-                          <span className="text-sm text-slate-300">
-                            {item?.company}
-                          </span>
+                          <span className="text-sm text-slate-300">{item?.company}</span>
                         </td>
 
                         {/* Rating */}
-                        <td className="py-4 px-3">
-                          {renderStars(item?.ratting)}
-                        </td>
+                        <td className="py-4 px-3">{renderStars(item?.ratting)}</td>
 
                         {/* Project Title */}
                         <td className="py-4 px-3">
-                          <span className="text-sm text-slate-300">
-                            {projectTitle || "—"}
-                          </span>
+                          <span className="text-sm text-slate-300">{projectTitle || '—'}</span>
                         </td>
 
                         {/* Testimonial Date */}
                         <td className="py-4 px-3">
-                          <span className="text-sm text-slate-300">
-                            {item?.testimonialDate}
-                          </span>
+                          <span className="text-sm text-slate-300">{item?.testimonialDate}</span>
                         </td>
 
                         {/* Message */}
@@ -239,14 +214,12 @@ const DTestimonialTable = () => {
                                 hidden: { opacity: 0.8 },
                                 hover: {
                                   scale: prefersReducedMotion ? 1 : 1.05,
-                                  borderColor: prefersReducedMotion
-                                    ? FileIconColor
-                                    : FileIconColor,
+                                  borderColor: prefersReducedMotion ? FileIconColor : FileIconColor,
                                   boxShadow: prefersReducedMotion
-                                    ? "none"
+                                    ? 'none'
                                     : `0 0 20px ${FileIconColor}40, 0 0 40px ${FileIconColor}20`,
                                   transition: {
-                                    type: "spring",
+                                    type: 'spring',
                                     stiffness: 400,
                                     damping: 15,
                                     mass: 0.8,
@@ -263,7 +236,7 @@ const DTestimonialTable = () => {
                               // ✅ Static styles
                               className="w-12 h-12 rounded-lg flex items-center justify-center border  flex-shrink-0 cursor-pointer overflow-hidden relative group"
                               style={{
-                                backgroundColor: FileIconColor + "20",
+                                backgroundColor: FileIconColor + '20',
                                 borderColor: FileIconColor,
                               }}
                             >
@@ -282,8 +255,8 @@ const DTestimonialTable = () => {
                                   style={{
                                     color: FileIconColor,
                                     filter: prefersReducedMotion
-                                      ? "none"
-                                      : "drop-shadow(0 2px 4px rgba(0,0,0,0.2))",
+                                      ? 'none'
+                                      : 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
                                   }}
                                 />
                               </motion.div>
@@ -307,7 +280,7 @@ const DTestimonialTable = () => {
                                   transition: {
                                     duration: 1.5,
                                     repeat: Infinity,
-                                    ease: "easeInOut",
+                                    ease: 'easeInOut',
                                   },
                                 }}
                               />
@@ -323,24 +296,18 @@ const DTestimonialTable = () => {
                               </motion.span>
                             </motion.a>
                           ) : (
-                            <span className="text-slate-500 text-xs">
-                              No certificate
-                            </span>
+                            <span className="text-slate-500 text-xs">No certificate</span>
                           )}
                         </td>
 
                         {/* Created At */}
                         <td className="py-4 px-3">
-                          <span className="text-xs text-slate-500">
-                            {createdAt}
-                          </span>
+                          <span className="text-xs text-slate-500">{createdAt}</span>
                         </td>
 
                         {/* Updated At */}
                         <td className="py-4 px-3">
-                          <span className="text-xs text-slate-500">
-                            {updatedAt}
-                          </span>
+                          <span className="text-xs text-slate-500">{updatedAt}</span>
                         </td>
 
                         {/* Actions */}
@@ -356,7 +323,7 @@ const DTestimonialTable = () => {
                             <button
                               onClick={() => {
                                 setIsOpen(true);
-                                setQueryKey("testimonials");
+                                setQueryKey('testimonials');
                                 setRoute(`/testimonial/delete/${item?.id}`);
                               }}
                               className="p-2 rounded-lg bg-gradient-to-r from-rose-600/30 to-red-600/30 border border-rose-500/40 text-rose-300 hover:from-rose-500/50 hover:to-red-500/50 hover:text-white transition-all duration-300 hover:scale-110"
@@ -375,9 +342,7 @@ const DTestimonialTable = () => {
                         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center border border-cyan-500/30">
                           <Quote className="w-8 h-8 text-cyan-400" />
                         </div>
-                        <p className="text-slate-400 text-lg">
-                          No testimonials found
-                        </p>
+                        <p className="text-slate-400 text-lg">No testimonials found</p>
                         <p className="text-slate-500 text-sm">
                           Add your first testimonial to get started
                         </p>

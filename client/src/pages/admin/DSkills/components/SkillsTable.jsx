@@ -1,26 +1,24 @@
-import React, { memo, useEffect, useCallback, useMemo } from "react";
-import { motion, useReducedMotion } from "motion/react";
-import { Pencil, Trash2, Wrench, Gauge, Zap } from "lucide-react";
-import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
-import { useDeleteEntryContext } from "../../../../context/DeleteEntry";
+import { Gauge, Pencil, Trash2, Wrench, Zap } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
+import { useDeleteEntryContext } from '../../../../context/DeleteEntryProvider';
 
 // Proficiency badge component
 const ProficiencyBadge = memo(({ level }) => {
   const getStyles = () => {
-    if (level >= 80)
-      return "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
-    if (level >= 60) return "bg-cyan-500/10 text-cyan-400 border-cyan-500/30";
-    if (level >= 40)
-      return "bg-amber-500/10 text-amber-400 border-amber-500/30";
-    return "bg-slate-500/10 text-slate-400 border-slate-500/30";
+    if (level >= 80) return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+    if (level >= 60) return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30';
+    if (level >= 40) return 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+    return 'bg-slate-500/10 text-slate-400 border-slate-500/30';
   };
 
   const getLabel = () => {
-    if (level >= 80) return "Expert";
-    if (level >= 60) return "Advanced";
-    if (level >= 40) return "Intermediate";
-    return "Beginner";
+    if (level >= 80) return 'Expert';
+    if (level >= 60) return 'Advanced';
+    if (level >= 40) return 'Intermediate';
+    return 'Beginner';
   };
 
   return (
@@ -33,7 +31,7 @@ const ProficiencyBadge = memo(({ level }) => {
   );
 });
 
-ProficiencyBadge.displayName = "ProficiencyBadge";
+ProficiencyBadge.displayName = 'ProficiencyBadge';
 
 // Table row component
 const SkillRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
@@ -50,7 +48,7 @@ const SkillRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
         },
       },
     }),
-    [index],
+    [index]
   );
 
   return (
@@ -95,7 +93,7 @@ const SkillRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
   );
 });
 
-SkillRow.displayName = "SkillRow";
+SkillRow.displayName = 'SkillRow';
 
 const SkillsTable = () => {
   const { skills } = useSelector((state) => state.skills);
@@ -103,16 +101,16 @@ const SkillsTable = () => {
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
-    setQueryKey("skills");
+    setQueryKey('skills');
   }, [setQueryKey]);
 
   const handleDelete = useCallback(
     (id) => {
       setRoute(`/skill/delete/${id}`);
       setIsOpen(true);
-      setQueryKey("skills");
+      setQueryKey('skills');
     },
-    [setRoute, setIsOpen, setQueryKey],
+    [setRoute, setIsOpen, setQueryKey]
   );
 
   const containerVariants = useMemo(
@@ -129,16 +127,16 @@ const SkillsTable = () => {
         },
       },
     }),
-    [],
+    []
   );
 
   const headers = useMemo(
     () => [
-      { key: "name", label: "Skill", icon: Wrench },
-      { key: "proficiency", label: "Proficiency", icon: Gauge },
-      { key: "action", label: "Actions", icon: null },
+      { key: 'name', label: 'Skill', icon: Wrench },
+      { key: 'proficiency', label: 'Proficiency', icon: Gauge },
+      { key: 'action', label: 'Actions', icon: null },
     ],
-    [],
+    []
   );
 
   return (
@@ -179,9 +177,7 @@ const SkillsTable = () => {
               <Wrench className="w-8 h-8 text-slate-600" />
             </div>
             <p className="text-slate-500 text-sm">No skills added yet</p>
-            <p className="text-slate-600 text-xs mt-1">
-              Add your first skill to get started
-            </p>
+            <p className="text-slate-600 text-xs mt-1">Add your first skill to get started</p>
           </div>
         )}
       </div>

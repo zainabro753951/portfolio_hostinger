@@ -1,6 +1,5 @@
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-import { Check } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useRef } from 'react';
 import { useSelector } from 'react-redux';
@@ -66,7 +65,7 @@ const PricePlanSection = () => {
   useGSAP(
     () => {
       // Pricing Animation
-      gsap.from('.pricing-card', {
+      gsap.from(pricingRef.current, {
         y: 60,
         opacity: 0,
         scale: 0.95,

@@ -1,12 +1,11 @@
-import React, { memo, useMemo } from "react";
-import { motion, useReducedMotion } from "motion/react";
-import { Outlet, useLocation } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
-import Sidebar from "../Components/Sidebar";
-import Header from "../Components/Header";
-import DHomeCards from "../DHome/components/DHomeCards";
-import DeleteConfirm from "../Components/DeleteConfirm";
-import { useDeleteEntryContext } from "../../../context/DeleteEntry";
+import { motion, useReducedMotion } from 'motion/react';
+import { memo, useMemo } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import DeleteConfirm from '../Components/DeleteConfirm';
+import Header from '../Components/Header';
+import Sidebar from '../Components/Sidebar';
+import DHomeCards from '../DHome/components/DHomeCards';
 
 const DHomePage = () => {
   const location = useLocation();
@@ -14,8 +13,8 @@ const DHomePage = () => {
 
   // Check if current route is exactly /admin (without child)
   const isDashboard = useMemo(
-    () => location.pathname === "/admin" || location.pathname === "/admin/",
-    [location.pathname],
+    () => location.pathname === '/admin' || location.pathname === '/admin/',
+    [location.pathname]
   );
 
   // Animated blob variants

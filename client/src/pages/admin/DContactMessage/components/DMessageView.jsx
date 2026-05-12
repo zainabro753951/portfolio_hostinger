@@ -1,30 +1,30 @@
 // src/components/admin/DMessage/components/DMessageView.jsx
-import React, { useEffect, memo, useCallback, useRef } from "react";
-import { motion } from "motion/react";
 import {
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Globe,
+  Hash,
+  Mail,
+  MailCheck,
+  MapPin,
   Reply,
   Trash2,
-  MailCheck,
-  Mail,
-  MapPin,
-  Globe,
-  Wifi,
-  Calendar,
-  Clock,
   User,
-  Hash,
-  CheckCircle2,
-} from "lucide-react";
-import { useDispatch, useSelector } from "react-redux";
-import { useDeleteEntryContext } from "../../../../context/DeleteEntry";
+  Wifi,
+} from 'lucide-react';
+import { motion } from 'motion/react';
+import { memo, useCallback, useEffect, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { store } from '../../../../app/store';
+import { useDeleteEntryContext } from '../../../../context/DeleteEntryProvider';
 import {
-  setSelectedIds,
   openReplyModal,
+  setSelectedIds,
   updateMessageStatus,
-} from "../../../../features/messageSlice";
-import { store } from "../../../../app/store";
-import { glassToast } from "../../Components/ToastMessage";
-import { useMarkAsRead } from "../../../../Queries/MarkAsRead";
+} from '../../../../features/messageSlice';
+import { useMarkAsRead } from '../../../../Queries/MarkAsRead';
+import { glassToast } from '../../Components/ToastMessage';
 
 const DMessageView = ({ MessageViewRef }) => {
   const { viewMessage } = useSelector((state) => state.contactMessages);
@@ -36,7 +36,7 @@ const DMessageView = ({ MessageViewRef }) => {
   const lastMarkedId = useRef(null);
 
   useEffect(() => {
-    setQueryKey("contactMessages");
+    setQueryKey('contactMessages');
   }, [setQueryKey]);
 
   const {
@@ -60,16 +60,16 @@ const DMessageView = ({ MessageViewRef }) => {
             .map((m) => m.id) || [];
 
       if (!updatedIds.length) {
-        glassToast("Please select at least one message to delete!", "warning");
+        glassToast('Please select at least one message to delete!', 'warning');
         return;
       }
 
       setIds(updatedIds);
-      setRoute("/message/delete");
-      setQueryKey("contactMessages");
+      setRoute('/message/delete');
+      setQueryKey('contactMessages');
       setIsOpen(true);
     },
-    [dispatch, setIds, setIsOpen, setRoute, setQueryKey],
+    [dispatch, setIds, setIsOpen, setRoute, setQueryKey]
   );
 
   // ✅ Mark as read - with user action tracking
@@ -84,10 +84,7 @@ const DMessageView = ({ MessageViewRef }) => {
             .map((m) => m.id) || [];
 
       if (!updatedIds.length) {
-        glassToast(
-          "Please select at least one message to mark as read!",
-          "warning",
-        );
+        glassToast('Please select at least one message to mark as read!', 'warning');
         return;
       }
 
@@ -97,13 +94,13 @@ const DMessageView = ({ MessageViewRef }) => {
 
       markAsRead(updatedIds);
     },
-    [dispatch, markAsRead],
+    [dispatch, markAsRead]
   );
 
   // Reply handler
   const handleReply = useCallback(() => {
     if (!viewMessage) {
-      glassToast("Please select a message to reply", "warning");
+      glassToast('Please select a message to reply', 'warning');
       return;
     }
     dispatch(openReplyModal());
@@ -121,8 +118,8 @@ const DMessageView = ({ MessageViewRef }) => {
         dispatch(
           updateMessageStatus({
             id: lastMarkedId.current,
-            status: "read",
-          }),
+            status: 'read',
+          })
         );
       }
 
@@ -136,9 +133,7 @@ const DMessageView = ({ MessageViewRef }) => {
     // ✅ Error handling (also guarded)
     if (isError && error && !hasShownSuccess.current) {
       hasShownSuccess.current = true;
-      glassToast.error(
-        error?.response?.data?.message || "Failed to mark as read",
-      );
+      glassToast.error(error?.response?.data?.message || 'Failed to mark as read');
       setTimeout(() => {
         reset();
         lastMarkedId.current = null;
@@ -155,15 +150,15 @@ const DMessageView = ({ MessageViewRef }) => {
 
   // Format date
   const fullDateTime = viewMessage?.createdAt
-    ? new Date(viewMessage.createdAt).toLocaleString("en-US", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
+    ? new Date(viewMessage.createdAt).toLocaleString('en-US', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
         hour12: true,
       })
-    : "";
+    : '';
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -242,18 +237,16 @@ const DMessageView = ({ MessageViewRef }) => {
                 <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">
                   Subject
                 </span>
-                <span className="text-white font-medium">
-                  {viewMessage?.subject}
-                </span>
+                <span className="text-white font-medium">{viewMessage?.subject}</span>
                 <span
                   className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
-                    viewMessage?.status === "read"
-                      ? "bg-cyan-500/15 text-cyan-300 border-cyan-400/30"
-                      : "bg-amber-500/15 text-amber-300 border-amber-400/30"
+                    viewMessage?.status === 'read'
+                      ? 'bg-cyan-500/15 text-cyan-300 border-cyan-400/30'
+                      : 'bg-amber-500/15 text-amber-300 border-amber-400/30'
                   }`}
                 >
                   <div className="flex items-center gap-1">
-                    {viewMessage?.status === "read" ? (
+                    {viewMessage?.status === 'read' ? (
                       <CheckCircle2 className="w-3 h-3" />
                     ) : (
                       <Clock className="w-3 h-3" />
@@ -277,8 +270,7 @@ const DMessageView = ({ MessageViewRef }) => {
                   <MapPin className="w-3 h-3" /> Location
                 </div>
                 <span className="text-sm text-slate-300">
-                  {viewMessage?.city || "Unknown"},{" "}
-                  {viewMessage?.country || "Unknown"}
+                  {viewMessage?.city || 'Unknown'}, {viewMessage?.country || 'Unknown'}
                 </span>
               </div>
               <div className="p-4 rounded-xl bg-slate-800/30 border border-white/5">
@@ -286,16 +278,14 @@ const DMessageView = ({ MessageViewRef }) => {
                   <Globe className="w-3 h-3" /> IP Address
                 </div>
                 <span className="text-sm text-slate-300 font-mono">
-                  {viewMessage?.ipAddress || "Not tracked"}
+                  {viewMessage?.ipAddress || 'Not tracked'}
                 </span>
               </div>
               <div className="p-4 rounded-xl bg-slate-800/30 border border-white/5">
                 <div className="flex items-center gap-2 text-slate-500 text-xs mb-1">
                   <Wifi className="w-3 h-3" /> ISP
                 </div>
-                <span className="text-sm text-slate-300">
-                  {viewMessage?.isp || "Unknown"}
-                </span>
+                <span className="text-sm text-slate-300">{viewMessage?.isp || 'Unknown'}</span>
               </div>
               <div className="p-4 rounded-xl bg-slate-800/30 border border-white/5">
                 <div className="flex items-center gap-2 text-slate-500 text-xs mb-1">
@@ -304,7 +294,7 @@ const DMessageView = ({ MessageViewRef }) => {
                 <span className="text-sm text-slate-300 font-mono">
                   {viewMessage?.latitude && viewMessage?.longitude
                     ? `${parseFloat(viewMessage.latitude).toFixed(4)}, ${parseFloat(viewMessage.longitude).toFixed(4)}`
-                    : "Not available"}
+                    : 'Not available'}
                 </span>
               </div>
             </div>
@@ -314,9 +304,7 @@ const DMessageView = ({ MessageViewRef }) => {
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center border border-cyan-500/30 mb-4">
               <Mail className="w-10 h-10 text-cyan-400" />
             </div>
-            <p className="text-lg font-medium text-slate-300">
-              No Message Selected
-            </p>
+            <p className="text-lg font-medium text-slate-300">No Message Selected</p>
             <p className="text-sm text-slate-500 mt-1">
               Click on a message from the table to view details
             </p>

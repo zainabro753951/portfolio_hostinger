@@ -1,21 +1,21 @@
-import React, { memo, useEffect, useMemo, useCallback } from "react";
-import { motion, useReducedMotion } from "motion/react";
 import {
-  Pencil,
-  Trash2,
-  FolderKanban,
-  Tag,
-  Code2,
-  FileText,
-  ExternalLink,
-  Layers,
   Calendar,
   CheckCircle2,
   Clock,
-} from "lucide-react";
-import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
-import { useDeleteEntryContext } from "../../../../context/DeleteEntry";
+  Code2,
+  ExternalLink,
+  FileText,
+  FolderKanban,
+  Layers,
+  Pencil,
+  Tag,
+  Trash2,
+} from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
+import { useDeleteEntryContext } from '../../../../context/DeleteEntryProvider';
 
 const TableRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
   const rowVariants = useMemo(
@@ -31,16 +31,16 @@ const TableRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
         },
       },
     }),
-    [index, prefersReducedMotion],
+    [index, prefersReducedMotion]
   );
 
-  const isPublished = item.status?.toLowerCase() === "published";
+  const isPublished = item.status?.toLowerCase() === 'published';
   const createdDate = item.createdAt
-    ? new Date(item.createdAt).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
+    ? new Date(item.createdAt).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
       })
-    : "—";
+    : '—';
 
   const handleDelete = useCallback(() => {
     onDelete(item.id);
@@ -121,8 +121,8 @@ const TableRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
         <span
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${
             isPublished
-              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-              : "bg-amber-500/10 text-amber-400 border-amber-500/30"
+              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+              : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
           }`}
         >
           {isPublished ? (
@@ -168,7 +168,7 @@ const TableRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
   );
 });
 
-TableRow.displayName = "TableRow";
+TableRow.displayName = 'TableRow';
 
 const ProjectTable = () => {
   const { projects } = useSelector((state) => state.projects);
@@ -176,28 +176,28 @@ const ProjectTable = () => {
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
-    setQueryKey("projects");
+    setQueryKey('projects');
   }, [setQueryKey]);
 
   const handleDelete = useCallback(
     (id) => {
       setRoute(`/project/delete/${id}`);
       setIsOpen(true);
-      setQueryKey("projects");
+      setQueryKey('projects');
     },
-    [setRoute, setIsOpen, setQueryKey],
+    [setRoute, setIsOpen, setQueryKey]
   );
 
   const headers = useMemo(
     () => [
-      { key: "id", label: "ID", width: "col-span-1" },
-      { key: "project", label: "Project", width: "col-span-3" },
-      { key: "tags", label: "Tags", width: "col-span-2" },
-      { key: "tech", label: "Tech Stack", width: "col-span-2" },
-      { key: "status", label: "Status", width: "col-span-2" },
-      { key: "actions", label: "Actions", width: "col-span-2" },
+      { key: 'id', label: 'ID', width: 'col-span-1' },
+      { key: 'project', label: 'Project', width: 'col-span-3' },
+      { key: 'tags', label: 'Tags', width: 'col-span-2' },
+      { key: 'tech', label: 'Tech Stack', width: 'col-span-2' },
+      { key: 'status', label: 'Status', width: 'col-span-2' },
+      { key: 'actions', label: 'Actions', width: 'col-span-2' },
     ],
-    [],
+    []
   );
 
   const containerVariants = useMemo(
@@ -214,16 +214,11 @@ const ProjectTable = () => {
         },
       },
     }),
-    [],
+    []
   );
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-      className="w-full "
-    >
+    <motion.div variants={containerVariants} initial="hidden" animate="show" className="w-full ">
       {/* Page Header */}
       <div className="flex items-center gap-4 mb-6">
         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/20">
@@ -232,8 +227,7 @@ const ProjectTable = () => {
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-white">Projects</h1>
           <p className="text-slate-400 text-sm">
-            {projects?.length || 0}{" "}
-            {projects?.length === 1 ? "project" : "projects"} total
+            {projects?.length || 0} {projects?.length === 1 ? 'project' : 'projects'} total
           </p>
         </div>
       </div>
@@ -245,7 +239,7 @@ const ProjectTable = () => {
           {headers.map((head) => (
             <div
               key={head.key}
-              className={`${head.width} py-4 px-4 text-xs font-semibold text-cyan-300 uppercase tracking-wider ${head.key === "actions" ? "text-right" : head.key === "id" ? "text-center" : ""}`}
+              className={`${head.width} py-4 px-4 text-xs font-semibold text-cyan-300 uppercase tracking-wider ${head.key === 'actions' ? 'text-right' : head.key === 'id' ? 'text-center' : ''}`}
             >
               {head.label}
             </div>
@@ -269,12 +263,8 @@ const ProjectTable = () => {
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500/10 to-blue-500/10 flex items-center justify-center mx-auto mb-4 border border-cyan-500/20">
                 <FileText className="w-10 h-10 text-cyan-400/50" />
               </div>
-              <p className="text-slate-400 text-lg font-medium">
-                No projects found
-              </p>
-              <p className="text-slate-500 text-sm mt-1">
-                Add your first project to get started
-              </p>
+              <p className="text-slate-400 text-lg font-medium">No projects found</p>
+              <p className="text-slate-500 text-sm mt-1">Add your first project to get started</p>
             </div>
           )}
         </div>

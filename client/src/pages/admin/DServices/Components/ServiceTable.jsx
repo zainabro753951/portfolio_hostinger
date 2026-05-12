@@ -1,32 +1,25 @@
-import React, { memo, useEffect, useCallback, useMemo } from "react";
-import { useSelector } from "react-redux";
-import { motion, useReducedMotion } from "motion/react";
-import { Link } from "react-router-dom";
 import {
-  Pencil,
-  Trash2,
   Briefcase,
+  Calendar,
+  CheckCircle2,
+  Clock,
   FileText,
   Layers,
-  CheckCircle2,
-  Image as ImageIcon,
-  Calendar,
-  Clock,
-} from "lucide-react";
-import { useDeleteEntryContext } from "../../../../context/DeleteEntry";
-import {
-  formatTimeAgo,
-  getFileIcon,
-  getFileNameFromUrl,
-} from "../../../../Utils/Utils";
+  Pencil,
+  Trash2,
+} from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
+import { useDeleteEntryContext } from '../../../../context/DeleteEntryProvider';
+import { formatTimeAgo, getFileIcon, getFileNameFromUrl } from '../../../../Utils/Utils';
 
 // Table row component
 const ServiceRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
   const serviceImage = useMemo(() =>
-    typeof item?.serviceImage === "string"
-      ? JSON.parse(item?.serviceImage)
-      : item?.serviceImage,
+    typeof item?.serviceImage === 'string' ? JSON.parse(item?.serviceImage) : item?.serviceImage
   );
   const createdAt = formatTimeAgo(item?.createdAt);
   const updatedAt = formatTimeAgo(item?.updatedAt);
@@ -46,19 +39,19 @@ const ServiceRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
         },
       },
     }),
-    [index],
+    [index]
   );
 
   const formatDate = (date) => {
-    if (!date) return "N/A";
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+    if (!date) return 'N/A';
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
     });
   };
 
-  const isPublished = item?.status?.toLowerCase() === "published";
+  const isPublished = item?.status?.toLowerCase() === 'published';
 
   return (
     <motion.div
@@ -85,7 +78,7 @@ const ServiceRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
         <div className="flex items-start gap-2">
           <FileText className="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" />
           <p className="text-slate-400 text-xs line-clamp-2 break-words">
-            {item?.shortDescription || "No description"}
+            {item?.shortDescription || 'No description'}
           </p>
         </div>
       </div>
@@ -94,9 +87,7 @@ const ServiceRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
       <div className="py-4 px-3 w-40 flex-shrink-0">
         <div className="flex items-center gap-2">
           <Layers className="w-4 h-4 text-slate-500 flex-shrink-0" />
-          <span className="text-slate-300 text-xs truncate">
-            {item?.category}
-          </span>
+          <span className="text-slate-300 text-xs truncate">{item?.category}</span>
         </div>
       </div>
 
@@ -105,8 +96,8 @@ const ServiceRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
         <span
           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${
             isPublished
-              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-              : "bg-amber-500/10 text-amber-400 border-amber-500/30"
+              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+              : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
           }`}
         >
           {isPublished ? (
@@ -130,14 +121,12 @@ const ServiceRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
               hidden: { opacity: 0.8 },
               hover: {
                 scale: prefersReducedMotion ? 1 : 1.05,
-                borderColor: prefersReducedMotion
-                  ? FileIconColor
-                  : FileIconColor,
+                borderColor: prefersReducedMotion ? FileIconColor : FileIconColor,
                 boxShadow: prefersReducedMotion
-                  ? "none"
+                  ? 'none'
                   : `0 0 20px ${FileIconColor}40, 0 0 40px ${FileIconColor}20`,
                 transition: {
-                  type: "spring",
+                  type: 'spring',
                   stiffness: 400,
                   damping: 15,
                   mass: 0.8,
@@ -154,7 +143,7 @@ const ServiceRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
             // ✅ Static styles
             className="w-12 h-12 rounded-lg flex items-center justify-center border  flex-shrink-0 cursor-pointer overflow-hidden relative group"
             style={{
-              backgroundColor: FileIconColor + "20",
+              backgroundColor: FileIconColor + '20',
               borderColor: FileIconColor,
             }}
           >
@@ -172,9 +161,7 @@ const ServiceRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
                 className="w-6 h-6 stroke-current transition-colors duration-300"
                 style={{
                   color: FileIconColor,
-                  filter: prefersReducedMotion
-                    ? "none"
-                    : "drop-shadow(0 2px 4px rgba(0,0,0,0.2))",
+                  filter: prefersReducedMotion ? 'none' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
                 }}
               />
             </motion.div>
@@ -198,7 +185,7 @@ const ServiceRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
                 transition: {
                   duration: 1.5,
                   repeat: Infinity,
-                  ease: "easeInOut",
+                  ease: 'easeInOut',
                 },
               }}
             />
@@ -256,7 +243,7 @@ const ServiceRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
   );
 });
 
-ServiceRow.displayName = "ServiceRow";
+ServiceRow.displayName = 'ServiceRow';
 
 const ServiceTable = () => {
   const { services, isLoading } = useSelector((state) => state.service);
@@ -272,16 +259,16 @@ const ServiceTable = () => {
   });
 
   useEffect(() => {
-    setQueryKey("services");
+    setQueryKey('services');
   }, [setQueryKey]);
 
   const handleDelete = useCallback(
     (id) => {
       setRoute(`/service/delete/${id}`);
       setIsOpen(true);
-      setQueryKey("services");
+      setQueryKey('services');
     },
-    [setRoute, setIsOpen, setQueryKey],
+    [setRoute, setIsOpen, setQueryKey]
   );
 
   const containerVariants = useMemo(
@@ -298,7 +285,7 @@ const ServiceTable = () => {
         },
       },
     }),
-    [],
+    []
   );
 
   return (
@@ -314,12 +301,8 @@ const ServiceTable = () => {
           <Briefcase className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-            All Services
-          </h3>
-          <p className="text-slate-500 text-xs sm:text-sm">
-            {services?.length || 0} entries
-          </p>
+          <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">All Services</h3>
+          <p className="text-slate-500 text-xs sm:text-sm">{services?.length || 0} entries</p>
         </div>
       </div>
 
@@ -332,21 +315,11 @@ const ServiceTable = () => {
             <div className="py-3 px-3 w-48 flex-shrink-0">Title</div>
             <div className="py-3 px-3 w-64 flex-shrink-0">Description</div>
             <div className="py-3 px-3 w-40 flex-shrink-0">Category</div>
-            <div className="py-3 px-3 text-center w-28 flex-shrink-0">
-              Status
-            </div>
-            <div className="py-3 px-3 text-center w-20 flex-shrink-0">
-              Image
-            </div>
-            <div className="py-3 px-3 text-center w-28 flex-shrink-0">
-              Created
-            </div>
-            <div className="py-3 px-3 text-center w-28 flex-shrink-0">
-              Updated
-            </div>
-            <div className="py-3 px-3 text-center w-24 flex-shrink-0">
-              Actions
-            </div>
+            <div className="py-3 px-3 text-center w-28 flex-shrink-0">Status</div>
+            <div className="py-3 px-3 text-center w-20 flex-shrink-0">Image</div>
+            <div className="py-3 px-3 text-center w-28 flex-shrink-0">Created</div>
+            <div className="py-3 px-3 text-center w-28 flex-shrink-0">Updated</div>
+            <div className="py-3 px-3 text-center w-24 flex-shrink-0">Actions</div>
           </div>
 
           {/* Table Body */}
@@ -367,9 +340,7 @@ const ServiceTable = () => {
                   <Briefcase className="w-8 h-8 text-slate-600" />
                 </div>
                 <p className="text-slate-500 text-sm">No services found</p>
-                <p className="text-slate-600 text-xs mt-1">
-                  Add your first service
-                </p>
+                <p className="text-slate-600 text-xs mt-1">Add your first service</p>
               </div>
             )}
           </div>

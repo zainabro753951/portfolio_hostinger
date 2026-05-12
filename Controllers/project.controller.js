@@ -1,47 +1,30 @@
-import { body, validationResult } from "express-validator";
-import pool from "../db.config.js";
-import { uploadToLocal, deleteFromLocal } from "../Utils/uploadToLocal.js"; // Local Helper
-import { safeParse } from "../Utils/SafeParser.js";
-import { logActivity } from "../Utils/activityLogger.js";
+import { body, validationResult } from 'express-validator';
+import pool from '../db.config.js';
+import { logActivity } from '../Utils/activityLogger.js';
+import { deleteFromLocal, uploadToLocal } from '../Utils/uploadToLocal.js'; // Local Helper
 
 export const AddProjectValidation = [
-  body("title").notEmpty().withMessage("Project title is required"),
-  body("slug").notEmpty().withMessage("Slug is required"),
-  body("shortDesc").notEmpty().withMessage("Short description is required"),
+  body('title').notEmpty().withMessage('Project title is required'),
+  body('slug').notEmpty().withMessage('Slug is required'),
+  body('shortDesc').notEmpty().withMessage('Short description is required'),
 
-  body("repoLink")
-    .optional()
-    .isURL()
-    .withMessage("Repository link must be a valid URL"),
-  body("category").notEmpty().withMessage("Category is required"),
-  body("visibility").notEmpty().withMessage("Visibility is required"),
+  body('repoLink').optional().isURL().withMessage('Repository link must be a valid URL'),
+  body('category').notEmpty().withMessage('Category is required'),
+  body('visibility').notEmpty().withMessage('Visibility is required'),
 ];
 
 export const UpdateProjectValidation = [
-  body("title").optional().notEmpty().withMessage("Title cannot be empty"),
-  body("slug").optional().notEmpty().withMessage("Slug cannot be empty"),
-  body("shortDesc")
-    .optional()
-    .notEmpty()
-    .withMessage("Short description cannot be empty"),
-  body("repoLink")
-    .optional()
-    .isURL()
-    .withMessage("Repository link must be a valid URL"),
-  body("category")
-    .optional()
-    .notEmpty()
-    .withMessage("Category cannot be empty"),
-  body("visibility")
-    .optional()
-    .notEmpty()
-    .withMessage("Visibility cannot be empty"),
+  body('title').optional().notEmpty().withMessage('Title cannot be empty'),
+  body('slug').optional().notEmpty().withMessage('Slug cannot be empty'),
+  body('shortDesc').optional().notEmpty().withMessage('Short description cannot be empty'),
+  body('repoLink').optional().isURL().withMessage('Repository link must be a valid URL'),
+  body('category').optional().notEmpty().withMessage('Category cannot be empty'),
+  body('visibility').optional().notEmpty().withMessage('Visibility cannot be empty'),
 ];
 
 export const addOrUpdateProject = async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty())
-    return res.status(400).json({ success: false, errors: errors.array() });
+  if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
 
   const uploadedKeys = [];
   const isUpdate = Boolean(req.params?.id);
@@ -76,7 +59,7 @@ export const addOrUpdateProject = async (req, res) => {
   try {
     const parseIfString = (data) => {
       if (!data) return null;
-      if (typeof data === "string") {
+      if (typeof data === 'string') {
         try {
           return JSON.parse(data);
         } catch {
@@ -86,7 +69,7 @@ export const addOrUpdateProject = async (req, res) => {
       return data;
     };
 
-    const isTrue = (val) => val === "true" || val === true;
+    const isTrue = (val) => val === 'true' || val === true;
 
     // Parse incoming data
     techStack = parseIfString(techStack) || [];
@@ -98,18 +81,12 @@ export const addOrUpdateProject = async (req, res) => {
 
     // ✅ 1. Upload New Files
     const [heroResult, ogResult, galleryResults] = await Promise.all([
-      req.files?.heroImage?.[0]
-        ? uploadToLocal(req.files.heroImage[0], "projects/hero")
-        : null,
+      req.files?.heroImage?.[0] ? uploadToLocal(req.files.heroImage[0], 'projects/hero') : null,
       req.files?.ogProjectImage?.[0]
-        ? uploadToLocal(req.files.ogProjectImage[0], "projects/og")
+        ? uploadToLocal(req.files.ogProjectImage[0], 'projects/og')
         : null,
       req.files?.gallery?.length
-        ? Promise.all(
-            req.files.gallery.map((img) =>
-              uploadToLocal(img, "projects/gallery"),
-            ),
-          )
+        ? Promise.all(req.files.gallery.map((img) => uploadToLocal(img, 'projects/gallery')))
         : [],
     ]);
 
@@ -166,12 +143,12 @@ export const addOrUpdateProject = async (req, res) => {
     if (isUpdate) {
       await pool.query(
         `UPDATE projects SET title=?, slug=?, shortDesc=?, content=?, repoLink=?, liveDemo=?, canonicalUrl=?, heroImage=?, ogProjectImage=?, gallery=?, techStack=?, tag=?, metaKeywords=?, seoTitle=?, metaDesc=?, category=?, status=?, featured=?, visibility=?, estTime=? WHERE id=?`,
-        [...commonValues, projectId],
+        [...commonValues, projectId]
       );
     } else {
       await pool.query(
         `INSERT INTO projects (title, slug, shortDesc, content, repoLink, liveDemo, canonicalUrl, heroImage, ogProjectImage, gallery, techStack, tag, metaKeywords, seoTitle, metaDesc, category, status, featured, visibility, estTime) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-        commonValues,
+        commonValues
       );
     }
 
@@ -180,45 +157,36 @@ export const addOrUpdateProject = async (req, res) => {
       // CLEANUP HERO: Agar naya upload hua YA user ne remove kiya
       if ((heroResult || isTrue(isHeroImageRemoved)) && heroImageOBJ?.key) {
         await deleteFromLocal(heroImageOBJ.key).catch((e) =>
-          console.error("Cleanup Hero Fail:", e),
+          console.error('Cleanup Hero Fail:', e)
         );
       }
 
       // CLEANUP OG: Agar naya upload hua YA user ne remove kiya
       if ((ogResult || isTrue(isOgImageRemoved)) && ogProjectImageOBJ?.key) {
         await deleteFromLocal(ogProjectImageOBJ.key).catch((e) =>
-          console.error("Cleanup OG Fail:", e),
+          console.error('Cleanup OG Fail:', e)
         );
       }
 
       // CLEANUP GALLERY: Agar naye images aaye YA user ne पूरी gallery remove ki
-      if (
-        (galleryResults.length > 0 || isTrue(isGalleryRemoved)) &&
-        Array.isArray(galleryOBJS)
-      ) {
+      if ((galleryResults.length > 0 || isTrue(isGalleryRemoved)) && Array.isArray(galleryOBJS)) {
         for (const img of galleryOBJS) {
           if (img?.key)
-            await deleteFromLocal(img.key).catch((e) =>
-              console.error("Cleanup Gallery Fail:", e),
-            );
+            await deleteFromLocal(img.key).catch((e) => console.error('Cleanup Gallery Fail:', e));
         }
       }
     }
 
     return res.status(isUpdate ? 200 : 201).json({
       success: true,
-      message: `Project ${isUpdate ? "updated" : "added"} successfully!`,
+      message: `Project ${isUpdate ? 'updated' : 'added'} successfully!`,
     });
   } catch (error) {
-    console.error("❌ Controller Error:", error);
+    console.error('❌ Controller Error:', error);
     for (const key of uploadedKeys) {
-      await deleteFromLocal(key).catch((e) =>
-        console.error("Rollback Error:", e),
-      );
+      await deleteFromLocal(key).catch((e) => console.error('Rollback Error:', e));
     }
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal Server Error!" });
+    return res.status(500).json({ success: false, message: 'Internal Server Error!' });
   }
 };
 
@@ -229,15 +197,12 @@ export const deleteProject = async (req, res) => {
   try {
     // 1️⃣ Get project images from DB
     const [rows] = await pool.query(
-      "SELECT heroImage, ogProjectImage, gallery FROM projects WHERE id = ?",
-      [id],
+      'SELECT heroImage, ogProjectImage, gallery FROM projects WHERE id = ?',
+      [id]
     );
 
     const project = rows[0];
-    if (!project)
-      return res
-        .status(404)
-        .json({ success: false, message: "Project not found" });
+    if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
 
     // 2️⃣ Parse JSON fields (if stored as string)
     const parseJSON = (str) => {
@@ -245,7 +210,7 @@ export const deleteProject = async (req, res) => {
       try {
         return JSON.parse(str);
       } catch (e) {
-        console.error("JSON parse error:", e);
+        console.error('JSON parse error:', e);
         return null;
       }
     };
@@ -271,34 +236,31 @@ export const deleteProject = async (req, res) => {
     await Promise.all(filesToDelete.map((key) => deleteFromLocal(key)));
 
     // 5️⃣ Delete project from DB
-    await pool.query("DELETE FROM projects WHERE id = ?", [id]);
+    await pool.query('DELETE FROM projects WHERE id = ?', [id]);
 
     // 6️⃣ Optional: log activity
     await logActivity({
-      type: "PROJECT_DELETE",
-      title: "Project Deleted",
+      type: 'PROJECT_DELETE',
+      title: 'Project Deleted',
       description: `Project with ID ${id} was deleted.`,
       ip: req.ip,
-      device: req.headers["user-agent"],
+      device: req.headers['user-agent'],
     });
 
     return res.status(200).json({
       success: true,
-      message: "Project and all related images deleted!",
+      message: 'Project and all related images deleted!',
     });
   } catch (error) {
-    console.error("❌ Delete project error:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Error deleting project" });
+    console.error('❌ Delete project error:', error);
+    return res.status(500).json({ success: false, message: 'Error deleting project' });
   }
 };
 
 export const getProjects = async (req, res) => {
   try {
-    const [projects] = await pool.query("SELECT * FROM projects");
+    const [projects] = await pool.query('SELECT * FROM projects');
 
-    console.log(projects);
     const formattedData = projects.map((item) => ({
       ...item,
       heroImage: JSON.parse(item?.heroImage),
@@ -311,17 +273,17 @@ export const getProjects = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      successCode: "GET_PROJECTS",
-      message: "Projects fetched successfully.",
+      successCode: 'GET_PROJECTS',
+      message: 'Projects fetched successfully.',
       projects: formattedData,
     });
   } catch (error) {
-    console.error("GET_PROJECTS_ERROR:", error);
+    console.error('GET_PROJECTS_ERROR:', error);
 
     return res.status(500).json({
       success: false,
-      errorCode: "SERVER_ERROR",
-      message: "Internal Server Error!",
+      errorCode: 'SERVER_ERROR',
+      message: 'Internal Server Error!',
     });
   }
 };

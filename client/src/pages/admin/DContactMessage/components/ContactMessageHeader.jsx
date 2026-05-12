@@ -1,25 +1,22 @@
-import React, { useEffect, useState, memo, useCallback } from "react";
-import { motion } from "motion/react";
-import { Search, Filter, Trash2, MailCheck, Mail } from "lucide-react";
-import { useDispatch } from "react-redux";
-import {
-  setSelectedIds,
-  sortContactMessages,
-} from "../../../../features/messageSlice";
-import { useDeleteEntryContext } from "../../../../context/DeleteEntry";
-import { glassToast } from "../../Components/ToastMessage";
-import { store } from "../../../../app/store";
-import { useMarkAsRead } from "../../../../Queries/MarkAsRead";
+import { Filter, Mail, MailCheck, Search, Trash2 } from 'lucide-react';
+import { motion } from 'motion/react';
+import { memo, useCallback, useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { store } from '../../../../app/store';
+import { useDeleteEntryContext } from '../../../../context/DeleteEntryProvider';
+import { sortContactMessages } from '../../../../features/messageSlice';
+import { useMarkAsRead } from '../../../../Queries/MarkAsRead';
+import { glassToast } from '../../Components/ToastMessage';
 
 const ContactMessageHeader = () => {
   const { setRoute, setIds, setQueryKey, setIsOpen } = useDeleteEntryContext();
   const dispatch = useDispatch();
-  const [selected, setSelected] = useState("All");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selected, setSelected] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Set query key for delete context
   useEffect(() => {
-    setQueryKey("contactMessages");
+    setQueryKey('contactMessages');
   }, [setQueryKey]);
 
   // Filter change handler
@@ -29,30 +26,23 @@ const ContactMessageHeader = () => {
     }
   }, [selected, dispatch]);
 
-  const {
-    mutate: markAsRead,
-    isError,
-    isSuccess,
-    data,
-    error,
-  } = useMarkAsRead();
+  const { mutate: markAsRead, isError, isSuccess, data, error } = useMarkAsRead();
 
   // Delete handler
   const setDeleteIds = useCallback(() => {
     const state = store.getState();
     const updatedIds =
-      state.contactMessages.contactCurrentMessages
-        ?.filter((m) => m.selected)
-        .map((m) => m.id) || [];
+      state.contactMessages.contactCurrentMessages?.filter((m) => m.selected).map((m) => m.id) ||
+      [];
 
     if (!updatedIds.length) {
-      glassToast("Please select at least one message to delete!", "warning");
+      glassToast('Please select at least one message to delete!', 'warning');
       return;
     }
 
     setIds(updatedIds);
-    setRoute("/message/delete");
-    setQueryKey("contactMessages");
+    setRoute('/message/delete');
+    setQueryKey('contactMessages');
     setIsOpen(true);
   }, [setIds, setIsOpen, setRoute, setQueryKey]);
 
@@ -60,15 +50,11 @@ const ContactMessageHeader = () => {
   const setMarkAsRead = useCallback(() => {
     const state = store.getState();
     const updatedIds =
-      state.contactMessages.contactCurrentMessages
-        ?.filter((m) => m.selected)
-        .map((m) => m.id) || [];
+      state.contactMessages.contactCurrentMessages?.filter((m) => m.selected).map((m) => m.id) ||
+      [];
 
     if (!updatedIds.length) {
-      glassToast(
-        "Please select at least one message to mark as read!",
-        "warning",
-      );
+      glassToast('Please select at least one message to mark as read!', 'warning');
       return;
     }
 
@@ -81,13 +67,11 @@ const ContactMessageHeader = () => {
       glassToast.success(data?.message);
     }
     if (isError && error) {
-      glassToast.error(
-        error?.response?.data?.message || "Failed to mark as read",
-      );
+      glassToast.error(error?.response?.data?.message || 'Failed to mark as read');
     }
   }, [isSuccess, isError, data, error]);
 
-  const filterOptions = ["All", "New", "Read", "Unread"];
+  const filterOptions = ['All', 'New', 'Read', 'Unread'];
 
   return (
     <motion.header

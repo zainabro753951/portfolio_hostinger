@@ -1,21 +1,21 @@
-import { memo, useMemo, useEffect, Suspense, lazy } from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { useSelector, shallowEqual } from "react-redux";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import "./App.css";
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { Suspense, memo, useEffect, useMemo } from 'react';
+import { shallowEqual, useSelector } from 'react-redux';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import './App.css';
 
-import ScrollToTop from "./components/ScrollToTop";
-import MetaUpdater from "./components/MetaUpdater";
-import AppInitializer from "./components/AppInitializer";
-import Login from "./pages/admin/Login";
-import AuthLoader from "./context/AuthLoader";
-import ProtectedRoute from "./context/ProtectedRoute";
-import AdminDataInitializer from "./components/AdminDataInitializer";
-import DHomePage from "./pages/admin/Layout/DHomePage";
-import DHomeCards from "./pages/admin/DHome/components/DHomeCards";
-import { userRoutes } from "./Routes/user.route.jsx";
-import { adminRoutes } from "./Routes/admin.route.jsx";
+import AdminDataInitializer from './components/AdminDataInitializer';
+import AppInitializer from './components/AppInitializer';
+import MetaUpdater from './components/MetaUpdater';
+import ScrollToTop from './components/ScrollToTop';
+import AuthLoader from './context/AuthLoader';
+import ProtectedRoute from './context/ProtectedRoute';
+import DHomeCards from './pages/admin/DHome/components/DHomeCards';
+import DHomePage from './pages/admin/Layout/DHomePage';
+import Login from './pages/admin/Login';
+import { adminRoutes } from './Routes/admin.route.jsx';
+import { userRoutes } from './Routes/user.route.jsx';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -35,12 +35,12 @@ const throttle = (func, limit) => {
 const AppSkeleton = memo(() => (
   <div
     style={{
-      position: "fixed",
+      position: 'fixed',
       inset: 0,
-      background: "#0a0a0f",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
+      background: '#0a0a0f',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
       zIndex: 9999,
     }}
   >
@@ -48,10 +48,10 @@ const AppSkeleton = memo(() => (
       style={{
         width: 48,
         height: 48,
-        border: "3px solid rgba(139, 92, 246, 0.2)",
-        borderTopColor: "#8b5cf6",
-        borderRadius: "50%",
-        animation: "spin 0.8s linear infinite",
+        border: '3px solid rgba(139, 92, 246, 0.2)',
+        borderTopColor: '#8b5cf6',
+        borderRadius: '50%',
+        animation: 'spin 0.8s linear infinite',
       }}
     />
     <style>{`
@@ -59,7 +59,7 @@ const AppSkeleton = memo(() => (
     `}</style>
   </div>
 ));
-AppSkeleton.displayName = "AppSkeleton";
+AppSkeleton.displayName = 'AppSkeleton';
 
 function App() {
   const isAuth = useSelector((state) => state.adminAuth?.isAuth, shallowEqual);
@@ -67,18 +67,18 @@ function App() {
 
   // 🚀 Throttled ScrollTrigger refresh
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
 
     const throttledRefresh = throttle(() => {
       ScrollTrigger.refresh();
     }, 200);
 
-    window.addEventListener("resize", throttledRefresh, { passive: true });
+    window.addEventListener('resize', throttledRefresh, { passive: true });
 
     return () => {
-      window.removeEventListener("resize", throttledRefresh);
+      window.removeEventListener('resize', throttledRefresh);
       ScrollTrigger.getAll()
-        .filter((st) => st.vars?.id?.startsWith("app-"))
+        .filter((st) => st.vars?.id?.startsWith('app-'))
         .forEach((st) => st.kill());
     };
   }, []);
@@ -86,7 +86,7 @@ function App() {
   // 🎯 Memoized login element
   const loginElement = useMemo(
     () => (isAuth ? <Navigate to="/admin" replace /> : <Login />),
-    [isAuth],
+    [isAuth]
   );
 
   // 🎯 Memoized user routes to prevent re-renders
@@ -96,7 +96,7 @@ function App() {
         <Route key={route.path} path={route.path} element={route.element}>
           {route?.children?.map((childRoute) => (
             <Route
-              key={`${route.path}-${childRoute.path || "index"}`}
+              key={`${route.path}-${childRoute.path || 'index'}`}
               index={childRoute.index}
               path={childRoute.path}
               element={childRoute.element}
@@ -104,16 +104,13 @@ function App() {
           ))}
         </Route>
       )),
-    [],
+    []
   );
 
   // 🎯 Memoized admin routes
   const adminRoutesElements = useMemo(
-    () =>
-      adminRoutes.map(({ path, elem }) => (
-        <Route key={path} path={path} element={elem} />
-      )),
-    [],
+    () => adminRoutes.map(({ path, elem }) => <Route key={path} path={path} element={elem} />),
+    []
   );
 
   return (
