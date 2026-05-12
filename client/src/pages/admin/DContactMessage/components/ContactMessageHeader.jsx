@@ -1,9 +1,9 @@
+import { useDeleteEntryContext } from '@/context/useDeleteEntryContext';
 import { Filter, Mail, MailCheck, Search, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { store } from '../../../../app/store';
-import { useDeleteEntryContext } from '../../../../context/DeleteEntryProvider';
 import { sortContactMessages } from '../../../../features/messageSlice';
 import { useMarkAsRead } from '../../../../Queries/MarkAsRead';
 import { glassToast } from '../../Components/ToastMessage';

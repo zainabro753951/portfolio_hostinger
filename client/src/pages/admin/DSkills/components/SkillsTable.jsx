@@ -1,9 +1,9 @@
+import { useDeleteEntryContext } from '@/context/useDeleteEntryContext';
 import { Gauge, Pencil, Trash2, Wrench, Zap } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { useDeleteEntryContext } from '../../../../context/DeleteEntryProvider';
 
 // Proficiency badge component
 const ProficiencyBadge = memo(({ level }) => {

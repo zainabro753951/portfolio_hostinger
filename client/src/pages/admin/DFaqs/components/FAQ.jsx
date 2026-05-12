@@ -1,8 +1,8 @@
+import { useDeleteEntryContext } from '@/context/useDeleteEntryContext';
 import { AnimatePresence, motion } from 'motion/react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-import { useDeleteEntryContext } from '../../../../context/DeleteEntryProvider';
 
 // Memoized action button component for better performance
 const ActionButton = memo(

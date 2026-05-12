@@ -1,3 +1,4 @@
+import { useDeleteEntryContext } from '@/context/useDeleteEntryContext';
 import {
   Calendar,
   CheckCircle2,
@@ -15,7 +16,6 @@ import { motion, useReducedMotion } from 'motion/react';
 import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { useDeleteEntryContext } from '../../../../context/DeleteEntryProvider';
 
 const TableRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
   const rowVariants = useMemo(

@@ -1,4 +1,5 @@
 // src/components/admin/DMessage/components/DMessageView.jsx
+import { useDeleteEntryContext } from '@/context/useDeleteEntryContext';
 import {
   Calendar,
   CheckCircle2,
@@ -17,7 +18,6 @@ import { motion } from 'motion/react';
 import { memo, useCallback, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { store } from '../../../../app/store';
-import { useDeleteEntryContext } from '../../../../context/DeleteEntryProvider';
 import {
   openReplyModal,
   setSelectedIds,

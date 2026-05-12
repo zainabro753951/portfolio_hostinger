@@ -1,3 +1,4 @@
+import { useDeleteEntryContext } from '@/context/useDeleteEntryContext';
 import {
   Briefcase,
   Building2,
@@ -16,7 +17,6 @@ import { motion, useReducedMotion } from 'motion/react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { useDeleteEntryContext } from '../../../../context/DeleteEntryProvider';
 import { projectFindById } from '../../../../features/projectSlice';
 import useCreatedAtSorted from '../../../../hooks/useCreatedAtSorted';
 import { formatTimeAgo, getFileIcon, getFileNameFromUrl, safeParse } from '../../../../Utils/Utils';
