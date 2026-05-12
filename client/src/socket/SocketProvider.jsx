@@ -1,85 +1,73 @@
 // src/socket/SocketProvider.jsx
-import { useEffect, useRef, useCallback } from "react";
-import { useDispatch } from "react-redux";
-import socket from "./socket";
-import {
-  setActiveUsersCount,
-  setSocketStatus,
-} from "../features/siteSettingsSlice";
+import { useCallback, useEffect, useRef } from 'react';
+import { useDispatch } from 'react-redux';
+import { setActiveUsersCount, setSocketStatus } from '../features/siteSettingsSlice';
+import socket from './socket';
 
 const SocketProvider = ({ children }) => {
   const dispatch = useDispatch();
   const initialized = useRef(false);
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
-  const reconnectDelay = 3000; // 3 seconds
+  const reconnectDelay = 3000;
 
-  // Stable callback for connection status
+  // ✅ 1. Sab handlers ko useCallback se stable banayein
   const handleConnect = useCallback(() => {
-    console.log("🟢 Socket connected:", socket.id);
-    dispatch(setSocketStatus({ status: "connected", id: socket.id }));
-    reconnectAttempts.current = 0; // Reset attempts on successful connection
+    console.log('🟢 Socket connected:', socket.id);
+    dispatch(setSocketStatus({ status: 'connected', id: socket.id }));
+    reconnectAttempts.current = 0;
   }, [dispatch]);
 
   const handleDisconnect = useCallback(
     (reason) => {
-      console.log("🔴 Socket disconnected:", reason);
-      dispatch(setSocketStatus({ status: "disconnected", reason }));
+      console.log('🔴 Socket disconnected:', reason);
+      dispatch(setSocketStatus({ status: 'disconnected', reason }));
 
-      // Attempt reconnection if not manually disconnected
-      if (
-        reason !== "io client disconnect" &&
-        reconnectAttempts.current < maxReconnectAttempts
-      ) {
+      if (reason !== 'io client disconnect' && reconnectAttempts.current < maxReconnectAttempts) {
         reconnectAttempts.current += 1;
         console.log(
-          `🔄 Reconnection attempt ${reconnectAttempts.current}/${maxReconnectAttempts} in ${reconnectDelay}ms...`,
+          `🔄 Reconnection attempt ${reconnectAttempts.current}/${maxReconnectAttempts} in ${reconnectDelay}ms...`
         );
-
         setTimeout(() => {
-          if (!socket.connected) {
-            socket.connect();
-          }
+          if (!socket.connected) socket.connect();
         }, reconnectDelay);
       }
     },
-    [dispatch],
+    [dispatch]
   );
 
   const handleConnectError = useCallback(
     (err) => {
-      console.error("❌ Socket connection error:", err.message);
-      dispatch(setSocketStatus({ status: "error", error: err.message }));
+      console.error('❌ Socket connection error:', err.message);
+      dispatch(setSocketStatus({ status: 'error', error: err.message }));
     },
-    [dispatch],
+    [dispatch]
   );
 
-  useEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
-
-    // ✅ pehle listeners lagao
-    socket.on("connect", handleConnect);
-    socket.on("activeUsersCount", ({ count }) => {
+  // ✅ 2. activeUsersCount handler ko bhi stable banayein
+  const handleActiveUsersCount = useCallback(
+    ({ count }) => {
       dispatch(setActiveUsersCount({ count }));
-    });
-    socket.on("disconnect", handleDisconnect);
-    socket.on("connect_error", handleConnectError);
+    },
+    [dispatch]
+  );
 
-    // ✅ phir connect karo
-    if (!socket.connected) {
-      socket.connect();
-    }
+  // ✅ Alternative: Without initialized guard
+  useEffect(() => {
+    socket.on('connect', handleConnect);
+    socket.on('activeUsersCount', handleActiveUsersCount);
+    socket.on('disconnect', handleDisconnect);
+    socket.on('connect_error', handleConnectError);
+
+    if (!socket.connected) socket.connect();
 
     return () => {
-      socket.off("connect", handleConnect);
-      socket.off("activeUsersCount", ({ count }) => {
-        dispatch(setActiveUsersCount({ count }));
-      });
-      socket.off("disconnect", handleDisconnect);
-      socket.off("connect_error", handleConnectError);
+      socket.off('connect', handleConnect);
+      socket.off('activeUsersCount', handleActiveUsersCount);
+      socket.off('disconnect', handleDisconnect);
+      socket.off('connect_error', handleConnectError);
     };
-  }, []);
+  }, [handleConnect, handleDisconnect, handleConnectError, handleActiveUsersCount]); // Dependencies ke saath
 
   return children;
 };
