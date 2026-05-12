@@ -1,34 +1,34 @@
-import React, { useEffect, useRef, memo, useCallback } from "react";
-import { motion } from "motion/react";
-import {
-  Eye,
-  Trash2,
-  Mail,
-  MapPin,
-  Globe,
-  Wifi,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  Hash,
-  User,
-  FileText,
-  Mail as MailIcon,
-  Building2,
-  Flag,
-} from "lucide-react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDeleteEntryContext } from '@/context/useDeleteEntryContext';
 import {
   contactMsgFindById,
   selectAllMessages,
   toggleSelectMessage,
-} from "@/features/messageSlice";
-import { useDeleteEntryContext } from "@/context/DeleteEntry";
-import { scrollToRef } from "@/Utils/Utils";
+} from '@/features/messageSlice';
+import { scrollToRef } from '@/Utils/Utils';
+import {
+  Building2,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Eye,
+  FileText,
+  Flag,
+  Globe,
+  Hash,
+  Mail,
+  Mail as MailIcon,
+  MapPin,
+  Trash2,
+  User,
+  Wifi,
+} from 'lucide-react';
+import { motion } from 'motion/react';
+import { memo, useCallback, useEffect, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 
 const CMTable = ({ MessageViewRef }) => {
   const { contactCurrentMessages, currentPageMsgsCounts } = useSelector(
-    (state) => state.contactMessages,
+    (state) => state.contactMessages
   );
   const { setRoute, setIds, setQueryKey, setIsOpen } = useDeleteEntryContext();
   const dispatch = useDispatch();
@@ -36,7 +36,7 @@ const CMTable = ({ MessageViewRef }) => {
 
   // Set query key for delete context
   useEffect(() => {
-    setQueryKey("contactMessages");
+    setQueryKey('contactMessages');
   }, [setQueryKey]);
 
   // Update master checkbox state
@@ -54,14 +54,14 @@ const CMTable = ({ MessageViewRef }) => {
     (e) => {
       dispatch(selectAllMessages(e.target.checked));
     },
-    [dispatch],
+    [dispatch]
   );
 
   const handleRowSelect = useCallback(
     (id) => {
       dispatch(toggleSelectMessage(id));
     },
-    [dispatch],
+    [dispatch]
   );
 
   const handleViewMessage = useCallback(
@@ -69,10 +69,10 @@ const CMTable = ({ MessageViewRef }) => {
       dispatch(contactMsgFindById(id));
       // 2. ✅ Manual scroll (next tick - DOM update ka wait)
       requestAnimationFrame(() => {
-        scrollToRef(MessageViewRef, { block: "nearest" });
+        scrollToRef(MessageViewRef, { block: 'nearest' });
       });
     },
-    [dispatch],
+    [dispatch]
   );
 
   const setDeleteIds = useCallback(
@@ -81,9 +81,7 @@ const CMTable = ({ MessageViewRef }) => {
       if (id) {
         idsToDelete = [id];
       } else {
-        idsToDelete = contactCurrentMessages
-          .filter((m) => m.selected)
-          .map((m) => m.id);
+        idsToDelete = contactCurrentMessages.filter((m) => m.selected).map((m) => m.id);
       }
 
       if (idsToDelete.length === 0) {
@@ -92,10 +90,10 @@ const CMTable = ({ MessageViewRef }) => {
 
       setIds(idsToDelete);
       setIsOpen(true);
-      setRoute("/message/delete");
-      setQueryKey("contactMessages");
+      setRoute('/message/delete');
+      setQueryKey('contactMessages');
     },
-    [contactCurrentMessages, setIds, setIsOpen, setRoute, setQueryKey],
+    [contactCurrentMessages, setIds, setIsOpen, setRoute, setQueryKey]
   );
 
   // Animation variants
@@ -113,30 +111,25 @@ const CMTable = ({ MessageViewRef }) => {
 
   // Table headers configuration
   const headers = [
-    { key: "select", label: "", icon: null, width: "w-12" },
-    { key: "id", label: "ID", icon: Hash, width: "w-16" },
-    { key: "planId", label: "Plan ID", icon: FileText, width: "w-24" },
-    { key: "fullName", label: "Sender", icon: User, width: "w-32" },
-    { key: "subject", label: "Subject", icon: MailIcon, width: "w-40" },
-    { key: "email", label: "Email", icon: Mail, width: "w-48" },
-    { key: "city", label: "City", icon: Building2, width: "w-24" },
-    { key: "country", label: "Country", icon: Flag, width: "w-24" },
-    { key: "isp", label: "ISP", icon: Wifi, width: "w-32" },
-    { key: "location", label: "Location", icon: MapPin, width: "w-32" },
-    { key: "ip", label: "IP Address", icon: Globe, width: "w-32" },
-    { key: "region", label: "Region", icon: Flag, width: "w-24" },
-    { key: "date", label: "Date", icon: Calendar, width: "w-32" },
-    { key: "status", label: "Status", icon: CheckCircle2, width: "w-24" },
-    { key: "actions", label: "Actions", icon: null, width: "w-24" },
+    { key: 'select', label: '', icon: null, width: 'w-12' },
+    { key: 'id', label: 'ID', icon: Hash, width: 'w-16' },
+    { key: 'planId', label: 'Plan ID', icon: FileText, width: 'w-24' },
+    { key: 'fullName', label: 'Sender', icon: User, width: 'w-32' },
+    { key: 'subject', label: 'Subject', icon: MailIcon, width: 'w-40' },
+    { key: 'email', label: 'Email', icon: Mail, width: 'w-48' },
+    { key: 'city', label: 'City', icon: Building2, width: 'w-24' },
+    { key: 'country', label: 'Country', icon: Flag, width: 'w-24' },
+    { key: 'isp', label: 'ISP', icon: Wifi, width: 'w-32' },
+    { key: 'location', label: 'Location', icon: MapPin, width: 'w-32' },
+    { key: 'ip', label: 'IP Address', icon: Globe, width: 'w-32' },
+    { key: 'region', label: 'Region', icon: Flag, width: 'w-24' },
+    { key: 'date', label: 'Date', icon: Calendar, width: 'w-32' },
+    { key: 'status', label: 'Status', icon: CheckCircle2, width: 'w-24' },
+    { key: 'actions', label: 'Actions', icon: null, width: 'w-24' },
   ];
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-      className="w-full "
-    >
+    <motion.div variants={containerVariants} initial="hidden" animate="show" className="w-full ">
       <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 shadow-xl overflow-hidden">
         {/* Table Container */}
         <div className="overflow-x-auto custom-scrollbar">
@@ -150,7 +143,7 @@ const CMTable = ({ MessageViewRef }) => {
                     className={`py-4 px-3 text-left text-xs font-semibold text-cyan-300 uppercase tracking-wider ${head.width}`}
                   >
                     <div className="flex items-center gap-2">
-                      {head.key === "select" ? (
+                      {head.key === 'select' ? (
                         <input
                           ref={masterRef}
                           type="checkbox"
@@ -159,9 +152,7 @@ const CMTable = ({ MessageViewRef }) => {
                         />
                       ) : (
                         <>
-                          {head.icon && (
-                            <head.icon className="w-4 h-4 text-cyan-400" />
-                          )}
+                          {head.icon && <head.icon className="w-4 h-4 text-cyan-400" />}
                           {head.label}
                         </>
                       )}
@@ -184,7 +175,7 @@ const CMTable = ({ MessageViewRef }) => {
                       animate={{ opacity: 1 }}
                       transition={{ delay: index * 0.03 }}
                       className={`group hover:bg-gradient-to-r hover:from-cyan-500/5 hover:to-blue-500/5 transition-all duration-300 ${
-                        item.selected ? "bg-cyan-500/10" : ""
+                        item.selected ? 'bg-cyan-500/10' : ''
                       }`}
                     >
                       {/* Select */}
@@ -199,23 +190,19 @@ const CMTable = ({ MessageViewRef }) => {
 
                       {/* ID */}
                       <td className="py-4 px-3">
-                        <span className="text-xs text-slate-500 font-mono">
-                          #{item.id}
-                        </span>
+                        <span className="text-xs text-slate-500 font-mono">#{item.id}</span>
                       </td>
 
                       {/* Plan ID */}
                       <td className="py-4 px-3">
-                        <span className="text-sm text-slate-300">
-                          {item.planId || "—"}
-                        </span>
+                        <span className="text-sm text-slate-300">{item.planId || '—'}</span>
                       </td>
 
                       {/* Sender */}
                       <td className="py-4 px-3">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 text-xs font-bold">
-                            {item.fullName?.charAt(0)?.toUpperCase() || "?"}
+                            {item.fullName?.charAt(0)?.toUpperCase() || '?'}
                           </div>
                           <span className="text-sm text-white font-medium truncate max-w-[100px]">
                             {item.fullName}
@@ -239,22 +226,18 @@ const CMTable = ({ MessageViewRef }) => {
 
                       {/* City */}
                       <td className="py-4 px-3">
-                        <span className="text-sm text-slate-300">
-                          {item?.city || "—"}
-                        </span>
+                        <span className="text-sm text-slate-300">{item?.city || '—'}</span>
                       </td>
 
                       {/* Country */}
                       <td className="py-4 px-3">
-                        <span className="text-sm text-slate-300">
-                          {item?.country || "—"}
-                        </span>
+                        <span className="text-sm text-slate-300">{item?.country || '—'}</span>
                       </td>
 
                       {/* ISP */}
                       <td className="py-4 px-3">
                         <span className="text-xs text-slate-400 truncate max-w-[100px] block">
-                          {item?.isp || "—"}
+                          {item?.isp || '—'}
                         </span>
                       </td>
 
@@ -263,22 +246,20 @@ const CMTable = ({ MessageViewRef }) => {
                         <span className="text-xs text-slate-500 font-mono">
                           {item?.latitude && item?.longitude
                             ? `${parseFloat(item.latitude).toFixed(2)}, ${parseFloat(item.longitude).toFixed(2)}`
-                            : "—"}
+                            : '—'}
                         </span>
                       </td>
 
                       {/* IP */}
                       <td className="py-4 px-3">
                         <span className="text-xs text-slate-500 font-mono">
-                          {item?.ipAddress || "—"}
+                          {item?.ipAddress || '—'}
                         </span>
                       </td>
 
                       {/* Region */}
                       <td className="py-4 px-3">
-                        <span className="text-sm text-slate-300">
-                          {item?.region || "—"}
-                        </span>
+                        <span className="text-sm text-slate-300">{item?.region || '—'}</span>
                       </td>
 
                       {/* Date */}
@@ -290,13 +271,13 @@ const CMTable = ({ MessageViewRef }) => {
                       <td className="py-4 px-3 flex items-center justify-center ">
                         <span
                           className={`px-2 py-1 rounded-full w-full text-xs font-medium border ${
-                            item.status?.toLowerCase() === "read"
-                              ? "bg-cyan-500/15 text-cyan-300 border-cyan-400/30"
-                              : "bg-amber-500/15 text-amber-300 border-amber-400/30"
+                            item.status?.toLowerCase() === 'read'
+                              ? 'bg-cyan-500/15 text-cyan-300 border-cyan-400/30'
+                              : 'bg-amber-500/15 text-amber-300 border-amber-400/30'
                           }`}
                         >
                           <div className="flex items-center gap-1">
-                            {item.status?.toLowerCase() === "read" ? (
+                            {item.status?.toLowerCase() === 'read' ? (
                               <CheckCircle2 className="w-3 h-3" />
                             ) : (
                               <Clock className="w-3 h-3" />
@@ -336,9 +317,7 @@ const CMTable = ({ MessageViewRef }) => {
                       <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center border border-cyan-500/30">
                         <Mail className="w-8 h-8 text-cyan-400" />
                       </div>
-                      <p className="text-slate-400 text-lg">
-                        No messages found
-                      </p>
+                      <p className="text-slate-400 text-lg">No messages found</p>
                       <p className="text-slate-500 text-sm">
                         Messages will appear here when users contact you
                       </p>
