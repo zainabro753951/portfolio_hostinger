@@ -1,20 +1,20 @@
-import { lazy, Suspense, memo } from "react";
-import { Skeleton } from "@/components/ui/skeleton"; // Ya apna custom loading
+import { lazy, memo, Suspense } from 'react';
+import Preloader from '../components/Preloader';
 
 // 🚀 Lazy load all user pages - Code Splitting
-const Layout = lazy(() => import("../components/Layout"));
-const Home = lazy(() => import("../pages/Home"));
-const About = lazy(() => import("../pages/About"));
-const Services = lazy(() => import("../pages/Services"));
-const Projects = lazy(() => import("../pages/Projects"));
-const Reviews = lazy(() => import("../pages/Reviews"));
-const Contact = lazy(() => import("../pages/Contact"));
-const ServiceDetailsPage = lazy(() => import("../pages/ServiceDetailsPage"));
+const Layout = lazy(() => import('../components/Layout'));
+const Home = lazy(() => import('../pages/Home'));
+const About = lazy(() => import('../pages/About'));
+const Services = lazy(() => import('../pages/Services'));
+const Projects = lazy(() => import('../pages/Projects'));
+const Reviews = lazy(() => import('../pages/Reviews'));
+const Contact = lazy(() => import('../pages/Contact'));
+const ServiceDetailsPage = lazy(() => import('../pages/ServiceDetailsPage'));
 
 // 🎯 Suspense Wrapper with elegant loading
 const withUserSuspense = (Component, displayName) => {
   const WrappedComponent = (props) => (
-    <Suspense>
+    <Suspense fallback={<Preloader />}>
       <Component {...props} />
     </Suspense>
   );
@@ -24,59 +24,56 @@ const withUserSuspense = (Component, displayName) => {
 };
 
 // 📋 Pre-wrapped components (memoized)
-const WrappedLayout = withUserSuspense(Layout, "Layout");
-const WrappedHome = withUserSuspense(Home, "Home");
-const WrappedAbout = withUserSuspense(About, "About");
-const WrappedServices = withUserSuspense(Services, "Services");
-const WrappedProjects = withUserSuspense(Projects, "Projects");
-const WrappedReviews = withUserSuspense(Reviews, "Reviews");
-const WrappedContact = withUserSuspense(Contact, "Contact");
-const WrappedServiceDetailsPage = withUserSuspense(
-  ServiceDetailsPage,
-  "ServiceDetailsPage",
-);
+const WrappedLayout = withUserSuspense(Layout, 'Layout');
+const WrappedHome = withUserSuspense(Home, 'Home');
+const WrappedAbout = withUserSuspense(About, 'About');
+const WrappedServices = withUserSuspense(Services, 'Services');
+const WrappedProjects = withUserSuspense(Projects, 'Projects');
+const WrappedReviews = withUserSuspense(Reviews, 'Reviews');
+const WrappedContact = withUserSuspense(Contact, 'Contact');
+const WrappedServiceDetailsPage = withUserSuspense(ServiceDetailsPage, 'ServiceDetailsPage');
 
 // 🚀 Optimized Route Configuration
 export const userRoutes = [
   {
-    path: "/",
+    path: '/',
     element: <WrappedLayout />,
     children: [
       { index: true, element: <WrappedHome /> },
-      { path: "about", element: <WrappedAbout /> },
-      { path: "services", element: <WrappedServices /> },
-      { path: "projects", element: <WrappedProjects /> },
-      { path: "reviews", element: <WrappedReviews /> },
-      { path: "contact", element: <WrappedContact /> },
-      { path: "services/:slug", element: <WrappedServiceDetailsPage /> },
+      { path: 'about', element: <WrappedAbout /> },
+      { path: 'services', element: <WrappedServices /> },
+      { path: 'projects', element: <WrappedProjects /> },
+      { path: 'reviews', element: <WrappedReviews /> },
+      { path: 'contact', element: <WrappedContact /> },
+      { path: 'services/:slug', element: <WrappedServiceDetailsPage /> },
     ],
   },
 ];
 
 // 🎯 Route metadata for SEO/Navigation
 export const userRouteMeta = {
-  "/": { title: "Home", description: "Welcome to my portfolio" },
-  "/about": { title: "About", description: "Learn more about me" },
-  "/services": { title: "Services", description: "What I offer" },
-  "/projects": { title: "Projects", description: "My recent work" },
-  "/reviews": { title: "Reviews", description: "Client testimonials" },
-  "/contact": { title: "Contact", description: "Get in touch" },
-  "/services/:slug": {
-    title: "ServiceDetailsPage",
-    description: "Learn more about services",
+  '/': { title: 'Home', description: 'Welcome to my portfolio' },
+  '/about': { title: 'About', description: 'Learn more about me' },
+  '/services': { title: 'Services', description: 'What I offer' },
+  '/projects': { title: 'Projects', description: 'My recent work' },
+  '/reviews': { title: 'Reviews', description: 'Client testimonials' },
+  '/contact': { title: 'Contact', description: 'Get in touch' },
+  '/services/:slug': {
+    title: 'ServiceDetailsPage',
+    description: 'Learn more about services',
   },
 };
 
 // 🚀 Preload utility for predictive loading
 export const preloadUserPage = (path) => {
   const preloadMap = {
-    "/": () => import("../pages/Home"),
-    "/about": () => import("../pages/About"),
-    "/services": () => import("../pages/Services"),
-    "/projects": () => import("../pages/Projects"),
-    "/reviews": () => import("../pages/Reviews"),
-    "/contact": () => import("../pages/Contact"),
-    "/services/:slug": () => import("../pages/ServiceDetailsPage"),
+    '/': () => import('../pages/Home'),
+    '/about': () => import('../pages/About'),
+    '/services': () => import('../pages/Services'),
+    '/projects': () => import('../pages/Projects'),
+    '/reviews': () => import('../pages/Reviews'),
+    '/contact': () => import('../pages/Contact'),
+    '/services/:slug': () => import('../pages/ServiceDetailsPage'),
   };
 
   const loader = preloadMap[path];
@@ -99,4 +96,4 @@ export const NavLinkWithPreload = memo(({ to, children, ...props }) => {
     </a>
   );
 });
-NavLinkWithPreload.displayName = "NavLinkWithPreload";
+NavLinkWithPreload.displayName = 'NavLinkWithPreload';

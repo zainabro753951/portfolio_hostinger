@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Sparkles, Zap, Crown, ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowRight, Check, Crown, Sparkles, Zap } from 'lucide-react';
+import { useState } from 'react';
 
 const PricingCard = ({ plans }) => {
   const [hoveredIndex, setHoveredIndex] = useState(null);

@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
-import { gsap } from "gsap";
-import { motion } from "motion/react";
-import { Sparkles, ArrowDown } from "lucide-react";
+import { gsap } from 'gsap';
+import { Sparkles } from 'lucide-react';
+import { motion } from 'motion/react';
+import { useEffect, useRef } from 'react';
 
 const HeroSkeleton = () => {
   const skeletonRef = useRef(null);
@@ -11,31 +11,31 @@ const HeroSkeleton = () => {
   useEffect(() => {
     const ctx = gsap.context(() => {
       // Shimmer effect for all skeleton elements
-      gsap.to(".skeleton-shimmer", {
-        backgroundPosition: "200% 0",
+      gsap.to('.skeleton-shimmer', {
+        backgroundPosition: '200% 0',
         duration: 1.5,
         repeat: -1,
-        ease: "linear",
+        ease: 'linear',
       });
 
       // Pulsing glow animation
-      gsap.to(".skeleton-glow", {
+      gsap.to('.skeleton-glow', {
         opacity: 0.4,
         duration: 2,
         repeat: -1,
         yoyo: true,
-        ease: "sine.inOut",
+        ease: 'sine.inOut',
         stagger: 0.3,
       });
 
       // Floating particles animation
-      gsap.to(".skeleton-particle", {
+      gsap.to('.skeleton-particle', {
         y: -20,
         duration: 2,
         repeat: -1,
         yoyo: true,
         stagger: 0.2,
-        ease: "sine.inOut",
+        ease: 'sine.inOut',
       });
 
       // Image container breathing effect
@@ -44,12 +44,12 @@ const HeroSkeleton = () => {
         duration: 3,
         repeat: -1,
         yoyo: true,
-        ease: "sine.inOut",
+        ease: 'sine.inOut',
       });
 
       // Text lines stagger animation
       gsap.fromTo(
-        ".skeleton-text-line",
+        '.skeleton-text-line',
         { x: -20, opacity: 0.3 },
         {
           x: 0,
@@ -58,17 +58,17 @@ const HeroSkeleton = () => {
           stagger: 0.1,
           repeat: -1,
           yoyo: true,
-          ease: "power2.inOut",
-        },
+          ease: 'power2.inOut',
+        }
       );
 
       // Gradient orb animation
-      gsap.to(".skeleton-orb", {
+      gsap.to('.skeleton-orb', {
         scale: 1.2,
         duration: 4,
         repeat: -1,
         yoyo: true,
-        ease: "sine.inOut",
+        ease: 'sine.inOut',
       });
     }, skeletonRef);
 
@@ -78,8 +78,8 @@ const HeroSkeleton = () => {
   // Shimmer gradient style
   const shimmerStyle = {
     background:
-      "linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 100%)",
-    backgroundSize: "200% 100%",
+      'linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 100%)',
+    backgroundSize: '200% 100%',
   };
 
   return (
@@ -112,10 +112,7 @@ const HeroSkeleton = () => {
       <div className="relative max-w-7xl mx-auto px-6 lg:px-8 py-32">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           {/* Text Content Skeleton */}
-          <div
-            ref={textRef}
-            className="text-center lg:text-left z-10 space-y-6"
-          >
+          <div ref={textRef} className="text-center lg:text-left z-10 space-y-6">
             {/* Badge Skeleton */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8 skeleton-shimmer skeleton-glow">
               <Sparkles size={16} className="text-neon-cyan/50" />
@@ -123,7 +120,7 @@ const HeroSkeleton = () => {
                 className="h-4 w-32 rounded-full"
                 style={{
                   ...shimmerStyle,
-                  backgroundColor: "rgba(255,255,255,0.05)",
+                  backgroundColor: 'rgba(255,255,255,0.05)',
                 }}
               />
             </div>
@@ -134,16 +131,16 @@ const HeroSkeleton = () => {
                 className="skeleton-text-line skeleton-shimmer h-16 sm:h-20 lg:h-24 xl:h-28 rounded-lg"
                 style={{
                   ...shimmerStyle,
-                  backgroundColor: "rgba(255,255,255,0.08)",
-                  width: "80%",
+                  backgroundColor: 'rgba(255,255,255,0.08)',
+                  width: '80%',
                 }}
               />
               <div
                 className="skeleton-text-line skeleton-shimmer h-16 sm:h-20 lg:h-24 xl:h-28 rounded-lg"
                 style={{
                   ...shimmerStyle,
-                  backgroundColor: "rgba(255,255,255,0.08)",
-                  width: "60%",
+                  backgroundColor: 'rgba(255,255,255,0.08)',
+                  width: '60%',
                 }}
               />
             </div>
@@ -153,8 +150,8 @@ const HeroSkeleton = () => {
               className="skeleton-text-line skeleton-shimmer h-6 sm:h-8 rounded-full mx-auto lg:mx-0"
               style={{
                 ...shimmerStyle,
-                backgroundColor: "rgba(255,255,255,0.05)",
-                width: "70%",
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                width: '70%',
               }}
             />
 
@@ -164,24 +161,24 @@ const HeroSkeleton = () => {
                 className="skeleton-text-line skeleton-shimmer h-4 rounded-full"
                 style={{
                   ...shimmerStyle,
-                  backgroundColor: "rgba(255,255,255,0.03)",
-                  width: "100%",
+                  backgroundColor: 'rgba(255,255,255,0.03)',
+                  width: '100%',
                 }}
               />
               <div
                 className="skeleton-text-line skeleton-shimmer h-4 rounded-full"
                 style={{
                   ...shimmerStyle,
-                  backgroundColor: "rgba(255,255,255,0.03)",
-                  width: "90%",
+                  backgroundColor: 'rgba(255,255,255,0.03)',
+                  width: '90%',
                 }}
               />
               <div
                 className="skeleton-text-line skeleton-shimmer h-4 rounded-full"
                 style={{
                   ...shimmerStyle,
-                  backgroundColor: "rgba(255,255,255,0.03)",
-                  width: "80%",
+                  backgroundColor: 'rgba(255,255,255,0.03)',
+                  width: '80%',
                 }}
               />
             </div>
@@ -192,15 +189,15 @@ const HeroSkeleton = () => {
                 className="skeleton-shimmer skeleton-glow h-14 w-48 rounded-full"
                 style={{
                   ...shimmerStyle,
-                  backgroundColor: "rgba(0,212,255,0.1)",
-                  border: "1px solid rgba(0,212,255,0.2)",
+                  backgroundColor: 'rgba(0,212,255,0.1)',
+                  border: '1px solid rgba(0,212,255,0.2)',
                 }}
               />
               <div
                 className="skeleton-shimmer h-14 w-40 rounded-full glass border border-white/10"
                 style={{
                   ...shimmerStyle,
-                  backgroundColor: "rgba(255,255,255,0.03)",
+                  backgroundColor: 'rgba(255,255,255,0.03)',
                 }}
               />
             </div>
@@ -213,14 +210,14 @@ const HeroSkeleton = () => {
                     className="skeleton-shimmer skeleton-glow h-8 sm:h-10 w-16 rounded-lg mx-auto"
                     style={{
                       ...shimmerStyle,
-                      backgroundColor: "rgba(0,212,255,0.1)",
+                      backgroundColor: 'rgba(0,212,255,0.1)',
                     }}
                   />
                   <div
                     className="skeleton-shimmer h-3 w-20 rounded-full mx-auto"
                     style={{
                       ...shimmerStyle,
-                      backgroundColor: "rgba(255,255,255,0.03)",
+                      backgroundColor: 'rgba(255,255,255,0.03)',
                     }}
                   />
                 </div>
@@ -230,11 +227,7 @@ const HeroSkeleton = () => {
 
           {/* Image Skeleton */}
           <div className="relative z-10 perspective-1000">
-            <div
-              ref={imageRef}
-              className="relative"
-              style={{ transformStyle: "preserve-3d" }}
-            >
+            <div ref={imageRef} className="relative" style={{ transformStyle: 'preserve-3d' }}>
               {/* Glow Effect */}
               <div className="absolute -inset-4 bg-gradient-to-r from-neon-blue/20 via-neon-purple/20 to-neon-cyan/20 rounded-3xl opacity-50 blur-2xl skeleton-glow" />
 
@@ -244,16 +237,16 @@ const HeroSkeleton = () => {
                   className="absolute inset-0 skeleton-shimmer"
                   style={{
                     ...shimmerStyle,
-                    backgroundColor: "rgba(255,255,255,0.03)",
+                    backgroundColor: 'rgba(255,255,255,0.03)',
                   }}
                 />
 
                 {/* Animated scan line */}
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-b from-transparent via-neon-cyan/10 to-transparent"
-                  animate={{ top: ["-100%", "200%"] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                  style={{ height: "50%" }}
+                  animate={{ top: ['-100%', '200%'] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                  style={{ height: '50%' }}
                 />
 
                 {/* Overlay Gradient */}
@@ -267,7 +260,7 @@ const HeroSkeleton = () => {
                     className="w-12 h-12 rounded-full skeleton-shimmer"
                     style={{
                       ...shimmerStyle,
-                      backgroundColor: "rgba(0,212,255,0.15)",
+                      backgroundColor: 'rgba(0,212,255,0.15)',
                     }}
                   />
                   <div className="space-y-2">
@@ -275,14 +268,14 @@ const HeroSkeleton = () => {
                       className="h-4 w-20 rounded-full"
                       style={{
                         ...shimmerStyle,
-                        backgroundColor: "rgba(255,255,255,0.05)",
+                        backgroundColor: 'rgba(255,255,255,0.05)',
                       }}
                     />
                     <div
                       className="h-3 w-24 rounded-full"
                       style={{
                         ...shimmerStyle,
-                        backgroundColor: "rgba(255,255,255,0.03)",
+                        backgroundColor: 'rgba(255,255,255,0.03)',
                       }}
                     />
                   </div>
@@ -295,14 +288,14 @@ const HeroSkeleton = () => {
                   className="h-8 w-16 rounded-lg mx-auto mb-1"
                   style={{
                     ...shimmerStyle,
-                    backgroundColor: "rgba(168,85,247,0.15)",
+                    backgroundColor: 'rgba(168,85,247,0.15)',
                   }}
                 />
                 <div
                   className="h-3 w-20 rounded-full mx-auto"
                   style={{
                     ...shimmerStyle,
-                    backgroundColor: "rgba(255,255,255,0.03)",
+                    backgroundColor: 'rgba(255,255,255,0.03)',
                   }}
                 />
               </div>
@@ -330,9 +323,7 @@ const HeroSkeleton = () => {
             />
           ))}
         </div>
-        <span className="text-xs text-gray-500 tracking-widest uppercase">
-          Loading Experience
-        </span>
+        <span className="text-xs text-gray-500 tracking-widest uppercase">Loading Experience</span>
       </div>
 
       {/* Bottom Gradient Fade */}

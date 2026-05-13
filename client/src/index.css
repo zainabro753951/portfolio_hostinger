@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800&family=Oswald:wght@200;300;400;500;600;700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800&family=Oswald:wght@200;300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -39,8 +39,8 @@
     --color-theme-cyan: #00d3ef;
     --color-light-blue: #7a89ff;
     --color-theme-dark: #0f0921;
-    --font-fira-code: "Fira Code", monospace;
-    --font-inter: "Inter", sans-serif;
+    --font-fira-code: 'Fira Code', monospace;
+    --font-inter: 'Inter', sans-serif;
     --breakpoint-xs: 300px;
   }
 }
@@ -56,7 +56,7 @@
 
   body {
     @apply bg-[#050507] text-foreground font-sans antialiased;
-    font-family: "Inter", sans-serif;
+    font-family: 'Inter', sans-serif;
   }
 
   h1,
@@ -65,7 +65,7 @@
   h4,
   h5,
   h6 {
-    font-family: "Oswald", sans-serif;
+    font-family: 'Oswald', sans-serif;
   }
 }
 
@@ -125,22 +125,9 @@
 
   .gradient-mesh {
     background:
-      radial-gradient(
-        ellipse at 20% 20%,
-        rgba(74, 144, 226, 0.15) 0%,
-        transparent 50%
-      ),
-      radial-gradient(
-        ellipse at 80% 80%,
-        rgba(155, 89, 182, 0.15) 0%,
-        transparent 50%
-      ),
-      radial-gradient(
-        ellipse at 50% 50%,
-        rgba(0, 212, 255, 0.05) 0%,
-        transparent 70%
-      ),
-      #050507;
+      radial-gradient(ellipse at 20% 20%, rgba(74, 144, 226, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(155, 89, 182, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(0, 212, 255, 0.05) 0%, transparent 70%), #050507;
   }
 
   /* Glassmorphism */
@@ -169,7 +156,7 @@
 
   /* Noise Texture Overlay */
   .noise-overlay::before {
-    content: "";
+    content: '';
     position: fixed;
     top: 0;
     left: 0;
@@ -284,7 +271,7 @@
   }
 
   .underline-animation::after {
-    content: "";
+    content: '';
     position: absolute;
     bottom: -2px;
     left: 0;
@@ -300,12 +287,7 @@
 }
 
 .gradient-text {
-  background: linear-gradient(
-    to right,
-    #00d596,
-    #7a89ff,
-    #00d3ef
-  ); /* Gradient colors */
+  background: linear-gradient(to right, #00d596, #7a89ff, #00d3ef); /* Gradient colors */
   -webkit-background-clip: text; /* Safari, Chrome */
   -webkit-text-fill-color: transparent; /* Safari, Chrome */
   background-clip: text; /* Firefox */
@@ -348,7 +330,7 @@
 }
 
 .bg-circut {
-  background-image: url("/imgs/bg-circuit.png");
+  background-image: url('/imgs/bg-circuit.png');
   background-position: center center;
 }
 .purple-shadow-circle {
@@ -393,7 +375,7 @@
 }
 
 .list-tick li::before {
-  content: "\2713";
+  content: '\2713';
   color: #06b6d4;
   font-weight: 900;
   position: absolute;
@@ -430,7 +412,7 @@
 }
 
 .list-tick li::before {
-  content: "\2713";
+  content: '\2713';
   color: #06b6d4;
   font-weight: 900;
   position: absolute;
@@ -478,11 +460,7 @@
 
 /* 👇 Custom dropdown options background */
 .custom-select option {
-  background: linear-gradient(
-    to right,
-    rgba(6, 182, 212, 0.3),
-    rgba(37, 99, 235, 0.2)
-  );
+  background: linear-gradient(to right, rgba(6, 182, 212, 0.3), rgba(37, 99, 235, 0.2));
   color: #67e8f9; /* text-cyan-300 */
 }
 
@@ -550,8 +528,8 @@
 
 .font-display {
   font-family:
-    "Inter",
-    "SF Pro Display",
+    'Inter',
+    'SF Pro Display',
     -apple-system,
     sans-serif;
   letter-spacing: -0.02em;
@@ -570,4 +548,61 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #334155;
+}
+
+/* 🎨 Performance-Optimized Animations */
+@layer utilities {
+  .animate-pulse-slow {
+    animation: pulse-slow 6s ease-in-out infinite;
+    will-change: transform, opacity;
+  }
+
+  .animate-float {
+    animation: float ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .animation-delay-1000 {
+    animation-delay: 1s;
+  }
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+}
+
+@keyframes pulse-slow {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+/* 🎯 GPU Acceleration Hints */
+.will-change-transform {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* 🖼️ Image Optimization */
+img[fetchpriority='high'] {
+  content-visibility: auto;
 }

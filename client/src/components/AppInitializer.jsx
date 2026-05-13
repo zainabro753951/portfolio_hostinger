@@ -1,87 +1,89 @@
-import React, { useEffect, useRef, useCallback, useMemo } from "react";
-import { useDispatch, batch } from "react-redux";
-import ErrorFallback from "./ErrorFallBack";
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { batch, useDispatch } from 'react-redux';
+import ErrorFallback from './ErrorFallBack';
 
 // 🧩 Public Queries
-import { useGetProjectsQuery } from "../Queries/GetProjects";
-import { useGetSiteSettingsQuery } from "../Queries/GetSiteSetting";
-import { useGetAbout } from "../Queries/GetAbout";
-import { useGetSkills } from "../Queries/GetSkills";
-import { useGetEducation } from "../Queries/GetEducation";
-import { useGetTestimonial } from "../Queries/GetTestimonial";
-import { useGetPlan } from "../Queries/GetPlan";
-import { useGetExp } from "../Queries/GetExp";
-import { useGetService } from "../Queries/GetServices";
-import { useGetFAQ } from "../Queries/GetFAQ";
-import { useGetVisitorsCount } from "../Queries/GetVisitorsCount";
+import { useGetAbout } from '../Queries/GetAbout';
+import { useGetEducation } from '../Queries/GetEducation';
+import { useGetExp } from '../Queries/GetExp';
+import { useGetFAQ } from '../Queries/GetFAQ';
+import { useGetPlan } from '../Queries/GetPlan';
+import { useGetProjectsQuery } from '../Queries/GetProjects';
+import { useGetService } from '../Queries/GetServices';
+import { useGetSiteSettingsQuery } from '../Queries/GetSiteSetting';
+import { useGetSkills } from '../Queries/GetSkills';
+import { useGetTestimonial } from '../Queries/GetTestimonial';
+import { useGetVisitorsCount } from '../Queries/GetVisitorsCount';
 
 // 🧩 Slices
-import { addProjects } from "../features/projectSlice";
-import { setSiteSettings } from "../features/siteSettingsSlice";
-import { addAbout } from "../features/aboutSlice";
-import { addSkills } from "../features/skillSlice";
-import { addEduc } from "../features/educationSlice";
-import { addTesti } from "../features/testimonialSlice";
-import { addPlan } from "../features/planSlice";
-import { addExp } from "../features/experienceSlice";
-import { addServices } from "../features/serviceSlice";
-import { addFAQs } from "../features/FAQSlice";
-import { addVisitorsCount } from "../features/visitorsSlice";
+import { addAbout } from '../features/aboutSlice';
+import { addEduc } from '../features/educationSlice';
+import { addExp } from '../features/experienceSlice';
+import { addFAQs } from '../features/FAQSlice';
+import { addPlan } from '../features/planSlice';
+import { addProjects } from '../features/projectSlice';
+import { addServices } from '../features/serviceSlice';
+import { setSiteSettings } from '../features/siteSettingsSlice';
+import { addSkills } from '../features/skillSlice';
+import { addTesti } from '../features/testimonialSlice';
+import { addVisitorsCount } from '../features/visitorsSlice';
+
+import Preloader from './Preloader';
 
 // 📋 PUBLIC DATA CONFIG
 const PUBLIC_DATA_CONFIG = [
   {
-    key: "projects",
+    key: 'projects',
     action: addProjects,
     transform: (d) => ({ projects: d?.projects || [] }),
   },
   {
-    key: "settings",
+    key: 'settings',
     action: setSiteSettings,
     transform: (d) => ({ settings: d?.siteSettings || {} }),
   },
   {
-    key: "about",
+    key: 'about',
     action: addAbout,
     transform: (d) => ({ about: d?.about || {} }),
   },
   {
-    key: "skills",
+    key: 'skills',
     action: addSkills,
     transform: (d) => ({ skills: d?.skills || [] }),
   },
   {
-    key: "education",
+    key: 'education',
     action: addEduc,
     transform: (d) => ({ education: d?.education || [] }),
   },
   {
-    key: "experience",
+    key: 'experience',
     action: addExp,
     transform: (d) => ({ experiences: d?.experiences || [] }),
   },
   {
-    key: "testimonials",
+    key: 'testimonials',
     action: addTesti,
     transform: (d) => ({ testimonials: d?.testimonials || [] }),
   },
   {
-    key: "plans",
+    key: 'plans',
     action: addPlan,
     transform: (d) => ({ plans: d?.plans || [] }),
   },
   {
-    key: "services",
+    key: 'services',
     action: addServices,
     transform: (d) => ({ services: d?.services || [] }),
   },
   {
-    key: "faqs",
+    key: 'faqs',
     action: addFAQs,
     transform: (d) => ({ faqs: d?.faqs || [] }),
   },
   {
-    key: "visitorsCount",
+    key: 'visitorsCount',
     action: addVisitorsCount,
     transform: (d) => ({ visitorsCount: d?.visitorsCount || 0 }),
     skipLoading: true,
@@ -130,9 +132,7 @@ const AppInitializer = ({ children }) => {
       const hasData = query.data !== undefined && query.data !== null;
 
       // 🔑 Use data fingerprint for change detection
-      const dataFingerprint = hasData
-        ? JSON.stringify(query.data).slice(0, 500)
-        : "no-data";
+      const dataFingerprint = hasData ? JSON.stringify(query.data).slice(0, 500) : 'no-data';
       const stateKey = `${key}-${isLoading}-${dataFingerprint}`;
       const lastProcessed = processedRefs.current.get(key);
 
@@ -148,7 +148,7 @@ const AppInitializer = ({ children }) => {
       if (!isLoading && hasData && !query.isError) {
         const payload = transform(query.data);
         const hasValidData = Object.values(payload).some((v) =>
-          Array.isArray(v) ? v.length > 0 : Object.keys(v).length > 0,
+          Array.isArray(v) ? v.length > 0 : Object.keys(v).length > 0
         );
 
         if (hasValidData) {
@@ -194,9 +194,7 @@ const AppInitializer = ({ children }) => {
     const queryArray = Object.values(queries);
 
     const isLoading = queryArray.some((q) => q.isFetching || q.isPending);
-    const hasData = queryArray.some(
-      (q) => q.data !== undefined && q.data !== null,
-    );
+    const hasData = queryArray.some((q) => q.data !== undefined && q.data !== null);
 
     const fatalErrors = queryArray.filter((q) => {
       if (!q.isError) return false;
@@ -220,13 +218,10 @@ const AppInitializer = ({ children }) => {
 
   // ⏳ Show nothing during initial load (prevents undefined flash)
   if (globalState.isLoading && !globalState.hasData && isFirstLoad.current) {
-    return null;
+    return <Preloader />;
   }
 
   return children;
 };
 
-export default React.memo(
-  AppInitializer,
-  (prev, next) => prev.children === next.children,
-);
+export default React.memo(AppInitializer, (prev, next) => prev.children === next.children);
