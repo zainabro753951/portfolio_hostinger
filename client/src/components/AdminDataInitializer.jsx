@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { batch, useDispatch } from 'react-redux';
+import { useDispatch } from 'react-redux'; // ✅ batch import hata diya
 import { useGetMessage } from '../Queries/GetMessage';
 import { useGetActivities } from '../Queries/GetRecentyActivity';
 import { addContactMessages } from '../features/messageSlice';
@@ -86,12 +86,11 @@ const AdminDataInitializer = ({ children }) => {
     }
   }, [messagesQuery, dispatch]);
 
-  // 🚀 Run handlers in batched effect
+  // 🚀 React 18: Automatic batching enabled by default
   useEffect(() => {
-    batch(() => {
-      handleActivities();
-      handleMessages();
-    });
+    // ✅ No need for batch() - React 18 auto-batches dispatches
+    handleActivities();
+    handleMessages();
   }, [handleActivities, handleMessages]);
 
   return children;
