@@ -3,7 +3,6 @@ import axios from 'axios';
 const api = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_URL,
   withCredentials: true, // ✅ this is crucial
-  headers: { 'Content-Type': 'application/json' },
 });
 
 // Interceptors check karein - kahin ye request modify to nahi kar rahe?

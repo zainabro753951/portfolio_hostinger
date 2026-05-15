@@ -82,6 +82,8 @@ export const addTestimonial = async (req, res) => {
     console.log('Existing Image Object:', validClientImage);
 
     if (isUpdate) {
+      console.log(req.file);
+
       // Validate testimonialID
       if (!testimonialID) {
         if (newFileKey) await deleteFromLocal(newFileKey);

@@ -90,6 +90,8 @@ const DTestimonialTable = () => {
     { key: 'actions', label: 'Actions', icon: null },
   ];
 
+  console.log(testiSorted);
+
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="show" className="w-full ">
       <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 sm:p-8 shadow-xl">
@@ -137,7 +139,7 @@ const DTestimonialTable = () => {
                   testiSorted.map((item, index) => {
                     const createdAt = formatTimeAgo(item?.createdAt);
                     const updatedAt = formatTimeAgo(item?.updatedAt);
-                    const clientImage = safeParse(item?.image);
+                    const clientImage = safeParse(item?.clientImage);
                     const fileName = getFileNameFromUrl(clientImage?.url);
                     const { Icon: FileIcon, color: FileIconColor } = getFileIcon(fileName);
 
@@ -285,7 +287,7 @@ const DTestimonialTable = () => {
                               </motion.span>
                             </motion.a>
                           ) : (
-                            <span className="text-slate-500 text-xs">No certificate</span>
+                            <span className="text-slate-500 text-xs">No profile image</span>
                           )}
                         </td>
 
