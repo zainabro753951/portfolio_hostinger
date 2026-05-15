@@ -1,66 +1,28 @@
-import { useRef, useState, useEffect, useCallback, useMemo } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { motion, AnimatePresence, LazyMotion, domAnimation } from "motion/react";
+import { GlassCard, GradientText, THEME } from '@/components/UI';
+import StatCard from '@/sections/StatCard';
+import { getClientSatisfactionRate, safeParse, TESTIMONIAL_GRADIENTS } from '@/Utils/Utils';
+import { AnimatePresence, domAnimation, LazyMotion, motion } from 'framer-motion';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
-  Star,
-  Quote,
+  Award,
   ChevronLeft,
   ChevronRight,
-  ThumbsUp,
   MessageCircle,
-  Award,
-  TrendingUp,
+  Quote,
   Sparkles,
-} from "lucide-react";
-import review1 from "../assets/images/review-1.jpg";
-import review2 from "../assets/images/review-2.jpg";
-import review3 from "../assets/images/review-3.jpg";
+  Star,
+  ThumbsUp,
+  TrendingUp,
+} from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
 
 gsap.registerPlugin(ScrollTrigger);
 
-// ✅ Optimized: Static data moved outside component
-const TESTIMONIALS_DATA = [
-  {
-    id: 1,
-    name: "Sarah Johnson",
-    role: "CEO, TechStart Inc.",
-    image: review1,
-    rating: 5,
-    text: "Working with Alex was an absolute pleasure. The attention to detail and creativity brought to our project exceeded all expectations. Our website traffic increased by 150% after the redesign!",
-    project: "Website Redesign",
-    color: "from-blue-500 to-cyan-400",
-  },
-  {
-    id: 2,
-    name: "Michael Chen",
-    role: "Product Manager, InnovateCo",
-    image: review2,
-    rating: 5,
-    text: "Alex has an incredible ability to understand client needs and translate them into beautiful, functional designs. The animations and interactions added a whole new level of polish to our product.",
-    project: "SaaS Dashboard",
-    color: "from-purple-500 to-pink-500",
-  },
-  {
-    id: 3,
-    name: "Emily Rodriguez",
-    role: "Marketing Director, Brandify",
-    image: review3,
-    rating: 5,
-    text: "The brand identity Alex created for us perfectly captures our company vision. Professional, creative, and always delivered on time. Highly recommend for any design project!",
-    project: "Brand Identity",
-    color: "from-orange-400 to-pink-500",
-  },
-];
-
-const STATS_DATA = [
-  { value: "50+", label: "Projects Completed", icon: ThumbsUp, color: "from-blue-500 to-cyan-400" },
-  { value: "30+", label: "Happy Clients", icon: MessageCircle, color: "from-purple-500 to-pink-500" },
-  { value: "5.0", label: "Average Rating", icon: Star, color: "from-yellow-400 to-orange-500" },
-  { value: "100%", label: "Satisfaction Rate", icon: Award, color: "from-green-400 to-emerald-500" },
-];
-
-// ✅ Optimized: Separate component for testimonial card
+// ═══════════════════════════════════════════════════════════════════════════
+// 🧩 TESTIMONIAL CARD
+// ═══════════════════════════════════════════════════════════════════════════
 const TestimonialCard = ({ testimonial, index, onClick, isActive }) => {
   return (
     <motion.div
@@ -69,14 +31,21 @@ const TestimonialCard = ({ testimonial, index, onClick, isActive }) => {
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1, duration: 0.5 }}
       viewport={{ once: true }}
-      whileHover={{ y: -8, scale: 1.02 }}
+      whileHover={{ y: -8 }}
       onClick={() => onClick(index)}
-      className={`cursor-pointer group ${isActive ? 'ring-2 ring-cyan-400' : ''}`}
+      className={`cursor-pointer group relative overflow-hidden ${isActive ? 'ring-1' : ''}`}
+      style={{
+        borderColor: isActive ? THEME.cyan : THEME.border,
+        transition: 'border 0.3s ease',
+      }}
     >
-      <div className="relative bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10 hover:border-cyan-400/30 transition-all duration-300 h-full overflow-hidden">
-        {/* Glow Effect */}
-        <div className={`absolute inset-0 bg-gradient-to-br ${testimonial.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
-        
+      <GlassCard className="h-full p-6" hover={false}>
+        {/* Background Glow */}
+        <div
+          className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-500 pointer-events-none"
+          style={{ background: testimonial.gradient }}
+        />
+
         {/* Rating */}
         <div className="flex gap-1 mb-4">
           {[...Array(testimonial.rating)].map((_, i) => (
@@ -84,16 +53,16 @@ const TestimonialCard = ({ testimonial, index, onClick, isActive }) => {
               key={i}
               initial={{ scale: 0, rotate: -180 }}
               whileInView={{ scale: 1, rotate: 0 }}
-              transition={{ delay: 0.3 + i * 0.1, type: "spring" }}
+              transition={{ delay: 0.3 + i * 0.1, type: 'spring' }}
               viewport={{ once: true }}
             >
-              <Star size={16} className="text-yellow-400 fill-yellow-400" />
+              <Star size={14} fill="#fbbf24" className="text-yellow-400" />
             </motion.div>
           ))}
         </div>
 
         {/* Quote */}
-        <p className="text-gray-300 text-sm leading-relaxed mb-6 line-clamp-3">
+        <p className="text-sm leading-relaxed mb-6 line-clamp-3" style={{ color: THEME.textGray }}>
           "{testimonial.text}"
         </p>
 
@@ -103,98 +72,37 @@ const TestimonialCard = ({ testimonial, index, onClick, isActive }) => {
             <img
               src={testimonial.image}
               alt={testimonial.name}
-              className="w-12 h-12 rounded-full object-cover border-2 border-white/20 group-hover:border-cyan-400/50 transition-colors"
+              className="w-10 h-10 rounded-full object-cover border-2"
+              style={{ borderColor: THEME.border }}
             />
-            <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-gradient-to-r ${testimonial.color} flex items-center justify-center`}>
-              <Sparkles size={10} className="text-white" />
+            <div
+              className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center"
+              style={{ background: testimonial.gradient }}
+            >
+              <Sparkles size={8} className="text-white" />
             </div>
           </div>
           <div>
-            <h4 className="font-semibold text-white text-sm group-hover:text-cyan-400 transition-colors">
+            <h4
+              className="font-semibold text-sm transition-colors duration-300 group-hover:text-cyan-400"
+              style={{ color: THEME.textWhite }}
+            >
               {testimonial.name}
             </h4>
-            <p className="text-gray-500 text-xs">{testimonial.role}</p>
+            <p className="text-xs" style={{ color: THEME.textGrayDark }}>
+              {testimonial.role}
+            </p>
           </div>
         </div>
 
-        {/* Project Tag */}
-        <span className={`inline-block mt-4 px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r ${testimonial.color} text-white`}>
-          {testimonial.project}
-        </span>
-      </div>
-    </motion.div>
-  );
-};
-
-// ✅ Optimized: Stats counter component with animation
-const StatCard = ({ stat, index }) => {
-  const [count, setCount] = useState(0);
-  const nodeRef = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          // Animate counter
-          const target = parseInt(stat.value) || 5;
-          const duration = 2000;
-          const steps = 60;
-          const increment = target / steps;
-          let current = 0;
-
-          const timer = setInterval(() => {
-            current += increment;
-            if (current >= target) {
-              setCount(target);
-              clearInterval(timer);
-            } else {
-              setCount(Math.floor(current));
-            }
-          }, duration / steps);
-
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.5 }
-    );
-
-    if (nodeRef.current) {
-      observer.observe(nodeRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [stat.value]);
-
-  const displayValue = stat.value.includes('%') ? `${count}%` : 
-                       stat.value.includes('.') ? `${count}.0` : `${count}+`;
-
-  return (
-    <motion.div
-      ref={nodeRef}
-      initial={{ opacity: 0, y: 30, scale: 0.9 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: index * 0.1, duration: 0.5 }}
-      viewport={{ once: true }}
-      whileHover={{ scale: 1.05, y: -5 }}
-      className="relative group"
-    >
-      <div className="bg-white/5 backdrop-blur-md rounded-2xl p-6 text-center border border-white/10 hover:border-cyan-400/30 transition-all duration-300 overflow-hidden">
-        {/* Background Glow */}
-        <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
-        
-        <motion.div 
-          whileHover={{ rotate: 360 }}
-          transition={{ duration: 0.5 }}
-          className={`w-14 h-14 rounded-xl bg-gradient-to-r ${stat.color} flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-shadow`}
+        {/* Company Tag */}
+        <span
+          className="inline-block mt-4 px-3 py-1 rounded-full text-xs font-medium text-white"
+          style={{ background: testimonial.gradient }}
         >
-          <stat.icon size={28} className="text-white" />
-        </motion.div>
-        
-        <div className="text-4xl font-bold text-white mb-2 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-          {displayValue}
-        </div>
-        <div className="text-gray-400 text-sm font-medium">{stat.label}</div>
-      </div>
+          {testimonial.company}
+        </span>
+      </GlassCard>
     </motion.div>
   );
 };
@@ -202,27 +110,98 @@ const StatCard = ({ stat, index }) => {
 const Reviews = () => {
   const containerRef = useRef(null);
   const carouselRef = useRef(null);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
+
+  const { testimonials = [] } = useSelector((state) => state.testimonial);
+
   const [activeIndex, setActiveIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [direction, setDirection] = useState(0);
 
-  // ✅ Optimized: Memoized current testimonial
-  const currentTestimonial = useMemo(() => 
-    TESTIMONIALS_DATA[activeIndex], 
-    [activeIndex]
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🔄 DATA PROCESSING (Dynamic Logic)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  console.log(testimonials[0]?.name);
+
+  // 1. Transform Testimonials
+  const processedTestimonials = useMemo(() => {
+    if (!testimonials?.length) return [];
+    return testimonials.map((t, i) => {
+      const imgData = safeParse(t.clientImage);
+      const imageUrl = imgData?.url ? `${backendUrl}${imgData.url}` : '/default-avatar.jpg';
+
+      return {
+        id: t.id,
+        name: t.clientName,
+        role: t.designationRole,
+        company: t.company,
+        image: imageUrl,
+        rating: t.ratting || 5,
+        text: t.message,
+        gradient: TESTIMONIAL_GRADIENTS[i % TESTIMONIAL_GRADIENTS.length],
+      };
+    });
+  }, [testimonials, backendUrl]);
+
+  // 2. Calculate Dynamic Stats
+  const statsData = useMemo(() => {
+    if (!processedTestimonials.length) return [];
+
+    const totalProjects = new Set(processedTestimonials.map((t) => t.id)).size; // Or unique projectId if needed
+    const uniqueClients = processedTestimonials.length; // Or unique companies
+    const totalRating = processedTestimonials.reduce((sum, t) => sum + t.rating, 0);
+    const avgRating = (totalRating / processedTestimonials.length).toFixed(1);
+    const satisfaction = getClientSatisfactionRate(processedTestimonials);
+
+    return [
+      {
+        value: `${totalProjects}`,
+        label: 'Testimonials',
+        icon: MessageCircle,
+        gradient: 'linear-gradient(135deg, #4e90e1, #02d3fe)',
+      },
+      {
+        value: `${uniqueClients}`,
+        label: 'Happy Clients',
+        icon: ThumbsUp,
+        gradient: 'linear-gradient(135deg, #9a5cb7, #ec4899)',
+      },
+      {
+        value: avgRating,
+        label: 'Average Rating',
+        icon: Star,
+        gradient: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+      },
+      {
+        value: `${satisfaction}%`,
+        label: 'Satisfaction Rate',
+        icon: Award,
+        gradient: 'linear-gradient(135deg, #10b981, #059669)',
+      },
+    ];
+  }, [processedTestimonials]);
+
+  // Current testimonial for Carousel
+  const currentTestimonial = useMemo(
+    () => processedTestimonials[activeIndex] || processedTestimonials[0] || {},
+    [activeIndex, processedTestimonials]
   );
 
-  // ✅ Optimized: GSAP animation with proper cleanup
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🎬 EFFECTS & ANIMATIONS
+  // ═══════════════════════════════════════════════════════════════════════════
+
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.from(".review-section-header", {
+      gsap.from('.review-section-header', {
         y: 40,
         opacity: 0,
         duration: 0.8,
-        ease: "power3.out",
+        ease: 'power3.out',
         scrollTrigger: {
-          trigger: ".review-section-header",
-          start: "top 85%",
+          trigger: '.review-section-header',
+          start: 'top 85%',
           once: true,
         },
       });
@@ -231,262 +210,331 @@ const Reviews = () => {
     return () => ctx.revert();
   }, []);
 
-  // ✅ Optimized: Auto-rotate with pause on hover
   useEffect(() => {
-    if (!isAutoPlaying) return;
+    if (!isAutoPlaying || processedTestimonials.length <= 1) return;
 
     const interval = setInterval(() => {
       setDirection(1);
-      setActiveIndex((prev) => (prev + 1) % TESTIMONIALS_DATA.length);
+      setActiveIndex((prev) => (prev + 1) % processedTestimonials.length);
     }, 6000);
 
     return () => clearInterval(interval);
-  }, [isAutoPlaying]);
+  }, [isAutoPlaying, processedTestimonials.length]);
 
-  // ✅ Optimized: Navigation handlers
+  // Reset activeIndex if it goes out of bounds when data changes
+  useEffect(() => {
+    if (activeIndex >= processedTestimonials.length) {
+      setActiveIndex(0);
+    }
+  }, [activeIndex, processedTestimonials.length]);
+
+  // Navigation Handlers
   const nextTestimonial = useCallback(() => {
     setDirection(1);
     setIsAutoPlaying(false);
-    setActiveIndex((prev) => (prev + 1) % TESTIMONIALS_DATA.length);
-  }, []);
+    setActiveIndex((prev) => (prev + 1) % processedTestimonials.length);
+  }, [processedTestimonials.length]);
 
   const prevTestimonial = useCallback(() => {
     setDirection(-1);
     setIsAutoPlaying(false);
-    setActiveIndex((prev) => (prev - 1 + TESTIMONIALS_DATA.length) % TESTIMONIALS_DATA.length);
-  }, []);
+    setActiveIndex(
+      (prev) => (prev - 1 + processedTestimonials.length) % processedTestimonials.length
+    );
+  }, [processedTestimonials.length]);
 
-  const goToTestimonial = useCallback((index) => {
-    setDirection(index > activeIndex ? 1 : -1);
-    setIsAutoPlaying(false);
-    setActiveIndex(index);
-  }, [activeIndex]);
-
-  // Animation variants
-  const slideVariants = {
-    enter: (direction) => ({
-      x: direction > 0 ? 100 : -100,
-      opacity: 0,
-      scale: 0.95,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-      scale: 1,
+  const goToTestimonial = useCallback(
+    (index) => {
+      setDirection(index > activeIndex ? 1 : -1);
+      setIsAutoPlaying(false);
+      setActiveIndex(index);
     },
-    exit: (direction) => ({
-      x: direction < 0 ? 100 : -100,
-      opacity: 0,
-      scale: 0.95,
-    }),
+    [activeIndex]
+  );
+
+  const slideVariants = {
+    enter: (dir) => ({ x: dir > 0 ? 100 : -100, opacity: 0, scale: 0.95 }),
+    center: { x: 0, opacity: 1, scale: 1 },
+    exit: (dir) => ({ x: dir < 0 ? 100 : -100, opacity: 0, scale: 0.95 }),
   };
+
+  if (processedTestimonials.length === 0) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: THEME.bg }}
+      >
+        <p style={{ color: THEME.textGray }}>No testimonials available.</p>
+      </div>
+    );
+  }
 
   return (
     <LazyMotion features={domAnimation}>
-      <div ref={containerRef} className="bg-gray-900 min-h-screen pt-24">
-        {/* Hero Section */}
-        <section className="py-20 relative overflow-hidden">
-          <div className="absolute inset-0">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-cyan-500/10" />
-            <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[120px] animate-pulse" />
-            <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: "1s" }} />
-          </div>
+      <div
+        ref={containerRef}
+        className="relative min-h-screen"
+        style={{ backgroundColor: THEME.bg, fontFamily: "'Inter', sans-serif" }}
+      >
+        {/* 🌌 BACKGROUND LAYERS */}
+        <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
+          <div
+            className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-[120px] animate-pulse"
+            style={{ background: 'rgba(2, 211, 254, 0.12)' }}
+          />
+          <div
+            className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-[120px] animate-pulse"
+            style={{ animationDelay: '1s', background: 'rgba(78, 144, 225, 0.12)' }}
+          />
+          <div
+            className="absolute top-1/2 left-1/2 w-64 h-64 rounded-full blur-[100px] animate-pulse"
+            style={{ animationDelay: '2s', background: 'rgba(154, 92, 183, 0.1)' }}
+          />
+        </div>
 
-          <div className="max-w-7xl mx-auto px-6 lg:px-8 relative">
+        {/* ✨ Particles */}
+        <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 1 }}>
+          {[...Array(15)].map((_, i) => (
+            <div
+              key={`p-${i}`}
+              className="absolute w-1 h-1 rounded-full animate-pulse"
+              style={{
+                left: `${(i * 7.3) % 100}%`,
+                top: `${(i * 13.7) % 100}%`,
+                background: i % 3 === 0 ? THEME.cyan : i % 3 === 1 ? THEME.blue : THEME.purple,
+                opacity: 0.2 + (i % 3) * 0.1,
+                animationDelay: `${i * 0.3}s`,
+                animationDuration: `${3 + (i % 4)}s`,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* 🦸 HERO SECTION */}
+        <section className="relative pt-24 pb-12" style={{ zIndex: 2 }}>
+          <div className="max-w-7xl mx-auto px-6 py-20">
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
+              transition={{ duration: 0.8 }}
               className="text-center"
             >
-              <motion.span
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="inline-block px-4 py-2 rounded-full bg-white/10 backdrop-blur-md text-cyan-400 text-sm font-medium mb-6 border border-white/10"
+              <span
+                className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-6"
+                style={{
+                  background: 'rgba(2, 211, 254, 0.1)',
+                  backdropFilter: 'blur(10px)',
+                  border: `1px solid rgba(2, 211, 254, 0.2)`,
+                  color: THEME.cyan,
+                }}
               >
-                <Sparkles size={14} className="inline mr-2" />
-                Testimonials
-              </motion.span>
-              
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 text-white">
-                Client{" "}
-                <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                  Reviews
-                </span>
+                <Sparkles size={14} className="inline mr-2 mb-0.5" /> Testimonials
+              </span>
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6">
+                Client <GradientText>Reviews</GradientText>
               </h1>
-              
-              <p className="text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">
-                Don't just take my word for it. Here's what my clients have to say
-                about working together.
+              <p
+                className="text-lg max-w-2xl mx-auto leading-relaxed"
+                style={{ color: THEME.textGray }}
+              >
+                Don't just take my word for it. Here's what my clients have to say about working
+                together.
               </p>
             </motion.div>
           </div>
         </section>
 
-        {/* Featured Testimonial Carousel */}
-        <section 
+        {/* 📋 FEATURED TESTIMONIAL CAROUSEL */}
+        <section
           ref={carouselRef}
-          className="py-24 relative overflow-hidden"
+          className="relative py-24"
+          style={{ zIndex: 2 }}
           onMouseEnter={() => setIsAutoPlaying(false)}
           onMouseLeave={() => setIsAutoPlaying(true)}
         >
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-purple-500/5 rounded-full blur-[150px]" />
+          <div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full blur-[150px]"
+            style={{ background: 'rgba(154, 92, 183, 0.05)' }}
+          />
 
-          <div className="max-w-5xl mx-auto px-6 lg:px-8 relative">
+          <div className="max-w-5xl mx-auto px-6 relative">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
               viewport={{ once: true }}
               className="text-center mb-16"
             >
-              <span className="inline-block px-4 py-2 rounded-full bg-white/10 backdrop-blur-md text-purple-400 text-sm font-medium mb-4 border border-white/10">
+              <span
+                className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-4"
+                style={{
+                  background: 'rgba(154, 92, 183, 0.1)',
+                  backdropFilter: 'blur(10px)',
+                  border: `1px solid rgba(154, 92, 183, 0.2)`,
+                  color: THEME.purple,
+                }}
+              >
                 Featured Review
               </span>
-              <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-white">
-                What Clients <span className="text-purple-400">Say</span>
+              <h2 className="text-4xl sm:text-5xl font-bold mb-6">
+                What Clients <span style={{ color: THEME.purple }}>Say</span>
               </h2>
             </motion.div>
 
-            {/* Carousel */}
-            <div className="relative">
-              {/* Main Testimonial Card */}
-              <div className="relative bg-white/10 backdrop-blur-xl rounded-3xl p-8 md:p-12 border border-white/10 shadow-2xl overflow-hidden">
-                {/* Background Gradient */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${currentTestimonial.color} opacity-5`} />
-                
-                {/* Quote Icon */}
-                <motion.div 
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ type: "spring", stiffness: 200 }}
-                  className="absolute -top-6 left-8 w-14 h-14 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center shadow-lg"
+            <GlassCard className="p-8 md:p-12 shadow-2xl overflow-hidden relative" hover={false}>
+              <div
+                className="absolute inset-0 opacity-5 pointer-events-none"
+                style={{ background: currentTestimonial.gradient }}
+              />
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: 'spring', stiffness: 200 }}
+                className="absolute -top-5 left-8 w-12 h-12 rounded-xl flex items-center justify-center shadow-lg z-10"
+                style={{ background: 'linear-gradient(135deg, #4e90e1, #9a5cb7)' }}
+              >
+                <Quote size={24} className="text-white" />
+              </motion.div>
+
+              <AnimatePresence mode="wait" custom={direction}>
+                <motion.div
+                  key={activeIndex}
+                  custom={direction}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.5, ease: 'easeInOut' }}
+                  className="relative mt-2"
                 >
-                  <Quote size={28} className="text-white" />
-                </motion.div>
-
-                <AnimatePresence mode="wait" custom={direction}>
-                  <motion.div
-                    key={activeIndex}
-                    custom={direction}
-                    variants={slideVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{ duration: 0.5, ease: "easeInOut" }}
-                    className="relative"
-                  >
-                    {/* Rating */}
-                    <div className="flex gap-2 mb-6">
-                      {[...Array(currentTestimonial.rating)].map((_, i) => (
-                        <motion.div
-                          key={i}
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ delay: 0.1 + i * 0.1, type: "spring" }}
-                        >
-                          <Star size={24} className="text-yellow-400 fill-yellow-400 drop-shadow-lg" />
-                        </motion.div>
-                      ))}
-                    </div>
-
-                    {/* Quote */}
-                    <p className="text-xl md:text-2xl text-white leading-relaxed mb-8 font-light">
-                      "{currentTestimonial.text}"
-                    </p>
-
-                    {/* Author */}
-                    <div className="flex items-center gap-4">
-                      <motion.div 
-                        className="relative"
-                        whileHover={{ scale: 1.1 }}
+                  <div className="flex gap-2 mb-6">
+                    {[...Array(currentTestimonial.rating)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.1 + i * 0.1, type: 'spring' }}
                       >
-                        <img
-                          src={currentTestimonial.image}
-                          alt={currentTestimonial.name}
-                          className={`w-20 h-20 rounded-full object-cover border-4 border-white/10 shadow-xl`}
-                        />
-                        <div className={`absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-gradient-to-r ${currentTestimonial.color} flex items-center justify-center`}>
-                          <Sparkles size={16} className="text-white" />
-                        </div>
+                        <Star size={20} fill="#fbbf24" className="text-yellow-400" />
                       </motion.div>
-                      <div>
-                        <h4 className="text-2xl font-bold text-white mb-1">
-                          {currentTestimonial.name}
-                        </h4>
-                        <p className="text-gray-400 text-lg">{currentTestimonial.role}</p>
-                        <motion.span 
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.3 }}
-                          className={`inline-block mt-2 px-4 py-1.5 rounded-full text-sm font-medium bg-gradient-to-r ${currentTestimonial.color} text-white`}
-                        >
-                          {currentTestimonial.project}
-                        </motion.span>
-                      </div>
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
-
-                {/* Navigation */}
-                <div className="flex items-center justify-between mt-8 pt-8 border-t border-white/10">
-                  {/* Dots */}
-                  <div className="flex gap-3">
-                    {TESTIMONIALS_DATA.map((_, index) => (
-                      <motion.button
-                        key={index}
-                        onClick={() => goToTestimonial(index)}
-                        whileHover={{ scale: 1.2 }}
-                        whileTap={{ scale: 0.9 }}
-                        className={`h-3 rounded-full transition-all duration-300 ${
-                          index === activeIndex
-                            ? "bg-cyan-400 w-10 shadow-lg shadow-cyan-400/50"
-                            : "bg-white/20 w-3 hover:bg-white/40"
-                        }`}
-                      />
                     ))}
                   </div>
 
-                  {/* Arrows */}
-                  <div className="flex gap-3">
-                    <motion.button
-                      whileHover={{ scale: 1.1, x: -2 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={prevTestimonial}
-                      className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:text-cyan-400 hover:bg-white/20 transition-all border border-white/10"
-                    >
-                      <ChevronLeft size={24} />
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.1, x: 2 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={nextTestimonial}
-                      className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:text-cyan-400 hover:bg-white/20 transition-all border border-white/10"
-                    >
-                      <ChevronRight size={24} />
-                    </motion.button>
+                  <p
+                    className="text-xl md:text-2xl leading-relaxed mb-8 font-light"
+                    style={{ color: THEME.textWhite }}
+                  >
+                    "{currentTestimonial.text}"
+                  </p>
+
+                  <div className="flex items-center gap-4">
+                    <motion.div className="relative" whileHover={{ scale: 1.1 }}>
+                      <img
+                        src={currentTestimonial.image}
+                        alt={currentTestimonial.name}
+                        className="w-16 h-16 rounded-full object-cover border-2 shadow-xl"
+                        style={{ borderColor: THEME.border }}
+                      />
+                      <div
+                        className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center"
+                        style={{ background: currentTestimonial.gradient }}
+                      >
+                        <Sparkles size={12} className="text-white" />
+                      </div>
+                    </motion.div>
+                    <div>
+                      <h4 className="text-xl font-bold mb-1" style={{ color: THEME.textWhite }}>
+                        {currentTestimonial.name}
+                      </h4>
+                      <p className="text-lg" style={{ color: THEME.textGray }}>
+                        {currentTestimonial.role}
+                      </p>
+                      <span
+                        className="inline-block mt-2 px-4 py-1.5 rounded-full text-xs font-medium text-white"
+                        style={{ background: currentTestimonial.gradient }}
+                      >
+                        {currentTestimonial.company}
+                      </span>
+                    </div>
                   </div>
+                </motion.div>
+              </AnimatePresence>
+
+              <div
+                className="flex items-center justify-between mt-8 pt-6"
+                style={{ borderTop: `1px solid ${THEME.border}` }}
+              >
+                <div className="flex gap-3">
+                  {processedTestimonials.map((_, index) => (
+                    <motion.button
+                      key={index}
+                      onClick={() => goToTestimonial(index)}
+                      whileHover={{ scale: 1.2 }}
+                      whileTap={{ scale: 0.9 }}
+                      className="h-2 rounded-full transition-all duration-300"
+                      style={{
+                        background: index === activeIndex ? THEME.cyan : 'rgba(255,255,255,0.2)',
+                        width: index === activeIndex ? '24px' : '12px',
+                        boxShadow:
+                          index === activeIndex ? `0 0 10px rgba(2, 211, 254, 0.5)` : 'none',
+                      }}
+                    />
+                  ))}
+                </div>
+                <div className="flex gap-3">
+                  <motion.button
+                    whileHover={{ scale: 1.1, x: -2 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={prevTestimonial}
+                    className="w-10 h-10 rounded-full flex items-center justify-center transition-all"
+                    style={{
+                      background: 'rgba(255,255,255,0.05)',
+                      border: `1px solid ${THEME.border}`,
+                      color: THEME.textGray,
+                    }}
+                  >
+                    <ChevronLeft size={20} />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.1, x: 2 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={nextTestimonial}
+                    className="w-10 h-10 rounded-full flex items-center justify-center transition-all"
+                    style={{
+                      background: 'rgba(255,255,255,0.05)',
+                      border: `1px solid ${THEME.border}`,
+                      color: THEME.textGray,
+                    }}
+                  >
+                    <ChevronRight size={20} />
+                  </motion.button>
                 </div>
               </div>
-            </div>
+            </GlassCard>
           </div>
         </section>
 
-        {/* All Reviews Grid */}
-        <section className="py-24 relative">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        {/* 📝 ALL REVIEWS GRID */}
+        <section className="relative py-24" style={{ zIndex: 2 }}>
+          <div className="max-w-7xl mx-auto px-6">
             <div className="review-section-header text-center mb-16">
-              <span className="inline-block px-4 py-2 rounded-full bg-white/10 backdrop-blur-md text-blue-400 text-sm font-medium mb-4 border border-white/10">
+              <span
+                className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-4"
+                style={{
+                  background: 'rgba(78, 144, 225, 0.1)',
+                  backdropFilter: 'blur(10px)',
+                  border: `1px solid rgba(78, 144, 225, 0.2)`,
+                  color: THEME.blue,
+                }}
+              >
                 All Reviews
               </span>
-              <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-white">
-                More <span className="text-blue-400">Testimonials</span>
+              <h2 className="text-4xl sm:text-5xl font-bold mb-6">
+                More <GradientText>Testimonials</GradientText>
               </h2>
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {TESTIMONIALS_DATA.map((testimonial, index) => (
+              {processedTestimonials.map((testimonial, index) => (
                 <TestimonialCard
                   key={testimonial.id}
                   testimonial={testimonial}
@@ -499,72 +547,108 @@ const Reviews = () => {
           </div>
         </section>
 
-        {/* Stats Section */}
-        <section className="py-24 relative overflow-hidden">
-          <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[150px]" />
-
-          <div className="max-w-7xl mx-auto px-6 lg:px-8 relative">
+        {/* 📊 STATS SECTION */}
+        <section className="relative py-24" style={{ zIndex: 2 }}>
+          <div
+            className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full blur-[150px]"
+            style={{ background: 'rgba(2, 211, 254, 0.05)' }}
+          />
+          <div className="max-w-7xl mx-auto px-6 relative">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
               viewport={{ once: true }}
               className="text-center mb-16"
             >
-              <span className="inline-block px-4 py-2 rounded-full bg-white/10 backdrop-blur-md text-cyan-400 text-sm font-medium mb-4 border border-white/10">
-                <TrendingUp size={14} className="inline mr-2" />
+              <span
+                className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-4"
+                style={{
+                  background: 'rgba(2, 211, 254, 0.1)',
+                  backdropFilter: 'blur(10px)',
+                  border: `1px solid rgba(2, 211, 254, 0.2)`,
+                  color: THEME.cyan,
+                }}
+              >
+                <TrendingUp size={14} className="inline mr-2 mb-0.5" />
                 By The Numbers
               </span>
-              <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-white">
-                Client <span className="text-cyan-400">Satisfaction</span>
+              <h2 className="text-4xl sm:text-5xl font-bold mb-6">
+                Client <GradientText>Satisfaction</GradientText>
               </h2>
             </motion.div>
-
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-              {STATS_DATA.map((stat, index) => (
+              {statsData.map((stat, index) => (
                 <StatCard key={index} stat={stat} index={index} />
               ))}
             </div>
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-24 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-cyan-500/20" />
-          <div className="absolute inset-0 backdrop-blur-3xl" />
-
-          <div className="max-w-4xl mx-auto px-6 lg:px-8 relative text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
+        {/* 💡 CTA SECTION */}
+        <section className="relative py-24" style={{ zIndex: 2 }}>
+          <div className="max-w-4xl mx-auto px-6">
+            <div
+              className="rounded-2xl p-8 md:p-12 text-center"
+              style={{
+                background:
+                  'linear-gradient(135deg, rgba(2, 211, 254, 0.15), rgba(154, 92, 183, 0.15))',
+                border: `1px solid rgba(2, 211, 254, 0.2)`,
+                boxShadow: '0 0 40px rgba(2, 211, 254, 0.05)',
+              }}
             >
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 text-white">
-                Join My{" "}
-                <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                  Happy Clients
-                </span>
-              </h2>
-              <p className="text-gray-300 text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
-                Let's work together and create something amazing. Your
-                satisfaction is my top priority.
-              </p>
-
-              <motion.button
-                whileHover={{ scale: 1.05, boxShadow: "0 0 40px rgba(34, 211, 238, 0.3)" }}
-                whileTap={{ scale: 0.95 }}
-                className="px-10 py-4 rounded-full bg-white text-gray-900 font-bold text-lg relative overflow-hidden group"
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+                className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6"
+                style={{ background: 'rgba(2, 211, 254, 0.15)' }}
               >
-                <span className="relative z-10 ">Start Your Project</span>
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-500"
-                  initial={{ x: "-100%" }}
-                  whileHover={{ x: 0 }}
-                  transition={{ duration: 0.3 }}
+                <Sparkles size={32} style={{ color: THEME.cyan }} />
+              </motion.div>
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6"
+                style={{ color: THEME.textWhite }}
+              >
+                Join My <span style={{ color: THEME.cyan }}>Happy Clients</span>
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="text-lg mb-10 max-w-2xl mx-auto leading-relaxed"
+                style={{ color: THEME.textGray }}
+              >
+                Let's work together and create something amazing. Your satisfaction is my top
+                priority.
+              </motion.p>
+              <motion.button
+                whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(2, 211, 254, 0.3)' }}
+                whileTap={{ scale: 0.95 }}
+                className="px-10 py-4 rounded-lg font-bold text-lg relative overflow-hidden group"
+                style={{
+                  background: THEME.gradientCyanBlue,
+                  color: '#ffffff',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
+              >
+                <span
+                  className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-500"
+                  style={{
+                    background:
+                      'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
+                  }}
                 />
+                <span className="relative z-10">Start Your Project</span>
               </motion.button>
-            </motion.div>
+            </div>
           </div>
         </section>
       </div>

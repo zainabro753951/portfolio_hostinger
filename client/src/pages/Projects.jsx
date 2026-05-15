@@ -1,331 +1,253 @@
-import { useRef, useState, useCallback, useMemo } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { motion, AnimatePresence, LazyMotion, domAnimation } from "motion/react";
-import {
-  ExternalLink,
-  Github,
-  ArrowRight,
-  X,
-  Code,
-  Palette,
-  Zap,
-  Layers,
-  Figma,
-  Play,
-} from "lucide-react";
+// ============================================================================
+// 📁 ui.jsx (Shared UI Components - Extract to separate file)
+// ============================================================================
+// Export these components to reuse across all pages
+import { GradientText, THEME } from '@/components/UI';
+// ============================================================================
 
-import project1 from "../assets/images/project-1.jpg";
-import project2 from "../assets/images/project-2.jpg";
-import project3 from "../assets/images/project-3.jpg";
-import project4 from "../assets/images/project-4.jpg";
+import useCreatedAtSorted from '@/hooks/useCreatedAtSorted';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import {
+  ArrowRight,
+  ChevronRight,
+  Code,
+  Figma,
+  Layers,
+  Palette,
+  Play,
+  Sparkles,
+} from 'lucide-react';
+import { AnimatePresence, LazyMotion, domAnimation, motion } from 'motion/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 
 gsap.registerPlugin(ScrollTrigger);
 
-// ✅ Optimized: Static data moved outside component
+// ============================================================================
+// 📁 ProjectsPage.jsx (Main Page - Uses shared components above)
+// ============================================================================
+
 const PROJECTS_DATA = [
   {
     id: 1,
-    title: "Ethereal Visions",
-    category: "web",
+    title: 'Ethereal Visions',
+    category: 'web',
     description:
-      "A stunning 3D visualization platform showcasing abstract art with immersive interactions and WebGL effects.",
+      'A stunning 3D visualization platform showcasing abstract art with immersive interactions and WebGL effects.',
     longDescription:
-      "Ethereal Visions is a cutting-edge 3D art platform that pushes the boundaries of web-based visualization. Built with React Three Fiber and custom shaders, it delivers an immersive gallery experience.",
-    image: project1,
-    tags: ["React", "Three.js", "GSAP", "WebGL"],
-    link: "#",
-    github: "#",
+      'Ethereal Visions is a cutting-edge 3D art platform that pushes the boundaries of web-based visualization. Built with React Three Fiber and custom shaders, it delivers an immersive gallery experience.',
+    image: '/api/placeholder/800/500',
+    tags: ['React', 'Three.js', 'GSAP', 'WebGL'],
+    link: '#',
+    github: '#',
     icon: Code,
-    color: "from-blue-500 to-cyan-400",
-    stats: { views: "12K+", likes: "850" },
+    gradient: 'linear-gradient(135deg, #4e90e1, #02d3fe)',
+    stats: { views: '12K+', likes: '850' },
   },
   {
     id: 2,
-    title: "Neon Dreams",
-    category: "design",
-    description:
-      "Complete brand identity and visual design system for a futuristic AI startup.",
+    title: 'Neon Dreams',
+    category: 'design',
+    description: 'Complete brand identity and visual design system for a futuristic AI startup.',
     longDescription:
-      "A comprehensive brand identity project including logo design, color systems, typography, and motion guidelines for an emerging AI technology company.",
-    image: project2,
-    tags: ["Figma", "Illustrator", "After Effects", "Brand Strategy"],
-    link: "#",
-    github: "#",
+      'A comprehensive brand identity project including logo design, color systems, typography, and motion guidelines for an emerging AI technology company.',
+    image: '/api/placeholder/800/500',
+    tags: ['Figma', 'Illustrator', 'After Effects', 'Brand Strategy'],
+    link: '#',
+    github: '#',
     icon: Palette,
-    color: "from-purple-500 to-pink-500",
-    stats: { views: "8K+", likes: "620" },
+    gradient: 'linear-gradient(135deg, #9a5cb7, #ec4899)',
+    stats: { views: '8K+', likes: '620' },
   },
   {
     id: 3,
-    title: "Cyber Portal",
-    category: "web",
-    description:
-      "High-performance analytics dashboard with real-time data visualization.",
+    title: 'Cyber Portal',
+    category: 'web',
+    description: 'High-performance analytics dashboard with real-time data visualization.',
     longDescription:
-      "Enterprise-grade dashboard handling millions of data points with sub-second latency. Features custom D3.js visualizations and WebSocket real-time updates.",
-    image: project3,
-    tags: ["Next.js", "TypeScript", "D3.js", "PostgreSQL"],
-    link: "#",
-    github: "#",
+      'Enterprise-grade dashboard handling millions of data points with sub-second latency. Features custom D3.js visualizations and WebSocket real-time updates.',
+    image: '/api/placeholder/800/500',
+    tags: ['Next.js', 'TypeScript', 'D3.js', 'PostgreSQL'],
+    link: '#',
+    github: '#',
     icon: Layers,
-    color: "from-cyan-400 to-blue-500",
-    stats: { views: "15K+", likes: "920" },
+    gradient: 'linear-gradient(135deg, #02d3fe, #4e90e1)',
+    stats: { views: '15K+', likes: '920' },
   },
   {
     id: 4,
-    title: "Crystal Flow",
-    category: "motion",
-    description:
-      "Premium motion graphics package for luxury product launch campaign.",
+    title: 'Crystal Flow',
+    category: 'motion',
+    description: 'Premium motion graphics package for luxury product launch campaign.',
     longDescription:
-      "Award-winning motion graphics campaign featuring fluid simulations, particle effects, and cinematic color grading for a flagship product launch.",
-    image: project4,
-    tags: ["After Effects", "Cinema 4D", "Lottie", "Houdini"],
-    link: "#",
-    github: "#",
+      'Award-winning motion graphics campaign featuring fluid simulations, particle effects, and cinematic color grading for a flagship product launch.',
+    image: '/api/placeholder/800/500',
+    tags: ['After Effects', 'Cinema 4D', 'Lottie', 'Houdini'],
+    link: '#',
+    github: '#',
     icon: Play,
-    color: "from-orange-400 to-pink-500",
-    stats: { views: "25K+", likes: "1.2K" },
+    gradient: 'linear-gradient(135deg, #f59e0b, #ec4899)',
+    stats: { views: '25K+', likes: '1.2K' },
   },
 ];
 
 const FILTERS = [
-  { key: "all", label: "All Projects", icon: Layers },
-  { key: "web", label: "Web Dev", icon: Code },
-  { key: "design", label: "Design", icon: Figma },
-  { key: "motion", label: "Motion", icon: Play },
+  { key: 'all', label: 'All Projects', icon: Layers },
+  { key: 'full-stack', label: 'Full Stack', icon: Code },
+  { key: 'frontend', label: 'Frontend', icon: Figma },
+  { key: 'backend', label: 'Backend', icon: Play },
+  { key: 'realtime', label: 'Realtime', icon: Play },
 ];
 
-// ✅ Optimized: Separate component for project card to prevent re-renders
-const ProjectCard = ({ project, index, onSelect }) => {
+const ProjectCard = ({ project, index }) => {
   const cardRef = useRef(null);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <motion.div
       ref={cardRef}
       layout
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -30, scale: 0.95 }}
-      transition={{
-        duration: 0.5,
-        delay: index * 0.1,
-        ease: [0.25, 0.46, 0.45, 0.94],
-      }}
+      transition={{ duration: 0.5, delay: index * 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
       whileHover={{ y: -12, transition: { duration: 0.3 } }}
-      onClick={() => onSelect(project)}
       className="group relative cursor-pointer"
     >
-      <div className="relative rounded-3xl overflow-hidden bg-white/5 border border-white/10 hover:border-cyan-400/40 transition-all duration-500 shadow-xl hover:shadow-2xl hover:shadow-cyan-500/10">
-        {/* Image Container */}
-        <div className="relative aspect-[16/10] overflow-hidden">
-          <motion.img
-            src={project.image}
-            alt={project.title}
-            className="w-full h-full object-cover"
-            whileHover={{ scale: 1.1 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
-          />
-          
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent opacity-80" />
-          
-          {/* Hover Overlay */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileHover={{ opacity: 1 }}
-            className="absolute inset-0 bg-gradient-to-t from-cyan-500/20 to-purple-500/20 backdrop-blur-[2px]"
-          />
-
-          {/* Stats Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 + index * 0.1 }}
-            className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10"
-          >
-            <span className="text-xs text-white font-medium">{project.stats.views} views</span>
-          </motion.div>
-        </div>
-
-        {/* Content */}
-        <div className="absolute bottom-0 left-0 right-0 p-6">
-          <div className="flex items-center gap-3 mb-3">
+      <Link to={`/projects/${project?.slug}`}>
+        <div
+          className="relative rounded-2xl overflow-hidden h-full"
+          style={{
+            background: THEME.bgCard,
+            backdropFilter: 'blur(10px)',
+            border: `1px solid ${THEME.border}`,
+            boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+            transition: 'all 0.3s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'rgba(2, 211, 254, 0.3)';
+            e.currentTarget.style.boxShadow = '0 0 30px rgba(2, 211, 254, 0.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = THEME.border;
+            e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,0,0,0.3)';
+          }}
+        >
+          {/* Image */}
+          <div className="relative aspect-[16/10] overflow-hidden">
+            <motion.img
+              src={`${backendUrl}${project.heroImage?.url}`}
+              alt={project.title}
+              className="w-full h-full object-cover"
+              whileHover={{ scale: 1.1 }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(to top, rgba(10,10,15,0.95), rgba(10,10,15,0.4), transparent)',
+              }}
+            />
             <motion.div
+              initial={{ opacity: 0 }}
+              whileHover={{ opacity: 1 }}
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(to top, rgba(2, 211, 254, 0.15), rgba(154, 92, 183, 0.1))',
+              }}
+            />
+          </div>
+
+          <div className="w-full absolute bottom-0 left-0 h-full  bg-black/20 pointer-events-none">
+            {/* Content */}
+            <div className="absolute bottom-0 left-0 right-0 p-6">
+              <div className="flex items-center gap-3 mb-3">
+                {/* <motion.div
               whileHover={{ rotate: 360, scale: 1.1 }}
               transition={{ duration: 0.5 }}
-              className={`w-10 h-10 rounded-xl bg-gradient-to-r ${project.color} flex items-center justify-center shadow-lg`}
+              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
+              style={{ background: project.gradient }}
             >
-              <project.icon size={20} className="text-white" />
-            </motion.div>
-            <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-              {project.category}
-            </span>
-          </div>
+              <project.icon size={20} style={{ color: '#ffffff' }} />
+            </motion.div> */}
+                <span
+                  className="text-xs font-medium uppercase tracking-wider"
+                  style={{ color: THEME.textGray }}
+                >
+                  {project.category}
+                </span>
+              </div>
 
-          <h3 className="text-xl font-bold text-white mb-2 group-hover:text-cyan-400 transition-colors duration-300">
-            {project.title}
-          </h3>
-          
-          <p className="text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
-            {project.description}
-          </p>
-
-          {/* Tags */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            {project.tags.slice(0, 3).map((tag, tIndex) => (
-              <motion.span
-                key={tIndex}
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.4 + tIndex * 0.05 }}
-                className="px-2.5 py-1 rounded-md bg-white/10 backdrop-blur-sm text-xs text-gray-300 border border-white/5"
+              <h3
+                className="text-xl font-bold mb-2 group-hover:text-cyan-400 transition-colors duration-300"
+                style={{ color: THEME.textWhite }}
               >
-                {tag}
-              </motion.span>
-            ))}
-          </div>
+                {project.title}
+              </h3>
 
-          {/* CTA */}
-          <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            whileHover={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-2 text-cyan-400 text-sm font-semibold opacity-0 group-hover:opacity-100 transition-all duration-300"
-          >
-            <span>Explore Project</span>
-            <motion.div
-              animate={{ x: [0, 5, 0] }}
-              transition={{ repeat: Infinity, duration: 1.5 }}
-            >
-              <ArrowRight size={16} />
-            </motion.div>
-          </motion.div>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-// ✅ Optimized: Modal component separated
-const ProjectModal = ({ project, onClose }) => {
-  if (!project) return null;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
-      {/* Backdrop */}
-      <motion.div
-        initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
-        animate={{ opacity: 1, backdropFilter: "blur(20px)" }}
-        exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
-        className="absolute inset-0 bg-gray-950/90"
-      />
-
-      {/* Modal Content */}
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0, y: 50 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.8, opacity: 0, y: 50 }}
-        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl bg-gray-900/80 border border-white/10 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Close Button */}
-        <motion.button
-          whileHover={{ scale: 1.1, rotate: 90 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={onClose}
-          className="absolute top-4 right-4 z-20 w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/10"
-        >
-          <X size={24} />
-        </motion.button>
-
-        {/* Hero Image */}
-        <div className="relative aspect-video">
-          <img
-            src={project.image}
-            alt={project.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/50 to-transparent" />
-          
-          {/* Floating Stats */}
-          <div className="absolute bottom-4 left-8 flex gap-4">
-            <div className="px-4 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
-              <span className="text-white font-semibold">{project.stats.views}</span>
-              <span className="text-gray-400 text-sm ml-1">views</span>
-            </div>
-            <div className="px-4 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
-              <span className="text-white font-semibold">{project.stats.likes}</span>
-              <span className="text-gray-400 text-sm ml-1">likes</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="p-8">
-          <div className="flex items-center gap-4 mb-6">
-            <div className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${project.color} flex items-center justify-center shadow-lg`}>
-              <project.icon size={32} className="text-white" />
-            </div>
-            <div>
-              <span className="text-sm text-gray-500 uppercase tracking-wider font-medium">
-                {project.category}
-              </span>
-              <h2 className="text-3xl font-bold text-white">{project.title}</h2>
-            </div>
-          </div>
-
-          <p className="text-gray-300 mb-6 leading-relaxed text-lg">
-            {project.longDescription}
-          </p>
-
-          {/* Tags */}
-          <div className="flex flex-wrap gap-2 mb-8">
-            {project.tags.map((tag, index) => (
-              <motion.span
-                key={index}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.05 }}
-                className="px-4 py-2 rounded-full bg-white/10 text-sm text-gray-300 border border-white/10"
+              <p
+                className="text-sm mb-4 line-clamp-2 leading-relaxed"
+                style={{ color: THEME.textGray }}
               >
-                {tag}
-              </motion.span>
-            ))}
-          </div>
+                {project.shortDesc}
+              </p>
 
-          {/* Actions */}
-          <div className="flex flex-wrap gap-4">
-            <motion.a
-              href={project.link}
-              whileHover={{ scale: 1.02, boxShadow: "0 0 30px rgba(59, 130, 246, 0.5)" }}
-              whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold shadow-lg"
-            >
-              <ExternalLink size={20} />
-              <span>Live Demo</span>
-            </motion.a>
+              {/* Tags */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {project?.techStack?.slice(0, 3).map(({ name }, tIndex) => {
+                  return (
+                    <motion.span
+                      key={tIndex}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.4 + tIndex * 0.05 }}
+                      className="px-2.5 py-1 rounded-md text-xs border"
+                      style={{
+                        background: 'rgba(255,255,255,0.05)',
+                        backdropFilter: 'blur(4px)',
+                        borderColor: 'rgba(255,255,255,0.05)',
+                        color: THEME.textGray,
+                      }}
+                    >
+                      {name}
+                    </motion.span>
+                  );
+                })}
+              </div>
 
-            <motion.a
-              href={project.github}
-              whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.15)" }}
-              whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-2 px-8 py-4 rounded-xl bg-white/10 text-white font-semibold border border-white/20 backdrop-blur-sm"
-            >
-              <Github size={20} />
-              <span>Source Code</span>
-            </motion.a>
+              {/* CTA Section - Replace existing wale ko is se */}
+              <AnimatePresence>
+                {isHovered && (
+                  <motion.div
+                    key="cta"
+                    initial={{ opacity: 0, x: -20, y: 10 }}
+                    animate={{ opacity: 1, x: 0, y: 0 }}
+                    exit={{ opacity: 0, x: -20, y: 10 }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                    className="flex items-center gap-2 text-sm font-semibold"
+                    style={{ color: THEME.cyan }}
+                  >
+                    <span>Explore Project</span>
+                    <motion.div
+                      animate={{ x: [0, 5, 0] }}
+                      transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+                    >
+                      <ArrowRight size={16} />
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
-      </motion.div>
+      </Link>
     </motion.div>
   );
 };
@@ -333,89 +255,130 @@ const ProjectModal = ({ project, onClose }) => {
 const Projects = () => {
   const containerRef = useRef(null);
   const headerRef = useRef(null);
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
+  const { projects: projectsDB } = useSelector((state) => state.projects);
+  const { sortedData: projects } = useCreatedAtSorted(projectsDB);
 
-  // ✅ Optimized: useMemo for filtered projects
-  const filteredProjects = useMemo(() => {
-    if (filter === "all") return PROJECTS_DATA;
-    return PROJECTS_DATA.filter((p) => p.category === filter);
-  }, [filter]);
+  const filteredProjects = useState(() => projects)[0];
+  const displayProjects =
+    filter === 'all' ? filteredProjects : filteredProjects.filter((p) => p.category === filter);
 
-  // ✅ Optimized: GSAP with proper cleanup
-  useRef(() => {
+  const handleFilterChange = useCallback(
+    (newFilter) => {
+      if (newFilter === filter) return;
+      setIsLoading(true);
+      setFilter(newFilter);
+      setTimeout(() => setIsLoading(false), 300);
+    },
+    [filter]
+  );
+
+  useEffect(() => {
     const ctx = gsap.context(() => {
-      // Header animation
       gsap.from(headerRef.current, {
         y: 30,
         opacity: 0,
         duration: 0.8,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: headerRef.current,
-          start: "top 85%",
-          once: true,
-        },
+        ease: 'power3.out',
+        scrollTrigger: { trigger: headerRef.current, start: 'top 85%', once: true },
       });
     }, containerRef);
-
     return () => ctx.revert();
   }, []);
 
-  // ✅ Optimized: Filter change handler with loading state
-  const handleFilterChange = useCallback((newFilter) => {
-    if (newFilter === filter) return;
-    setIsLoading(true);
-    setFilter(newFilter);
-    setTimeout(() => setIsLoading(false), 300);
-  }, [filter]);
-
   return (
     <LazyMotion features={domAnimation}>
-      <div ref={containerRef} className="bg-gray-900 min-h-screen pt-24">
-        {/* Hero Section */}
-        <section className="py-20 relative overflow-hidden">
-          <div className="absolute inset-0">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-cyan-500/10" />
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[120px] animate-pulse" />
-            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: "1s" }} />
-          </div>
+      <div
+        ref={containerRef}
+        className="relative min-h-screen overflow-x-hidden"
+        style={{ backgroundColor: THEME.bg, fontFamily: "'Inter', sans-serif" }}
+      >
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {/* 🌌 BACKGROUND LAYERS (Matches ProjectDetailsPage EXACTLY)         */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
+          <div
+            className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-[120px] animate-pulse"
+            style={{ background: 'rgba(2, 211, 254, 0.12)' }}
+          />
+          <div
+            className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-[120px] animate-pulse"
+            style={{ animationDelay: '1s', background: 'rgba(78, 144, 225, 0.12)' }}
+          />
+          <div
+            className="absolute top-1/2 left-1/2 w-64 h-64 rounded-full blur-[100px] animate-pulse"
+            style={{ animationDelay: '2s', background: 'rgba(154, 92, 183, 0.1)' }}
+          />
+        </div>
 
-          <div className="max-w-7xl mx-auto px-6 lg:px-8 relative">
+        {/* Particles */}
+        <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 1 }}>
+          {[...Array(15)].map((_, i) => (
+            <div
+              key={`p-${i}`}
+              className="absolute w-1 h-1 rounded-full animate-pulse"
+              style={{
+                left: `${(i * 7.3) % 100}%`,
+                top: `${(i * 13.7) % 100}%`,
+                background: i % 3 === 0 ? THEME.cyan : i % 3 === 1 ? THEME.blue : THEME.purple,
+                opacity: 0.2 + (i % 3) * 0.1,
+                animationDelay: `${i * 0.3}s`,
+                animationDuration: `${3 + (i % 4)}s`,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {/* 🦸 HERO SECTION                                                    */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        <section className="relative pt-24 pb-12" style={{ zIndex: 2 }}>
+          <div className="max-w-7xl mx-auto px-6 py-20">
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
               className="text-center"
             >
               <motion.span
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="inline-block px-4 py-2 rounded-full bg-white/10 backdrop-blur-md text-cyan-400 text-sm font-medium mb-6 border border-white/10"
+                className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-6"
+                style={{
+                  background: 'rgba(2, 211, 254, 0.1)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(2, 211, 254, 0.2)',
+                  color: THEME.cyan,
+                }}
               >
                 Portfolio
               </motion.span>
-              
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 text-white">
-                Featured{" "}
-                <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                  Projects
-                </span>
+
+              <h1
+                className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6"
+                style={{ color: THEME.textWhite }}
+              >
+                Featured <GradientText>Projects</GradientText>
               </h1>
-              
-              <p className="text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">
-                A curated collection of my recent work showcasing web development, 
-                UI/UX design, and motion graphics projects.
+
+              <p
+                className="text-lg max-w-2xl mx-auto leading-relaxed"
+                style={{ color: THEME.textGray }}
+              >
+                A curated collection of my recent work showcasing web development, UI/UX design, and
+                motion graphics projects.
               </p>
             </motion.div>
           </div>
         </section>
 
-        {/* Projects Section */}
-        <section ref={headerRef} className="py-24 relative">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {/* 📋 PROJECTS GRID                                                   */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        <section ref={headerRef} className="relative py-24" style={{ zIndex: 2 }}>
+          <div className="max-w-7xl mx-auto px-6">
             {/* Filter Buttons */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -427,33 +390,30 @@ const Projects = () => {
               {FILTERS.map((f) => {
                 const Icon = f.icon;
                 const isActive = filter === f.key;
-                
                 return (
                   <motion.button
                     key={f.key}
                     onClick={() => handleFilterChange(f.key)}
                     whileHover={{ scale: 1.05, y: -2 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-300 ${
-                      isActive
-                        ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg shadow-blue-500/25"
-                        : "bg-white/5 text-gray-400 hover:text-white border border-white/10 hover:border-white/20 backdrop-blur-sm"
-                    }`}
+                    className="flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-300"
+                    style={{
+                      background: isActive ? THEME.gradientPrimary : 'rgba(255,255,255,0.05)',
+                      color: isActive ? '#ffffff' : THEME.textGray,
+                      border: isActive ? 'none' : `1px solid ${THEME.border}`,
+                      backdropFilter: 'blur(4px)',
+                      boxShadow: isActive ? '0 0 20px rgba(2, 211, 254, 0.2)' : 'none',
+                    }}
                   >
                     <Icon size={18} />
                     <span>{f.label}</span>
-                    {isActive && (
-                      <motion.span
-                        layoutId="activeFilter"
-                        className="ml-1 w-2 h-2 rounded-full bg-white"
-                      />
-                    )}
+                    {isActive && <span className="ml-1 w-2 h-2 rounded-full bg-white" />}
                   </motion.button>
                 );
               })}
             </motion.div>
 
-            {/* Loading State */}
+            {/* Loading */}
             <AnimatePresence>
               {isLoading && (
                 <motion.div
@@ -464,93 +424,125 @@ const Projects = () => {
                 >
                   <motion.div
                     animate={{ rotate: 360 }}
-                    transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                    className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full"
+                    transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                    className="w-8 h-8 border-2 rounded-full"
+                    style={{ borderColor: THEME.cyan, borderTopColor: 'transparent' }}
                   />
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Projects Grid */}
+            {/* Grid */}
             <AnimatePresence mode="popLayout">
               {!isLoading && (
-                <motion.div
-                  layout
-                  className="grid md:grid-cols-2 gap-8"
-                >
-                  {filteredProjects.map((project, index) => (
-                    <ProjectCard
-                      key={project.id}
-                      project={project}
-                      index={index}
-                      onSelect={setSelectedProject}
-                    />
+                <motion.div layout className="grid md:grid-cols-2 gap-8">
+                  {displayProjects.map((project, index) => (
+                    <ProjectCard key={project.id} project={project} index={index} />
                   ))}
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Empty State */}
+            {/* Empty */}
             <AnimatePresence>
-              {!isLoading && filteredProjects.length === 0 && (
+              {!isLoading && displayProjects.length === 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
                   className="text-center py-20"
                 >
-                  <p className="text-gray-400 text-lg">No projects found in this category.</p>
+                  <p className="text-lg" style={{ color: THEME.textGray }}>
+                    No projects found in this category.
+                  </p>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
         </section>
 
-        {/* Project Modal */}
-        <AnimatePresence>
-          {selectedProject && (
-            <ProjectModal
-              project={selectedProject}
-              onClose={() => setSelectedProject(null)}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* CTA Section */}
-        <section className="py-24 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-cyan-500/20" />
-          <div className="absolute inset-0 backdrop-blur-3xl" />
-
-          <div className="max-w-4xl mx-auto px-6 lg:px-8 relative text-center">
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {/* 💡 CTA SECTION (Matches ProjectDetailsPage CTA style)              */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        <section className="relative py-24" style={{ zIndex: 2 }}>
+          <div
+            className="absolute inset-0 opacity-30"
+            style={{
+              background:
+                'linear-gradient(to right, rgba(2, 211, 254, 0.1), rgba(154, 92, 183, 0.1))',
+            }}
+          />
+          <div
+            className="max-w-4xl mx-auto px-6 relative text-center rounded-2xl p-8 md:p-12"
+            style={{
+              background: THEME.bgCard,
+              backdropFilter: 'blur(10px)',
+              border: `1px solid rgba(2, 211, 254, 0.2)`,
+              boxShadow: '0 0 40px rgba(2, 211, 254, 0.05)',
+            }}
+          >
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6"
+              style={{ background: 'rgba(2, 211, 254, 0.15)' }}
             >
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 text-white">
-                Have a Project in{" "}
-                <span className="text-cyan-400">Mind?</span>
-              </h2>
-              <p className="text-gray-300 text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
-                Let's collaborate and create something amazing together. I'm
-                always excited to work on new challenges.
-              </p>
-
-              <motion.button
-                whileHover={{ scale: 1.05, boxShadow: "0 0 40px rgba(34, 211, 238, 0.3)" }}
-                whileTap={{ scale: 0.95 }}
-                className="px-10 py-4 rounded-full bg-white text-gray-900 font-bold text-lg relative overflow-hidden group"
-              >
-                <span className="relative z-10">Start a Project</span>
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-500"
-                  initial={{ x: "100%" }}
-                  whileHover={{ x: 0 }}
-                  transition={{ duration: 0.3 }}
-                />
-              </motion.button>
+              <Sparkles size={32} style={{ color: THEME.cyan }} />
             </motion.div>
+
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6"
+              style={{ color: THEME.textWhite }}
+            >
+              Have a Project in <span style={{ color: THEME.cyan }}>Mind?</span>
+            </motion.h2>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-lg mb-10 max-w-2xl mx-auto leading-relaxed"
+              style={{ color: THEME.textGray }}
+            >
+              Let's collaborate and create something amazing together. I'm always excited to work on
+              new challenges.
+            </motion.p>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="relative inline-flex items-center gap-2 px-10 py-4 rounded-full font-bold text-lg overflow-hidden group"
+              style={{
+                background: THEME.gradientPrimary,
+                color: '#ffffff',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = '0 0 40px rgba(2, 211, 254, 0.3)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              <span
+                className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-500"
+                style={{
+                  background:
+                    'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
+                }}
+              />
+              <span className="relative z-10">Start a Project</span>
+              <ChevronRight size={20} className="relative z-10" />
+            </motion.button>
           </div>
         </section>
       </div>

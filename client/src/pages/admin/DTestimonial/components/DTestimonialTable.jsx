@@ -14,10 +14,9 @@ import {
   User,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { projectFindById } from '../../../../features/projectSlice';
 import useCreatedAtSorted from '../../../../hooks/useCreatedAtSorted';
 import { formatTimeAgo, getFileIcon, getFileNameFromUrl, safeParse } from '../../../../Utils/Utils';
 
@@ -25,12 +24,11 @@ const DTestimonialTable = () => {
   const dispatch = useDispatch();
   const prefersReducedMotion = useReducedMotion();
   const { testimonials } = useSelector((state) => state.testimonial);
-  const { project } = useSelector((state) => state.projects);
-  let projectId = '';
-  const [projectTitle, setProjectTitle] = useState('');
+  const { project, projects } = useSelector((state) => state.projects);
+  // ✅ Yeh add karo — projects ka map banao
   const { setRoute, setIsOpen, setQueryKey } = useDeleteEntryContext();
   const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
-
+  // ✅ Yeh already store mein hai
   const { sortedData: testiSorted } = useCreatedAtSorted(testimonials);
 
   // Set query key for delete context
@@ -38,21 +36,14 @@ const DTestimonialTable = () => {
     setQueryKey('testimonials');
   }, [setQueryKey]);
 
-  // Fetch project by testimonial's projectId
-  useEffect(() => {
-    if (projectId) {
-      dispatch(projectFindById(projectId));
-    }
-  }, [dispatch, projectId]);
-
-  // Update project title once project is fetched
-  useEffect(() => {
-    if (project?.title) {
-      setProjectTitle(project.title);
-    } else {
-      setProjectTitle('');
-    }
-  }, [project]);
+  // ✅ Seedha map banao projects array se
+  const projectTitlesMap = useMemo(() => {
+    if (!projects?.length) return {};
+    return projects.reduce((acc, p) => {
+      acc[p.id] = p.title;
+      return acc;
+    }, {});
+  }, [projects]);
 
   // Animation variants
   const containerVariants = {
@@ -146,11 +137,9 @@ const DTestimonialTable = () => {
                   testiSorted.map((item, index) => {
                     const createdAt = formatTimeAgo(item?.createdAt);
                     const updatedAt = formatTimeAgo(item?.updatedAt);
-                    const clientImage = safeParse(item?.clientImage);
+                    const clientImage = safeParse(item?.image);
                     const fileName = getFileNameFromUrl(clientImage?.url);
                     const { Icon: FileIcon, color: FileIconColor } = getFileIcon(fileName);
-
-                    projectId = item?.projectId || '';
 
                     return (
                       <motion.tr
@@ -187,7 +176,7 @@ const DTestimonialTable = () => {
 
                         {/* Project Title */}
                         <td className="py-4 px-3">
-                          <span className="text-sm text-slate-300">{projectTitle || '—'}</span>
+                          <span>{projectTitlesMap[item?.projectId] || '—'}</span>
                         </td>
 
                         {/* Testimonial Date */}

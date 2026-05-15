@@ -683,10 +683,10 @@ const DAddProjectPage = () => {
                 <label className="text-sm font-medium text-slate-300">Category</label>
                 <select {...register('category', { required: true })} className={fieldBase}>
                   <option value="">Select Category</option>
-                  <option value="ui design">UI Design</option>
-                  <option value="frontend development">Frontend Development</option>
-                  <option value="react projects">React Projects</option>
-                  <option value="open source">Open Source</option>
+                  <option value="full-stack">Full Stack</option>
+                  <option value="frontend">Frontend</option>
+                  <option value="backend">Backend</option>
+                  <option value="realtime">Realtime</option>
                 </select>
                 {errors.category && <p className="text-rose-400 text-xs">Required</p>}
               </div>

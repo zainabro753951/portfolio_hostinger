@@ -1,8 +1,10 @@
+import { OutlineButton, PrimaryButton, THEME } from '@/components/UI';
+import { getClientSatisfactionRate } from '@/Utils/Utils';
 import { useGSAP } from '@gsap/react';
+import { motion } from 'framer-motion';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Award, Star, Users, Zap } from 'lucide-react';
-import { motion } from 'motion/react'; // ✅ Fixed: motion/react -> framer-motion
 import { useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -11,7 +13,7 @@ import HeroSkeleton from '../sections/HeroSkeleton';
 import PricePlanSection from '../sections/PricePlanSection';
 import ServicesSection from '../sections/ServicesSection';
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const useHomeData = () => {
   const { data: about, isLoading: isAboutLoading } = useSelector((state) => state.about);
@@ -28,15 +30,13 @@ const Home = () => {
   const containerRef = useRef(null);
   const statsRef = useRef(null);
   const { testimonials } = useSelector((state) => state.testimonial);
-
-  // =============== Home Data ================
+  const satisfaction = getClientSatisfactionRate(testimonials);
   const { about, isLoading, projectCounts } = useHomeData();
 
-  // ✅ Single useGSAP with proper cleanup and correct scope
   useGSAP(
     () => {
       // Stats Animation
-      gsap.from('.stat-item', {
+      gsap.from(statsRef.current, {
         y: 30,
         opacity: 0,
         duration: 0.5,
@@ -49,110 +49,196 @@ const Home = () => {
           once: true,
         },
       });
+      gsap.to('.gradient-orb', {
+        scale: 1.2,
+        duration: 4,
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut',
+      });
     },
-    { scope: containerRef } // ✅ Scope set to parent container
+    { scope: containerRef }
   );
 
   const stats = [
     {
       icon: Users,
-      value: projectCounts?.publishedProjects,
+      value: projectCounts?.publishedProjects || '0',
       label: 'Projects Completed',
     },
     {
       icon: Star,
-      value: testimonials?.length || '30+',
+      value: testimonials?.length || '0',
       label: 'Happy Clients',
     },
-    { icon: Award, value: about.experience, label: 'Years Experience' },
-    { icon: Zap, value: '100%', label: 'Satisfaction Rate' },
+    {
+      icon: Award,
+      value: about?.experience || '0',
+      label: 'Years Experience',
+    },
+    {
+      icon: Zap,
+      value: `${satisfaction}%`,
+      label: 'Satisfaction Rate',
+    },
   ];
 
   return (
-    <div ref={containerRef} className="bg-gray-900 min-h-screen">
-      {/* Hero Section */}
-      {isLoading ? <HeroSkeleton /> : <Hero about={{ ...about, projectCounts }} />}
-
-      {/* Services Section */}
-      <ServicesSection containerRef={containerRef} />
-
-      {/* Stats Section */}
-      <section ref={statsRef} className="py-20 relative">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <motion.div
-                key={index}
-                className="stat-item text-center p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/5"
-                whileHover={{ scale: 1.05, y: -5 }}
-                transition={{ type: 'spring', stiffness: 400 }}
-              >
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md mb-4 border border-white/10">
-                  <stat.icon size={32} className="text-cyan-400" />
-                </div>
-                <div className="text-4xl lg:text-5xl font-bold text-white mb-2 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                  {stat.value}
-                </div>
-                <div className="text-gray-400 text-sm">{stat.label}</div>
-              </motion.div>
-            ))}
-          </div>
+    <div
+      ref={containerRef}
+      className="relative min-h-screen overflow-x-hidden"
+      style={{ backgroundColor: THEME.bg, fontFamily: "'Inter', sans-serif" }}
+    >
+      <div className="fixed inset-0 pointer-events-none z-10">
+        <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 20 }}>
+          <div
+            className="gradient-orb  absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-[120px] animate-pulse"
+            style={{ background: 'rgba(2, 211, 254, 0.12)' }}
+          />
+          <div
+            className="gradient-orb  absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-[120px] animate-pulse"
+            style={{ animationDelay: '1s', background: 'rgba(78, 144, 225, 0.12)' }}
+          />
+          <div
+            className="gradient-orb  absolute top-1/2 left-1/2 w-64 h-64 rounded-full blur-[100px] animate-pulse"
+            style={{ animationDelay: '2s', background: 'rgba(154, 92, 183, 0.1)' }}
+          />
         </div>
-      </section>
+        {[...Array(15)].map((_, i) => (
+          <div
+            key={`p-${i}`}
+            className="absolute w-1 h-1 rounded-full animate-pulse"
+            style={{
+              left: `${(i * 7.3) % 100}%`,
+              top: `${(i * 13.7) % 100}%`,
+              background: i % 3 === 0 ? THEME.cyan : i % 3 === 1 ? THEME.blue : THEME.purple,
+              opacity: 0.2 + (i % 3) * 0.1,
+              animationDelay: `${i * 0.3}s`,
+              animationDuration: `${3 + (i % 4)}s`,
+            }}
+          />
+        ))}
+      </div>
 
-      {/* Pricing Section */}
-      <PricePlanSection />
+      <div className="relative z-0">
+        <section className="relative z-10">
+          {isLoading ? <HeroSkeleton /> : <Hero about={{ ...about, projectCounts }} />}
+        </section>
 
-      {/* CTA Section */}
-      <section className="py-24 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-cyan-500/20" />
-        <div className="absolute inset-0 backdrop-blur-3xl" />
+        <section className="relative z-10 py-24">
+          <ServicesSection containerRef={containerRef} />
+        </section>
 
-        <div className="max-w-4xl mx-auto px-6 lg:px-8 relative text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 text-white">
-              Ready to Start Your <span className="text-cyan-400">Project?</span>
-            </h2>
-            <p className="text-gray-300 text-lg mb-10 max-w-2xl mx-auto">
-              Let's collaborate and bring your vision to life. I'm always excited to work on new and
-              challenging projects.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to={'/contact'}>
-                <motion.button
-                  whileHover={{
-                    scale: 1.05,
-                    boxShadow: '0 0 30px rgba(255,255,255,0.3)',
+        <section ref={statsRef} className="relative z-10 py-20">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+              {stats.map((stat, index) => (
+                <motion.div
+                  key={index}
+                  className="stat-item text-center p-6 rounded-2xl"
+                  style={{
+                    background: THEME.bgCard,
+                    backdropFilter: 'blur(10px)',
+                    border: `1px solid ${THEME.border}`,
+                    transition: 'all 0.3s ease',
                   }}
-                  whileTap={{ scale: 0.95 }}
-                  className="px-10 py-4 rounded-full bg-white text-gray-900 font-semibold relative overflow-hidden group transition-all duration-300"
-                >
-                  <span className="relative z-10">Get In Touch</span>
-                </motion.button>
-              </Link>
-
-              <Link to={'/projects'}>
-                <motion.button
                   whileHover={{
-                    scale: 1.05,
-                    borderColor: 'rgba(255,255,255,0.5)',
+                    y: -5,
+                    borderColor: 'rgba(2, 211, 254, 0.3)',
+                    boxShadow: '0 0 20px rgba(2, 211, 254, 0.1)',
                   }}
-                  whileTap={{ scale: 0.95 }}
-                  className="px-10 py-4 rounded-full bg-white/10 backdrop-blur-md text-white font-semibold border border-white/20 transition-all duration-300"
+                  transition={{ type: 'spring', stiffness: 300 }}
                 >
-                  View Projects
-                </motion.button>
-              </Link>
+                  <div
+                    className="inline-flex items-center justify-center w-14 h-14 rounded-xl mb-4"
+                    style={{ background: 'rgba(2, 211, 254, 0.15)' }}
+                  >
+                    <stat.icon size={24} style={{ color: THEME.cyan }} />
+                  </div>
+                  <div
+                    className="text-3xl lg:text-4xl font-bold mb-2"
+                    style={{ color: THEME.cyan }}
+                  >
+                    {stat.value}
+                  </div>
+                  <div className="text-sm font-medium" style={{ color: THEME.textGrayDark }}>
+                    {stat.label}
+                  </div>
+                </motion.div>
+              ))}
             </div>
-          </motion.div>
-        </div>
-      </section>
+          </div>
+        </section>
+
+        <section className="relative z-10 py-24">
+          <PricePlanSection />
+        </section>
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {/* 💡 CTA SECTION                                                     */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        <section className="relative z-10 py-24">
+          <div className="max-w-4xl mx-auto px-6">
+            <div
+              className="rounded-2xl p-8 md:p-12 text-center"
+              style={{
+                background:
+                  'linear-gradient(135deg, rgba(2, 211, 254, 0.15), rgba(154, 92, 183, 0.15))',
+                border: '1px solid rgba(2, 211, 254, 0.2)',
+                boxShadow: '0 0 40px rgba(2, 211, 254, 0.05)',
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                whileInView={{ scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+                className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6"
+                style={{ background: 'rgba(2, 211, 254, 0.15)' }}
+              >
+                <Zap size={32} style={{ color: THEME.cyan }} />
+              </motion.div>
+
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="text-4xl sm:text-5xl font-bold mb-6"
+                style={{ color: THEME.textWhite }}
+              >
+                Ready to Start Your <span style={{ color: THEME.cyan }}>Project?</span>
+              </motion.h2>
+
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="text-lg mb-10 max-w-2xl mx-auto leading-relaxed"
+                style={{ color: THEME.textGray }}
+              >
+                Let's collaborate and bring your vision to life. I'm always excited to work on new
+                and challenging projects.
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="flex flex-wrap justify-center gap-4"
+              >
+                <Link to="/contact">
+                  <PrimaryButton icon={Zap}>Get In Touch</PrimaryButton>
+                </Link>
+                <Link to="/projects">
+                  <OutlineButton icon={Star}>View Projects</OutlineButton>
+                </Link>
+              </motion.div>
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
   );
 };

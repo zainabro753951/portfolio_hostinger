@@ -1,4 +1,5 @@
 import { useDeleteEntryContext } from '@/context/useDeleteEntryContext';
+import useCreatedAtSorted from '@/hooks/useCreatedAtSorted';
 import {
   Calendar,
   CheckCircle2,
@@ -171,7 +172,8 @@ const TableRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
 TableRow.displayName = 'TableRow';
 
 const ProjectTable = () => {
-  const { projects } = useSelector((state) => state.projects);
+  const { projects: projectDataBase } = useSelector((state) => state.projects);
+  const { sortedData: projects } = useCreatedAtSorted(projectDataBase);
   const { setRoute, setIsOpen, setQueryKey } = useDeleteEntryContext();
   const prefersReducedMotion = useReducedMotion();
 

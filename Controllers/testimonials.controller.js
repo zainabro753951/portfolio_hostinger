@@ -1,26 +1,22 @@
-import pool from "../db.config.js";
-import { body, validationResult } from "express-validator";
-import { deleteFromLocal, uploadToLocal } from "../Utils/uploadToLocal.js"; // Local Helpers
-import { safeParse } from "../Utils/SafeParser.js";
+import { body, validationResult } from 'express-validator';
+import pool from '../db.config.js';
+import { safeParse } from '../Utils/SafeParser.js';
+import { deleteFromLocal, uploadToLocal } from '../Utils/uploadToLocal.js'; // Local Helpers
 
 export const AddTestimonialValidation = [
-  body("clientName").notEmpty().withMessage("Client name is required!"),
+  body('clientName').notEmpty().withMessage('Client name is required!'),
 
-  body("designationRole")
-    .notEmpty()
-    .withMessage("Designation/Role is required!"),
+  body('designationRole').notEmpty().withMessage('Designation/Role is required!'),
 
-  body("company").notEmpty().withMessage("Company name is required!"),
+  body('company').notEmpty().withMessage('Company name is required!'),
 
-  body("ratting").notEmpty().withMessage("Ratting is required!"),
+  body('ratting').notEmpty().withMessage('Ratting is required!'),
 
-  body("projectId").notEmpty().withMessage("Project title is required!"),
+  body('projectId').notEmpty().withMessage('Project title is required!'),
 
-  body("testimonialDate")
-    .notEmpty()
-    .withMessage("Testimonial date is required!"),
+  body('testimonialDate').notEmpty().withMessage('Testimonial date is required!'),
 
-  body("message").notEmpty().withMessage("Client message is required!"),
+  body('message').notEmpty().withMessage('Client message is required!'),
 ];
 
 export const addTestimonial = async (req, res) => {
@@ -46,16 +42,14 @@ export const addTestimonial = async (req, res) => {
   } = req.body;
 
   // Type conversion
-  isUpdate = isUpdate === "true" || isUpdate === true;
+  isUpdate = isUpdate === 'true' || isUpdate === true;
   testimonialID = isUpdate ? Number(testimonialID) || null : null;
 
   // Safe parse clientImageOBJ
   let parsedClientImage = null;
   if (clientImageOBJ) {
     parsedClientImage =
-      typeof clientImageOBJ === "string"
-        ? safeParse(clientImageOBJ)
-        : clientImageOBJ;
+      typeof clientImageOBJ === 'string' ? safeParse(clientImageOBJ) : clientImageOBJ;
   }
 
   // Validate parsed image object structure
@@ -67,27 +61,25 @@ export const addTestimonial = async (req, res) => {
         }
       : null;
 
-  let newFileKey = ""; // Tracking for rollback
-  let newFileUrl = "";
+  let newFileKey = ''; // Tracking for rollback
+  let newFileUrl = '';
 
   try {
     // 1. Upload new image if provided (Local Storage)
     if (req.file) {
-      const uploadResult = await uploadToLocal(req.file, "testimonials");
-      console.log("Upload Result:", uploadResult);
+      const uploadResult = await uploadToLocal(req.file, 'testimonials');
+      console.log('Upload Result:', uploadResult);
 
-      newFileKey = uploadResult?.key || "";
-      newFileUrl = uploadResult?.url || "";
+      newFileKey = uploadResult?.key || '';
+      newFileUrl = uploadResult?.url || '';
     }
 
     // 2. Build final image object
     // Priority: New upload > Existing image > null
-    const finalClientImage = newFileKey
-      ? { url: newFileUrl, key: newFileKey }
-      : validClientImage;
+    const finalClientImage = newFileKey ? { url: newFileUrl, key: newFileKey } : validClientImage;
 
-    console.log("Final Client Image:", finalClientImage);
-    console.log("Existing Image Object:", validClientImage);
+    console.log('Final Client Image:', finalClientImage);
+    console.log('Existing Image Object:', validClientImage);
 
     if (isUpdate) {
       // Validate testimonialID
@@ -95,26 +87,23 @@ export const addTestimonial = async (req, res) => {
         if (newFileKey) await deleteFromLocal(newFileKey);
         return res.status(400).json({
           success: false,
-          message: "Testimonial ID is required for update!",
+          message: 'Testimonial ID is required for update!',
         });
       }
 
       // Check existing record
-      const [rows] = await pool.query(
-        "SELECT clientImage FROM testimonials WHERE id = ?",
-        [testimonialID],
-      );
+      const [rows] = await pool.query('SELECT clientImage FROM testimonials WHERE id = ?', [
+        testimonialID,
+      ]);
 
       if (rows.length === 0) {
         if (newFileKey) await deleteFromLocal(newFileKey);
-        return res
-          .status(404)
-          .json({ success: false, message: "Testimonial not found!" });
+        return res.status(404).json({ success: false, message: 'Testimonial not found!' });
       }
 
       // Safe parse existing image from DB
       const existingImg =
-        typeof rows[0].clientImage === "string"
+        typeof rows[0].clientImage === 'string'
           ? safeParse(rows[0].clientImage)
           : rows[0].clientImage;
 
@@ -126,7 +115,7 @@ export const addTestimonial = async (req, res) => {
       // 3. Delete old image if a new one is uploaded
       if (req.file && validExistingImg?.key) {
         await deleteFromLocal(validExistingImg.key).catch((e) =>
-          console.error("Old file delete failed:", e),
+          console.error('Old file delete failed:', e)
         );
       }
 
@@ -148,19 +137,17 @@ export const addTestimonial = async (req, res) => {
           testimonialDate,
           message,
           testimonialID,
-        ],
+        ]
       );
 
       if (!updateResult.affectedRows) {
         if (newFileKey) await deleteFromLocal(newFileKey);
-        return res
-          .status(500)
-          .json({ success: false, message: "Update failed!" });
+        return res.status(500).json({ success: false, message: 'Update failed!' });
       }
 
       return res.status(200).json({
         success: true,
-        message: "Testimonial updated successfully.",
+        message: 'Testimonial updated successfully.',
         data: { image: imageToStore },
       });
     } else {
@@ -178,82 +165,70 @@ export const addTestimonial = async (req, res) => {
           projectId || null,
           testimonialDate,
           message,
-        ],
+        ]
       );
 
       if (!insertResult.affectedRows) {
         if (newFileKey) await deleteFromLocal(newFileKey);
-        return res
-          .status(500)
-          .json({ success: false, message: "Failed to add testimonial!" });
+        return res.status(500).json({ success: false, message: 'Failed to add testimonial!' });
       }
 
       return res.status(201).json({
         success: true,
-        message: "Testimonial added successfully.",
+        message: 'Testimonial added successfully.',
         data: { image: finalClientImage },
       });
     }
   } catch (error) {
-    console.error("Testimonial Error:", error);
+    console.error('Testimonial Error:', error);
     if (newFileKey) {
-      await deleteFromLocal(newFileKey).catch((e) =>
-        console.error("Rollback failed:", e),
-      );
+      await deleteFromLocal(newFileKey).catch((e) => console.error('Rollback failed:', e));
     }
-    res.status(500).json({ success: false, message: "Internal Server Error!" });
+    res.status(500).json({ success: false, message: 'Internal Server Error!' });
   }
 };
 
 export const deleteTestimonial = async (req, res) => {
   const { id } = req.params;
   try {
-    const [rows] = await pool.query(
-      "SELECT clientImage FROM testimonials WHERE id = ?",
-      [id],
-    );
-    if (rows.length === 0)
-      return res.status(404).json({ success: false, message: "Not found!" });
+    const [rows] = await pool.query('SELECT clientImage FROM testimonials WHERE id = ?', [id]);
+    if (rows.length === 0) return res.status(404).json({ success: false, message: 'Not found!' });
 
     const imgData =
-      typeof rows[0].clientImage === "string"
+      typeof rows[0].clientImage === 'string'
         ? safeParse(rows[0].clientImage)
         : rows[0].clientImage;
 
     // 5. Delete file from local storage
     if (imgData?.key) {
-      await deleteFromLocal(imgData.key).catch((e) =>
-        console.error("File delete failed", e),
-      );
+      await deleteFromLocal(imgData.key).catch((e) => console.error('File delete failed', e));
     }
 
-    await pool.query("DELETE FROM testimonials WHERE id = ?", [id]);
-    return res
-      .status(200)
-      .json({ success: true, message: "Deleted successfully!" });
+    await pool.query('DELETE FROM testimonials WHERE id = ?', [id]);
+    return res.status(200).json({ success: true, message: 'Deleted successfully!' });
   } catch (error) {
-    console.error("Delete Error:", error);
-    res.status(500).json({ success: false, message: "Server Error" });
+    console.error('Delete Error:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
 
 export const getTestimonial = async (req, res) => {
   try {
-    const [testimonials] = await pool.query("SELECT * FROM testimonials");
+    const [testimonials] = await pool.query('SELECT * FROM testimonials');
 
     return res.status(200).json({
       success: true,
-      successCode: "GET_TESTIMONIAL",
-      message: "Testimonial fetched successfully.",
+      successCode: 'GET_TESTIMONIAL',
+      message: 'Testimonial fetched successfully.',
       testimonials,
     });
   } catch (error) {
-    console.error("GET_TESTIMONIAL_ERROR:", error);
+    console.error('GET_TESTIMONIAL_ERROR:', error);
 
     return res.status(500).json({
       success: false,
-      errorCode: "SERVER_ERROR",
-      message: "Internal Server Error!",
+      errorCode: 'SERVER_ERROR',
+      message: 'Internal Server Error!',
     });
   }
 };
