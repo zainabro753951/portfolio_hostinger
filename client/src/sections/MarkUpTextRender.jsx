@@ -1,53 +1,62 @@
 import { renderMarkdown } from '@/Utils/Utils';
+import { useMemo } from 'react';
 
-const MarkUpTextRender = ({ markedDesc, children }) => {
+/**
+ * MarkUpTextRender - Renders markdown content or fallback children
+ * Optimized for performance, SEO, and mobile responsiveness
+ */
+const MarkUpTextRender = ({ markedDesc, children, className = '', lang = 'en' }) => {
+  // Memoize rendered HTML to prevent unnecessary re-parsing
+  const renderedHtml = useMemo(() => {
+    if (!markedDesc) return null;
+    try {
+      return { __html: renderMarkdown(markedDesc) };
+    } catch (error) {
+      console.error('Markdown rendering failed:', error);
+      return null;
+    }
+  }, [markedDesc]);
+
+  // Fallback to children if no markdown or rendering failed
+  const hasContent = renderedHtml !== null;
+
   return (
-    <div
-      className="
-                text-left
-    prose 
-    prose-invert 
-    max-w-none
-
-    prose-p:text-gray-300
-    prose-p:leading-8
-
-    prose-strong:text-white
-    prose-strong:font-semibold
-
-    prose-em:text-gray-300
-
-    prose-ul:list-disc
-    prose-ul:pl-6
-    prose-ul:space-y-3
-
-    prose-ol:list-decimal
-    prose-ol:pl-6
-    prose-ol:space-y-3
-
-    prose-li:text-gray-300
-    prose-li:marker:text-cyan-400
-
-    prose-headings:text-white
-
-    prose-a:text-cyan-400
-    prose-a:no-underline
-    hover:prose-a:text-cyan-300
-  "
+    <article
+      className={`
+        text-left
+        prose 
+        prose-invert 
+        max-w-none
+        text-sm sm:text-base md:text-lg
+        leading-relaxed sm:leading-8
+        break-words
+        overflow-wrap-anywhere
+        ${className}
+      `.trim()}
+      lang={lang}
+      role="region"
+      aria-label="Content section"
+      itemScope
+      itemType="https://schema.org/Article"
     >
-      {markedDesc ? (
-        // ✅ Case 1: Data available hai -> Render Markdown
+      {hasContent ? (
         <div
-          dangerouslySetInnerHTML={{
-            __html: renderMarkdown(markedDesc),
+          className="prose-content break-words"
+          dangerouslySetInnerHTML={renderedHtml}
+          itemProp="articleBody"
+          style={{
+            fontSize: 'inherit',
+            lineHeight: 'inherit',
           }}
         />
       ) : (
-        // ✅ Case 2: Data nahi hai -> Show Default Content
-        children
+        <div className="prose-content" itemProp="articleBody">
+          {children}
+        </div>
       )}
-    </div>
+    </article>
   );
 };
 
+MarkUpTextRender.displayName = 'MarkUpTextRender';
 export default MarkUpTextRender;

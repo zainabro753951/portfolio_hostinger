@@ -679,6 +679,12 @@ export const SERVICE_COLOR_PALETTES = [
     iconBg: 'bg-cyan-600',
   },
 ];
+export const SERVICE_GRADIENTS = [
+  'linear-gradient(135deg, #4e90e1, #02d3fe)',
+  'linear-gradient(135deg, #9a5cb7, #ec4899)',
+  'linear-gradient(135deg, #02d3fe, #4e90e1)',
+  'linear-gradient(135deg, #f59e0b, #02d3fe)',
+];
 
 export const techIcons = [
   { type: 'reactjs', icon: Atom },

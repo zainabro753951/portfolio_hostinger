@@ -1,21 +1,41 @@
-// ============================================================================
-// 📁 PricePlanSection.jsx
-// ============================================================================
 import { GradientText, THEME } from '@/components/UI';
 import { motion } from 'framer-motion';
-import { useRef } from 'react';
+import { memo, useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import PricingCard from './PricingCard';
 
-const PricePlanSection = () => {
+const PricePlanSection = memo(() => {
   const containerRef = useRef(null);
   const { plans, isLoading } = useSelector((state) => state.plan);
+
+  // SEO Structured Data
+  const structuredData = useMemo(() => {
+    if (!plans || plans.length === 0) return null;
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: 'Pricing Plans',
+      description: 'Flexible pricing plans for development and design services.',
+      itemListElement: plans.map((plan, index) => ({
+        '@type': 'Offer',
+        position: index + 1,
+        name: plan.title || 'Pricing Plan',
+        description: plan.description || `Plan ${index + 1} for services`,
+        price: plan.price || 0,
+        priceCurrency: 'USD', // Assuming USD, or adjust if plan has currency
+        availability: 'https://schema.org/InStock',
+        url: `${window.location.origin}/services/${plan.slug || ''}`,
+      })),
+    };
+  }, [plans]);
 
   if (isLoading) {
     return (
       <section
-        className="relative py-24 overflow-hidden flex items-center justify-center min-h-[50vh]"
+        className="relative overflow-hidden flex items-center justify-center py-24 sm:py-32"
         style={{ backgroundColor: THEME.bg }}
+        aria-label="Loading pricing plans"
+        role="status"
       >
         <motion.div
           animate={{ rotate: 360 }}
@@ -30,62 +50,73 @@ const PricePlanSection = () => {
   return (
     <section
       ref={containerRef}
-      className="relative py-24 overflow-hidden"
+      className="relative py-16 sm:py-20 md:py-24 overflow-hidden"
       style={{ backgroundColor: THEME.bg, fontFamily: "'Inter', sans-serif" }}
+      aria-label="Pricing Plans Section"
+      role="region"
+      id="pricing"
     >
-      {/* ✨ Particles */}
-      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 1 }}>
-        {[...Array(15)].map((_, i) => (
-          <div
-            key={`p-${i}`}
-            className="absolute w-1 h-1 rounded-full animate-pulse"
-            style={{
-              left: `${(i * 7.3) % 100}%`,
-              top: `${(i * 13.7) % 100}%`,
-              background: i % 3 === 0 ? THEME.cyan : i % 3 === 1 ? THEME.blue : THEME.purple,
-              opacity: 0.2 + (i % 3) * 0.1,
-              animationDelay: `${i * 0.3}s`,
-              animationDuration: `${3 + (i % 4)}s`,
-            }}
-          />
-        ))}
-      </div>
+      {/* Structured Data for SEO */}
+      {structuredData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+      )}
 
-      <div className="max-w-7xl mx-auto px-6 relative" style={{ zIndex: 2 }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-6 relative" style={{ zIndex: 2 }}>
         {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <span
-            className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-4"
-            style={{
-              background: 'rgba(154, 92, 183, 0.1)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(154, 92, 183, 0.2)',
-              color: THEME.purple,
-            }}
+        <header className="text-center mb-10 sm:mb-12 md:mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.5 }}
           >
-            Pricing Plans
-          </span>
-          <h2
-            className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6"
+            <span
+              className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium mb-4"
+              style={{
+                background: 'rgba(154, 92, 183, 0.1)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(154, 92, 183, 0.2)',
+                color: THEME.purple,
+              }}
+            >
+              Pricing Plans
+            </span>
+          </motion.div>
+
+          <motion.h2
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 leading-tight px-2"
             style={{ color: THEME.textWhite }}
           >
             Choose Your <GradientText>Plan</GradientText>
-          </h2>
-          <p className="max-w-2xl mx-auto" style={{ color: THEME.textGray }}>
-            Flexible pricing options designed to fit your needs and budget. Get started today!
-          </p>
-        </motion.div>
+          </motion.h2>
 
-        <PricingCard plans={plans} />
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="max-w-2xl mx-auto text-sm sm:text-base md:text-lg px-2"
+            style={{ color: THEME.textGray }}
+          >
+            Flexible pricing options designed to fit your needs and budget. Get started today!
+          </motion.p>
+        </header>
+
+        {/* Pricing Cards Grid */}
+        <div aria-label="Available Pricing Options">
+          <PricingCard plans={plans} />
+        </div>
       </div>
     </section>
   );
-};
+});
 
+PricePlanSection.displayName = 'PricePlanSection';
 export default PricePlanSection;
