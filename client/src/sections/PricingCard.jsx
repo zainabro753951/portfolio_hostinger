@@ -167,12 +167,6 @@ const PricingCard = ({ plans }) => {
                 <div className="mb-6 sm:mb-8 text-center">
                   <div className="flex items-baseline justify-center gap-0.5 sm:gap-1">
                     <span
-                      className="text-lg sm:text-2xl font-medium"
-                      style={{ color: THEME.textGray }}
-                    >
-                      $
-                    </span>
-                    <span
                       className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight"
                       style={{ color: THEME.textWhite }}
                     >
