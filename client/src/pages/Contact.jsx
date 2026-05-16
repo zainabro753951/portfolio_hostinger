@@ -5,8 +5,10 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ChevronDown, Sparkles } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 import ContactSection from '../sections/ContactSection';
+import Particles from '../sections/Particles';
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -28,7 +30,7 @@ const FaqItem = memo(({ faq, index, isOpen, onToggle }) => {
     <GlassCard className="faq-item mb-3 sm:mb-4" hover={false}>
       <motion.button
         onClick={onToggle}
-        className="w-full p-4 sm:p-5 md:p-6 flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-inset focus:ring-cyan-500 rounded-t-xl"
+        className="w-full p-4 sm:p-5 md:p-6 flex items-center justify-between text-left focus:outline-none rounded-t-xl"
         whileHover={
           prefersReducedMotion ? undefined : { backgroundColor: 'rgba(255,255,255,0.03)' }
         }
@@ -39,7 +41,7 @@ const FaqItem = memo(({ faq, index, isOpen, onToggle }) => {
           className="text-sm sm:text-base md:text-lg font-semibold pr-2 sm:pr-4 transition-colors duration-300 text-left"
           style={{ color: THEME.textWhite }}
         >
-          {faq.q}
+          {faq.question}
         </h3>
         <motion.div
           animate={prefersReducedMotion ? undefined : { rotate: isOpen ? 180 : 0 }}
@@ -68,10 +70,10 @@ const FaqItem = memo(({ faq, index, isOpen, onToggle }) => {
             role="region"
           >
             <p
-              className="px-4 sm:px-5 md:px-6 pb-4 sm:pb-5 md:pb-6 leading-relaxed text-xs sm:text-sm md:text-base"
+              className="px-4 sm:px-5 md:px-6 py-4 sm:py-5 md:py-6 leading-relaxed text-xs sm:text-sm md:text-base"
               style={{ color: THEME.textGray }}
             >
-              {faq.a}
+              {faq.answer}
             </p>
           </motion.div>
         )}
@@ -90,6 +92,7 @@ const Contact = memo(() => {
   const [searchParams] = useSearchParams();
   const [openFaq, setOpenFaq] = useState(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const { FAQs } = useSelector((state) => state.FAQ);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -143,43 +146,43 @@ const Contact = memo(() => {
     setOpenFaq((prev) => (prev === index ? null : index));
   }, []);
 
-  const faqs = useMemo(
-    () => [
-      {
-        q: 'What is your typical project timeline?',
-        a: 'Project timelines vary based on complexity. A simple website takes 1-2 weeks, while complex applications may take 4-8 weeks.',
-      },
-      {
-        q: 'Do you offer ongoing support?',
-        a: 'Yes! I offer maintenance packages to keep your website running smoothly with regular updates and support.',
-      },
-      {
-        q: 'What are your payment terms?',
-        a: 'I typically require a 50% deposit to start, with the remaining 50% due upon project completion.',
-      },
-      {
-        q: 'Can you work with existing designs?',
-        a: 'Absolutely! I can work with your existing designs or create new ones from scratch based on your requirements.',
-      },
-    ],
-    []
-  );
+  // const faqs = useMemo(
+  //   () => [
+  //     {
+  //       q: 'What is your typical project timeline?',
+  //       a: 'Project timelines vary based on complexity. A simple website takes 1-2 weeks, while complex applications may take 4-8 weeks.',
+  //     },
+  //     {
+  //       q: 'Do you offer ongoing support?',
+  //       a: 'Yes! I offer maintenance packages to keep your website running smoothly with regular updates and support.',
+  //     },
+  //     {
+  //       q: 'What are your payment terms?',
+  //       a: 'I typically require a 50% deposit to start, with the remaining 50% due upon project completion.',
+  //     },
+  //     {
+  //       q: 'Can you work with existing designs?',
+  //       a: 'Absolutely! I can work with your existing designs or create new ones from scratch based on your requirements.',
+  //     },
+  //   ],
+  //   []
+  // );
 
   // SEO Structured Data
   const structuredData = useMemo(
     () => ({
       '@context': 'https://schema.org',
       '@type': 'FAQPage',
-      mainEntity: faqs.map((faq) => ({
+      mainEntity: FAQs.map((faq) => ({
         '@type': 'Question',
-        name: faq.q,
+        name: faq.question,
         acceptedAnswer: {
           '@type': 'Answer',
-          text: faq.a,
+          text: faq.answer,
         },
       })),
     }),
-    [faqs]
+    [FAQs]
   );
 
   const contactInfoData = useMemo(
@@ -200,7 +203,7 @@ const Contact = memo(() => {
   return (
     <main
       ref={containerRef}
-      className="relative min-h-screen min-h-[100dvh] overflow-x-hidden"
+      className="relative  overflow-x-hidden"
       style={{ backgroundColor: THEME.bg, fontFamily: "'Inter', sans-serif" }}
       aria-label="Contact Page"
     >
@@ -237,22 +240,7 @@ const Contact = memo(() => {
       </div>
 
       {/* Particles */}
-      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 1 }} aria-hidden="true">
-        {[...Array(10)].map((_, i) => (
-          <div
-            key={`p-${i}`}
-            className="absolute w-1 h-1 rounded-full animate-pulse"
-            style={{
-              left: `${(i * 11.3) % 100}%`,
-              top: `${(i * 17.7) % 100}%`,
-              background: i % 3 === 0 ? THEME.cyan : i % 3 === 1 ? THEME.blue : THEME.purple,
-              opacity: 0.2 + (i % 3) * 0.1,
-              animationDelay: `${i * 0.3}s`,
-              animationDuration: `${3 + (i % 4)}s`,
-            }}
-          />
-        ))}
-      </div>
+      <Particles />
 
       {/* 🦸 HERO SECTION */}
       <header
@@ -352,7 +340,7 @@ const Contact = memo(() => {
             role="list"
             aria-label="Frequently asked questions"
           >
-            {faqs.map((faq, index) => (
+            {FAQs.map((faq, index) => (
               <FaqItem
                 key={index}
                 faq={faq}

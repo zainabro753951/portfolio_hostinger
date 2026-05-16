@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -451,7 +451,7 @@ const AdditionalServiceCard = ({ service, index }) => {
 const Services = () => {
   const containerRef = useRef(null);
   const { services: sc } = useSelector((state) => state.service);
-
+  const navigate = useNavigate();
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -470,6 +470,26 @@ const Services = () => {
       return { ...service, ...palette };
     });
   }, [sc]);
+
+  // ✅ New function: Handle Free Quote click & navigate to contact with params
+  const handleFreeQuote = useCallback(() => {
+    const params = new URLSearchParams({
+      source: 'services-page',
+      subject: 'Free Quote Request - Services',
+      message: `Hi, I visited your services page and would like to request a free quote.\n\nI'm interested in discussing:\n${
+        services
+          ?.slice(0, 3)
+          .map((s) => `• ${s.title}`)
+          .join('\n') || '• General inquiry'
+      }\n\nPlease let me know your availability and pricing details.\n\nBest regards,`,
+      services:
+        services
+          ?.slice(0, 5)
+          .map((s) => s.slug)
+          .join(',') || '',
+    });
+    navigate(`/contact?${params.toString()}`);
+  }, [navigate, services]);
 
   // SEO Structured Data
   const structuredData = useMemo(() => {
@@ -854,6 +874,7 @@ const Services = () => {
                 className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 w-full sm:w-auto px-4 sm:px-0"
               >
                 <PrimaryButton
+                  onClick={handleFreeQuote} // ✅ Click handler
                   icon={ArrowRight}
                   className="px-6 sm:px-10 py-3 sm:py-4 w-full sm:w-auto justify-center"
                 >

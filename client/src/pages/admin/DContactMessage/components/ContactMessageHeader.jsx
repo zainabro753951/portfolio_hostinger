@@ -1,6 +1,6 @@
 import { useDeleteEntryContext } from '@/context/useDeleteEntryContext';
+import { motion } from 'framer-motion';
 import { Filter, Mail, MailCheck, Search, Trash2 } from 'lucide-react';
-import { motion } from 'motion/react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { store } from '../../../../app/store';

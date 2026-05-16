@@ -1,4 +1,7 @@
 import { useDeleteEntryContext } from '@/context/useDeleteEntryContext';
+import useCreatedAtSorted from '@/hooks/useCreatedAtSorted';
+import { formatTimeAgo, getFileIcon, getFileNameFromUrl, safeParse } from '@/Utils/Utils';
+import { motion, useReducedMotion } from 'framer-motion';
 import {
   Briefcase,
   Building2,
@@ -13,12 +16,9 @@ import {
   Trash2,
   User,
 } from 'lucide-react';
-import { motion, useReducedMotion } from 'motion/react';
 import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import useCreatedAtSorted from '../../../../hooks/useCreatedAtSorted';
-import { formatTimeAgo, getFileIcon, getFileNameFromUrl, safeParse } from '../../../../Utils/Utils';
 
 const DTestimonialTable = () => {
   const dispatch = useDispatch();
@@ -89,8 +89,6 @@ const DTestimonialTable = () => {
     { key: 'updatedAt', label: 'Updated', icon: Clock },
     { key: 'actions', label: 'Actions', icon: null },
   ];
-
-  console.log(testiSorted);
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="show" className="w-full ">

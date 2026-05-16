@@ -1,9 +1,9 @@
 import { GlassCard, GradientText, THEME } from '@/components/UI';
 import { useGSAP } from '@gsap/react';
+import { motion } from 'framer-motion';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowDown, Award, Code, Coffee, Heart, Lightbulb } from 'lucide-react';
-import { motion } from 'motion/react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import aboutImage from '../assets/images/about-portrait.jpg';

@@ -1,4 +1,5 @@
 import { useDeleteEntryContext } from '@/context/useDeleteEntryContext';
+import { motion, useReducedMotion } from 'framer-motion';
 import {
   Briefcase,
   Calendar,
@@ -9,7 +10,6 @@ import {
   Pencil,
   Trash2,
 } from 'lucide-react';
-import { motion, useReducedMotion } from 'motion/react';
 import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';

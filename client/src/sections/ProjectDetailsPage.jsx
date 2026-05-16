@@ -29,8 +29,11 @@ import {
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import DynamicMetaUpdater from '../components/DynamicMetaUpdater';
 import { projectFindBySlug } from '../features/projectSlice';
 import '../richText.css';
+import { formatDuration } from '../Utils/Utils';
+import Particles from './Particles';
 
 // ── Register GSAP Plugins ──────────────────────────────────────────────────
 gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -429,10 +432,10 @@ const ProjectDetailsPage = memo(() => {
       image: project.heroImage?.url ? `${backendUrl}${project.heroImage.url}` : undefined,
       creator: {
         '@type': 'Person',
-        name: project.author || project.role || 'Developer',
+        name: project.author || project.role || 'Zain Abro',
       },
       datePublished: project.createdAt,
-      keywords: (project?.techStack || []).map((t) => t.name).join(', '),
+      keywords: (project?.metaKeywords || []).map((t) => t.name).join(', '),
     };
   }, [project, backendUrl]);
 
@@ -455,6 +458,14 @@ const ProjectDetailsPage = memo(() => {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
       )}
+
+      {/* ✅ Reusable Meta Data Updater */}
+      <DynamicMetaUpdater
+        title={project.seoTitle || project.title || 'Project Details'}
+        description={project.metaDesc || project.shortDesc || ''}
+        schemaId="project-jsonld"
+        schema={structuredData}
+      />
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* 🌌 BACKGROUND LAYERS                                               */}
@@ -479,22 +490,7 @@ const ProjectDetailsPage = memo(() => {
       </div>
 
       {/* Particles */}
-      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 1 }} aria-hidden="true">
-        {[...Array(10)].map((_, i) => (
-          <div
-            key={`p-${i}`}
-            className="absolute w-1 h-1 rounded-full animate-pulse"
-            style={{
-              left: `${(i * 11.3) % 100}%`,
-              top: `${(i * 17.7) % 100}%`,
-              background: i % 3 === 0 ? THEME.cyan : i % 3 === 1 ? THEME.blue : THEME.purple,
-              opacity: 0.2 + (i % 3) * 0.1,
-              animationDelay: `${i * 0.3}s`,
-              animationDuration: `${3 + (i % 4)}s`,
-            }}
-          />
-        ))}
-      </div>
+      <Particles />
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* 🦸 HERO SECTION                                                    */}
@@ -510,7 +506,7 @@ const ProjectDetailsPage = memo(() => {
             initial={prefersReducedMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
             animate={prefersReducedMotion ? undefined : { opacity: 1, x: 0 }}
             transition={prefersReducedMotion ? {} : { duration: 0.5 }}
-            className="inline-flex items-center gap-2 mb-4 sm:mb-8 group transition-colors duration-300 hover:text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-400 rounded p-1 -ml-1"
+            className="inline-flex items-center gap-2 mb-4 sm:mb-8 group transition-colors duration-300 hover:text-white cursor-pointer focus:outline-none rounded p-1 -ml-1"
             style={{ color: THEME.textGray }}
             aria-label="Go back to projects"
           >
@@ -752,14 +748,14 @@ const ProjectDetailsPage = memo(() => {
                   </h4>
                   <div className="space-y-2 sm:space-y-3">
                     {[
-                      { label: 'Client', value: project.client },
-                      { label: 'Role', value: project.role },
-                      { label: 'Duration', value: project.duration },
+                      { label: 'Client', value: projectData?.name },
+                      { label: 'Role', value: project?.category },
+                      { label: 'Duration', value: formatDuration(project?.estTime) },
                       {
                         label: 'Status',
                         value: (
                           <span
-                            className="inline-flex items-center gap-1.5 sm:gap-2"
+                            className="inline-flex items-center gap-1.5 sm:gap-2 "
                             style={{ color: THEME.cyan }}
                           >
                             <span
@@ -778,10 +774,10 @@ const ProjectDetailsPage = memo(() => {
                             href={project.liveDemo}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="transition-colors duration-300 hover:text-white text-xs sm:text-sm break-all"
+                            className="transition-colors duration-300 hover:text-white text-xs sm:text-sm break-all lowercase"
                             style={{ color: THEME.cyan }}
                           >
-                            Visit Site ↗
+                            {projectData?.name}.{projectData?.suffix}
                           </a>
                         ) : (
                           'N/A'
@@ -796,12 +792,12 @@ const ProjectDetailsPage = memo(() => {
                         }}
                       >
                         <span
-                          className="text-[10px] sm:text-xs"
+                          className="text-[10px] sm:text-xs "
                           style={{ color: THEME.textGrayDark }}
                         >
                           {info.label}
                         </span>
-                        <span className="text-xs sm:text-sm font-medium text-right max-w-[60%] truncate">
+                        <span className="text-xs sm:text-sm font-medium text-right max-w-[60%] truncate capitalize">
                           {info.value}
                         </span>
                       </div>

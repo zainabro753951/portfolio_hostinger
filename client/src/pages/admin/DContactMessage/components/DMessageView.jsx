@@ -1,5 +1,6 @@
 // src/components/admin/DMessage/components/DMessageView.jsx
 import { useDeleteEntryContext } from '@/context/useDeleteEntryContext';
+import { motion } from 'framer-motion';
 import {
   Calendar,
   CheckCircle2,
@@ -14,7 +15,6 @@ import {
   User,
   Wifi,
 } from 'lucide-react';
-import { motion } from 'motion/react';
 import { memo, useCallback, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { store } from '../../../../app/store';

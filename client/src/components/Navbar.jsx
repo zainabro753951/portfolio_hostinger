@@ -107,11 +107,11 @@ const Navbar = () => {
             </div>
 
             {/* CTA Button */}
-            <div className="hidden lg:block">
+            <Link to={'/contact'} className="hidden lg:block">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-neon-blue to-neon-purple text-white font-medium text-sm relative overflow-hidden group focus:outline-none focus:ring-2 focus:ring-neon-cyan focus:ring-offset-2 focus:ring-offset-transparent"
+                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-neon-blue to-neon-purple text-white font-medium text-sm relative overflow-hidden group focus:outline-none "
                 aria-label="Hire me for a project"
               >
                 <span className="relative z-10">Hire Me</span>
@@ -123,7 +123,7 @@ const Navbar = () => {
                   aria-hidden="true"
                 />
               </motion.button>
-            </div>
+            </Link>
 
             {/* Mobile Menu Button */}
             <button

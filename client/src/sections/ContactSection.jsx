@@ -526,11 +526,11 @@ const ContactSection = memo(() => {
                           {...register('message', {
                             required: 'Message is required',
                             minLength: { value: 10, message: 'Minimum 10 characters' },
-                            maxLength: { value: 1000, message: 'Maximum 1000 characters' },
+                            maxLength: { value: 10000, message: 'Maximum 10000 characters' },
                           })}
                           onFocus={() => setFocusedField('message')}
                           onBlur={() => setFocusedField(null)}
-                          rows={4}
+                          rows={8}
                           className={`w-full bg-transparent outline-none py-2.5 sm:py-3 text-sm sm:text-base text-white transition-colors duration-300 resize-none border-b-2 ${
                             errors.message
                               ? 'border-red-400'

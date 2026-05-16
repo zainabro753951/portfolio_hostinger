@@ -1,8 +1,8 @@
 import { useDeleteEntryContext } from '@/context/useDeleteEntryContext';
 import useCreatedAtSorted from '@/hooks/useCreatedAtSorted';
 import { formatTimeAgo, getFileIcon, getFileNameFromUrl } from '@/Utils/Utils';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Building2, Calendar, GraduationCap, Pencil, Trash2 } from 'lucide-react';
-import { motion, useReducedMotion } from 'motion/react';
 import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';

@@ -1,6 +1,6 @@
 import { useDeleteEntryContext } from '@/context/useDeleteEntryContext';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { AlertTriangle, Loader2, Trash2, X } from 'lucide-react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { memo, useCallback } from 'react';
 
 const DeleteConfirm = () => {

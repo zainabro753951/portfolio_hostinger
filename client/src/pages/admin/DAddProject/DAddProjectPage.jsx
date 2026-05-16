@@ -1,3 +1,4 @@
+import { motion, useReducedMotion } from 'framer-motion';
 import {
   AlertCircle,
   Code2,
@@ -10,7 +11,6 @@ import {
   Trash2,
   Upload,
 } from 'lucide-react';
-import { motion, useReducedMotion } from 'motion/react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';

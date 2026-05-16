@@ -1,7 +1,7 @@
 import { useGSAP } from '@gsap/react';
+import { motion } from 'framer-motion';
 import gsap from 'gsap';
 import { ArrowRight, Sparkles } from 'lucide-react';
-import { motion } from 'motion/react';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { safeParse, SERVICE_GRADIENTS } from '../Utils/Utils';
@@ -169,7 +169,7 @@ export const PrimaryButton = memo(
 );
 PrimaryButton.displayName = 'PrimaryButton';
 
-export const OutlineButton = memo(({ children, href, onClick, icon: Icon, className = '' }) => {
+export const OutlineButton = memo(({ children, href, to, onClick, icon: Icon, className = '' }) => {
   const content = (
     <span
       className={`inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0a0a0f] focus:ring-cyan-500 ${className}`}
@@ -193,6 +193,13 @@ export const OutlineButton = memo(({ children, href, onClick, icon: Icon, classN
       {children}
     </span>
   );
+  if (to) {
+    return (
+      <Link to={to} onClick={onClick}>
+        {content}
+      </Link>
+    );
+  }
   if (href) {
     return (
       <a href={href} onClick={onClick}>

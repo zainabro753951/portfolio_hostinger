@@ -314,11 +314,16 @@ const Hero = memo(({ about }) => {
               <PrimaryButton
                 onClick={scrollToProjects}
                 icon={ArrowDown}
+                to={'/projects'}
                 aria-label="Explore my projects and portfolio work"
               >
                 Explore My Work
               </PrimaryButton>
-              <OutlineButton onClick={scrollToContact} aria-label="Get in touch and contact me">
+              <OutlineButton
+                to={'/contact'}
+                onClick={scrollToContact}
+                aria-label="Get in touch and contact me"
+              >
                 Contact Me
               </OutlineButton>
             </div>

@@ -1,10 +1,28 @@
 import { THEME } from '@/components/UI';
 import { motion } from 'framer-motion';
 import { ArrowRight, Check, Crown, Sparkles, Zap } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const PricingCard = ({ plans }) => {
   const [hoveredIndex, setHoveredIndex] = useState(null);
+  const navigate = useNavigate(); // ✅ Initialize navigate
+
+  // ✅ New function: Handle plan selection & navigate to contact with params
+  const handlePlanSelect = useCallback(
+    (plan) => {
+      const params = new URLSearchParams({
+        plan: plan?.planName || 'Unknown',
+        price: plan?.price?.toString() || '0',
+        period: plan?.period || '/month',
+        currency: plan?.currency || 'USD',
+        subject: `Interested in ${plan?.planName || 'Pricing'} Plan`,
+        message: `Hi, I'm interested in your "${plan?.planName || 'Plan'}" pricing plan.\n\nPlan Details:\n• Price: ${plan?.currency || '$'}${plan?.price || '0'}${plan?.period || '/month'}\n• Features:\n${plan?.featurePoints?.map((f) => `  - ${f.name}`).join('\n') || '  - No features listed'}\n\nPlease let me know the next steps.\n\nBest regards,`,
+      });
+      navigate(`/contact?${params.toString()}`);
+    },
+    [navigate]
+  );
 
   const getPlanIcon = (planName) => {
     const name = planName?.toLowerCase();
@@ -233,6 +251,7 @@ const PricingCard = ({ plans }) => {
 
                 {/* CTA */}
                 <motion.button
+                  onClick={() => handlePlanSelect(plan)} // ✅ Added click handler
                   whileHover={prefersReducedMotion ? undefined : { scale: 1.02 }}
                   whileTap={prefersReducedMotion ? undefined : { scale: 0.98 }}
                   className="w-full py-3.5 sm:py-4 px-4 sm:px-6 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-2 group/btn overflow-hidden relative"

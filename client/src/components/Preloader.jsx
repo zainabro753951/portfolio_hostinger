@@ -318,7 +318,7 @@ const Preloader = memo(({ onComplete }) => {
       {/* ── Main Content ── */}
       <div
         ref={contentRef}
-        className="relative z-10 flex flex-col items-center px-4 sm:px-6 w-full max-w-lg"
+        className="relative z-10 flex flex-col items-center px-4 sm:px-6 w-full max-w-2xl"
       >
         {/* Logo Icon */}
         <div

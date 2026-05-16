@@ -5,6 +5,7 @@ import {
   toggleSelectMessage,
 } from '@/features/messageSlice';
 import { scrollToRef } from '@/Utils/Utils';
+import { motion } from 'framer-motion';
 import {
   Building2,
   Calendar,
@@ -22,7 +23,6 @@ import {
   User,
   Wifi,
 } from 'lucide-react';
-import { motion } from 'motion/react';
 import { memo, useCallback, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 

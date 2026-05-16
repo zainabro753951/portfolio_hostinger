@@ -1,9 +1,9 @@
 import { GradientText, THEME } from '@/components/UI';
 import useCreatedAtSorted from '@/hooks/useCreatedAtSorted';
+import { AnimatePresence, LazyMotion, domAnimation, motion } from 'framer-motion';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowRight, ChevronRight, Code, Figma, Layers, Play, Sparkles } from 'lucide-react';
-import { AnimatePresence, LazyMotion, domAnimation, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';

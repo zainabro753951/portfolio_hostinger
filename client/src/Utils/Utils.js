@@ -824,3 +824,14 @@ export const getClientSatisfactionRate = (testimonial) => {
     (testimonial.filter((t) => t?.rating >= 4 || t?.ratting >= 4).length / testimonial.length) * 100
   );
 };
+
+
+export function formatDuration(days) {
+  if (days >= 30) {
+    const months = Math.floor(days / 30);
+
+    return `${months} month${months > 1 ? "s" : ""}`;
+  }
+
+  return `${days} day${days > 1 ? "s" : ""}`;
+}

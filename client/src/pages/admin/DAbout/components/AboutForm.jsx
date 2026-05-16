@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import {
   AlignLeft,
   Award,
@@ -11,7 +12,6 @@ import {
   User,
   X,
 } from 'lucide-react';
-import { motion } from 'motion/react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useSelector } from 'react-redux';

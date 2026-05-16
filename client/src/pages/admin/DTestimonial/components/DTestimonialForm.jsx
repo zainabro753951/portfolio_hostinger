@@ -1,4 +1,5 @@
 import useScrollToRef from '@/hooks/useScrollToRef';
+import { motion, useReducedMotion } from 'framer-motion';
 import {
   Briefcase,
   Building2,
@@ -9,7 +10,6 @@ import {
   Save,
   User,
 } from 'lucide-react';
-import { motion, useReducedMotion } from 'motion/react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';

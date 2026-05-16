@@ -22,6 +22,7 @@ import {
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
+import { DynamicMetaUpdater } from '../components/DynamicMetaUpdater'; // Import the reusable component
 import MarkUpTextRender from '../sections/MarkUpTextRender';
 import Particles from '../sections/Particles';
 
@@ -184,74 +185,35 @@ ProcessStep.displayName = 'ProcessStep';
 
 // ── Color Config for Badges ───────────────────────────────────────────────────
 const BADGE_COLORS = {
-  // Cyan/Blue variants
   cyan: { bg: 'rgba(2, 211, 254, 0.12)', border: 'rgba(2, 211, 254, 0.4)', text: '#02d4fe' },
   blue: { bg: 'rgba(78, 144, 225, 0.12)', border: 'rgba(78, 144, 225, 0.4)', text: '#4e90e1' },
-
-  // Success/Green
   green: { bg: 'rgba(16, 185, 129, 0.12)', border: 'rgba(16, 185, 129, 0.4)', text: '#10b981' },
   emerald: { bg: 'rgba(52, 211, 153, 0.12)', border: 'rgba(52, 211, 153, 0.4)', text: '#34d399' },
-
-  // Warning/Yellow
   yellow: { bg: 'rgba(245, 158, 11, 0.12)', border: 'rgba(245, 158, 11, 0.4)', text: '#f59e0b' },
   orange: { bg: 'rgba(249, 115, 22, 0.12)', border: 'rgba(249, 115, 22, 0.4)', text: '#f97316' },
-
-  // Error/Red
   red: { bg: 'rgba(239, 68, 68, 0.12)', border: 'rgba(239, 68, 68, 0.4)', text: '#ef4444' },
   rose: { bg: 'rgba(244, 63, 94, 0.12)', border: 'rgba(244, 63, 94, 0.4)', text: '#f43f5e' },
-
-  // Purple/Pink
   purple: { bg: 'rgba(154, 92, 183, 0.12)', border: 'rgba(154, 92, 183, 0.4)', text: '#9a5cb7' },
   pink: { bg: 'rgba(236, 72, 153, 0.12)', border: 'rgba(236, 72, 153, 0.4)', text: '#ec4899' },
-
-  // Default fallback
   default: { bg: 'rgba(255,255,255,0.08)', border: 'rgba(255,255,255,0.2)', text: THEME.textGray },
 };
 
-// ── Helper: Get badge style from color key or hex ───────────────────────────
 const getBadgeStyle = (colorInput) => {
-  // Agar predefined key hai (jaise 'cyan', 'green')
-  if (BADGE_COLORS[colorInput]) {
-    return BADGE_COLORS[colorInput];
-  }
-  // Agar hex/rgb string hai, to fallback generate karein
-  return {
-    bg: `${colorInput}15`,
-    border: `${colorInput}40`,
-    text: colorInput,
-  };
+  if (BADGE_COLORS[colorInput]) return BADGE_COLORS[colorInput];
+  return { bg: `${colorInput}15`, border: `${colorInput}40`, text: colorInput };
 };
 
-// ── Stat Badge (Improved) ───────────────────────────────────────────────────
 const StatBadge = ({ icon: Icon, label, value, color, variant = 'solid' }) => {
-  // ✅ Color variants for consistent styling
   const variants = {
-    solid: {
-      bg: `${color}15`, // 8% opacity hex suffix
-      border: `${color}40`, // 25% opacity
-      text: color,
-      icon: color,
-    },
-    soft: {
-      bg: `${color}10`,
-      border: 'transparent',
-      text: color,
-      icon: color,
-    },
-    outline: {
-      bg: 'transparent',
-      border: `${color}50`,
-      text: color,
-      icon: color,
-    },
+    solid: { bg: `${color}15`, border: `${color}40`, text: color, icon: color },
+    soft: { bg: `${color}10`, border: 'transparent', text: color, icon: color },
+    outline: { bg: 'transparent', border: `${color}50`, text: color, icon: color },
   };
-
   const style = variants[variant] || variants.solid;
 
   return (
     <div
-      className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg 
-                 transition-all duration-200 hover:scale-[1.02] hover:shadow-sm"
+      className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-sm"
       style={{
         background: style.bg,
         border: `1px solid ${style.border}`,
@@ -265,13 +227,11 @@ const StatBadge = ({ icon: Icon, label, value, color, variant = 'solid' }) => {
         style={{ color: style.icon }}
         aria-hidden="true"
       />
-
       {label && (
         <span className="text-[10px] sm:text-xs opacity-80" style={{ color: THEME.textGray }}>
           {label}
         </span>
       )}
-
       <span
         className="text-[10px] sm:text-xs font-semibold capitalize tracking-wide"
         style={{ color: style.text }}
@@ -298,22 +258,6 @@ const ServiceDetailPage = memo(() => {
 
   const { services } = useSelector((state) => state.service);
   const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE || '';
-
-  // ── SEO ──────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!service) return;
-    document.title = service.seoMetaTitle || service.title || 'Service Details';
-    let meta = document.querySelector('meta[name="description"]');
-    const content = service.seoMetaDescription || service.shortDescription || '';
-    if (meta) {
-      meta.setAttribute('content', content);
-    } else {
-      meta = document.createElement('meta');
-      meta.name = 'description';
-      meta.content = content;
-      document.head.appendChild(meta);
-    }
-  }, [service]);
 
   // ── Data ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -387,11 +331,32 @@ const ServiceDetailPage = memo(() => {
     []
   );
 
+  // ── Structured Data ──────────────────────────────────────────
+  const structuredData = useMemo(() => {
+    if (!service) return null;
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Service',
+      name: service.title,
+      description: service.shortDescription || service.fullDescription,
+      url: `${window.location.origin}/services/${slug}`,
+      provider: { '@type': 'Organization', name: 'Portfolio' },
+      offers: {
+        '@type': 'Offer',
+        url: `${window.location.origin}/contact`,
+        priceCurrency: 'USD',
+        availability:
+          service.status === 'active'
+            ? 'https://schema.org/InStock'
+            : 'https://schema.org/OutOfStock',
+      },
+    };
+  }, [service, slug]);
+
   // ── GSAP ─────────────────────────────────────────────────────
   useGSAP(
     () => {
       if (!service || loading || prefersReducedMotion) return;
-
       const heroContent = heroRef.current?.querySelector('.hero-content');
       if (heroContent) {
         gsap.from(heroContent.children, {
@@ -402,7 +367,6 @@ const ServiceDetailPage = memo(() => {
           ease: 'power3.out',
         });
       }
-
       if (heroImageRef.current) {
         gsap.from(heroImageRef.current, {
           x: 50,
@@ -412,7 +376,6 @@ const ServiceDetailPage = memo(() => {
           ease: 'power3.out',
         });
       }
-
       const detailCards = document.querySelectorAll('.detail-card');
       detailCards.forEach((card, index) => {
         gsap.from(card, {
@@ -429,7 +392,6 @@ const ServiceDetailPage = memo(() => {
           ease: 'power3.out',
         });
       });
-
       gsap.to('.gradient-orb', {
         scale: 1.2,
         duration: 4,
@@ -440,31 +402,6 @@ const ServiceDetailPage = memo(() => {
     },
     { scope: pageRef, dependencies: [service, loading] }
   );
-
-  // ── Structured Data ──────────────────────────────────────────
-  const structuredData = useMemo(() => {
-    if (!service) return null;
-    return {
-      '@context': 'https://schema.org',
-      '@type': 'Service',
-      name: service.title,
-      description: service.shortDescription || service.fullDescription,
-      url: `${window.location.origin}/services/${slug}`,
-      provider: {
-        '@type': 'Organization',
-        name: 'Portfolio',
-      },
-      offers: {
-        '@type': 'Offer',
-        url: `${window.location.origin}/contact`,
-        priceCurrency: 'USD',
-        availability:
-          service.status === 'active'
-            ? 'https://schema.org/InStock'
-            : 'https://schema.org/OutOfStock',
-      },
-    };
-  }, [service, slug]);
 
   // ── Contact CTA ──────────────────────────────────────────────
   const handleGetStarted = useCallback(() => {
@@ -519,20 +456,19 @@ const ServiceDetailPage = memo(() => {
   return (
     <main
       ref={pageRef}
-      className="relative  overflow-x-hidden"
+      className="relative overflow-x-hidden"
       style={{ backgroundColor: THEME.bg, fontFamily: "'Inter', sans-serif" }}
       aria-label={`${service.title} Service Details`}
     >
-      {structuredData && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-        />
-      )}
+      {/* ✅ Reusable Meta Data Updater */}
+      <DynamicMetaUpdater
+        title={service.seoMetaTitle || service.title || 'Service Details'}
+        description={service.seoMetaDescription || service.shortDescription || ''}
+        schemaId="service-jsonld"
+        schema={structuredData}
+      />
 
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* 🌌 BACKGROUND LAYERS                                               */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* 🌌 BACKGROUND LAYERS */}
       <div
         className="fixed inset-0 pointer-events-none overflow-hidden"
         style={{ zIndex: 0 }}
@@ -551,18 +487,14 @@ const ServiceDetailPage = memo(() => {
           style={{ animationDelay: '2s', background: 'rgba(154, 92, 183, 0.1)' }}
         />
       </div>
-
       <Particles />
 
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* 🦸 HERO SECTION                                                    */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* 🦸 HERO SECTION */}
       <section
         className="relative min-h-[85vh] sm:min-h-screen flex items-center justify-center pt-20 pb-8 sm:pt-24 sm:pb-12"
         style={{ zIndex: 2 }}
       >
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-8 sm:py-12 w-full">
-          {/* Back Button */}
           <motion.button
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -584,7 +516,6 @@ const ServiceDetailPage = memo(() => {
           </motion.button>
 
           <div className="grid md:grid-cols-2 gap-6 sm:gap-8 md:gap-10 lg:gap-12 items-center">
-            {/* Text Content */}
             <article ref={heroRef} className="hero-content order-2 md:order-1">
               <motion.div
                 initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
@@ -609,14 +540,12 @@ const ServiceDetailPage = memo(() => {
                   {service.category}
                 </span>
               </motion.div>
-
               <h1
                 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-4 sm:mb-6 leading-[1.1] sm:leading-tight"
                 style={{ color: THEME.textGray }}
               >
                 {service.title}
               </h1>
-
               <p
                 className="text-sm sm:text-lg md:text-xl mb-3 sm:mb-4 font-light max-w-xl"
                 style={{ color: THEME.textGray }}
@@ -624,7 +553,6 @@ const ServiceDetailPage = memo(() => {
                 {service.shortDescription}
               </p>
 
-              {/* Status / Delivery Badges */}
               <motion.div
                 initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
@@ -651,7 +579,6 @@ const ServiceDetailPage = memo(() => {
                 )}
               </motion.div>
 
-              {/* CTA */}
               <motion.div
                 initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
@@ -675,7 +602,6 @@ const ServiceDetailPage = memo(() => {
               </motion.div>
             </article>
 
-            {/* Hero Image */}
             <figure ref={heroImageRef} className="relative hidden md:block order-1 md:order-2">
               <div
                 className="absolute -inset-3 sm:-inset-4 rounded-2xl sm:rounded-3xl opacity-30 blur-2xl pointer-events-none"
@@ -706,8 +632,6 @@ const ServiceDetailPage = memo(() => {
                   }}
                   aria-hidden="true"
                 />
-
-                {/* Overlay Info Card */}
                 <motion.div
                   initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
                   animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
@@ -745,8 +669,6 @@ const ServiceDetailPage = memo(() => {
                   </div>
                 </motion.div>
               </div>
-
-              {/* Decorative */}
               <div
                 className="absolute -top-3 sm:-top-4 -right-3 sm:-right-4 w-20 h-20 sm:w-24 sm:h-24 rounded-full blur-xl animate-pulse"
                 style={{ background: 'rgba(2, 211, 254, 0.2)' }}
@@ -762,12 +684,9 @@ const ServiceDetailPage = memo(() => {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* 📋 CONTENT SECTIONS                                                */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* 📋 CONTENT SECTIONS */}
       <section className="relative py-12 sm:py-16 md:py-24" style={{ zIndex: 2 }}>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6">
-          {/* 1. Full Description */}
           <section className="mb-12 sm:mb-16 md:mb-20" aria-labelledby="overview-heading">
             <SectionHeading
               icon={FileText}
@@ -784,7 +703,6 @@ const ServiceDetailPage = memo(() => {
             </GlassCard>
           </section>
 
-          {/* 2. Tech Stack */}
           {techStack.length > 0 && (
             <section className="mb-12 sm:mb-16 md:mb-20" aria-labelledby="tech-heading">
               <SectionHeading
@@ -802,7 +720,6 @@ const ServiceDetailPage = memo(() => {
             </section>
           )}
 
-          {/* 3. Features */}
           {features.length > 0 && (
             <section className="mb-12 sm:mb-16 md:mb-20" aria-labelledby="features-heading">
               <SectionHeading
@@ -824,7 +741,6 @@ const ServiceDetailPage = memo(() => {
             </section>
           )}
 
-          {/* 4. Process */}
           <section className="mb-12 sm:mb-16 md:mb-20" aria-labelledby="process-heading">
             <SectionHeading
               icon={Cpu}
@@ -847,7 +763,6 @@ const ServiceDetailPage = memo(() => {
             </GlassCard>
           </section>
 
-          {/* 5. CTA */}
           <section aria-label="Start project call to action">
             <div
               className="rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-12 detail-card text-center"
