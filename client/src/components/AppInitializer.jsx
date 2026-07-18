@@ -1,34 +1,34 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { batch, useDispatch } from 'react-redux';
-import ErrorFallback from './ErrorFallBack';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import { batch, useDispatch } from 'react-redux'
+import ErrorFallback from './ErrorFallBack'
 
 // 🧩 Public Queries
-import { useGetAbout } from '../Queries/GetAbout';
-import { useGetEducation } from '../Queries/GetEducation';
-import { useGetExp } from '../Queries/GetExp';
-import { useGetFAQ } from '../Queries/GetFAQ';
-import { useGetPlan } from '../Queries/GetPlan';
-import { useGetProjectsQuery } from '../Queries/GetProjects';
-import { useGetService } from '../Queries/GetServices';
-import { useGetSiteSettingsQuery } from '../Queries/GetSiteSetting';
-import { useGetSkills } from '../Queries/GetSkills';
-import { useGetTestimonial } from '../Queries/GetTestimonial';
-import { useGetVisitorsCount } from '../Queries/GetVisitorsCount';
+import { useGetAbout } from '../Queries/GetAbout'
+import { useGetEducation } from '../Queries/GetEducation'
+import { useGetExp } from '../Queries/GetExp'
+import { useGetFAQ } from '../Queries/GetFAQ'
+import { useGetPlan } from '../Queries/GetPlan'
+import { useGetProjectsQuery } from '../Queries/GetProjects'
+import { useGetService } from '../Queries/GetServices'
+import { useGetSiteSettingsQuery } from '../Queries/GetSiteSetting'
+import { useGetSkills } from '../Queries/GetSkills'
+import { useGetTestimonial } from '../Queries/GetTestimonial'
+import { useGetVisitorsCount } from '../Queries/GetVisitorsCount'
 
 // 🧩 Slices
-import { addAbout } from '../features/aboutSlice';
-import { addEduc } from '../features/educationSlice';
-import { addExp } from '../features/experienceSlice';
-import { addFAQs } from '../features/FAQSlice';
-import { addPlan } from '../features/planSlice';
-import { addProjects } from '../features/projectSlice';
-import { addServices } from '../features/serviceSlice';
-import { setSiteSettings } from '../features/siteSettingsSlice';
-import { addSkills } from '../features/skillSlice';
-import { addTesti } from '../features/testimonialSlice';
-import { addVisitorsCount } from '../features/visitorsSlice';
+import { addAbout } from '../features/aboutSlice'
+import { addEduc } from '../features/educationSlice'
+import { addExp } from '../features/experienceSlice'
+import { addFAQs } from '../features/FAQSlice'
+import { addPlan } from '../features/planSlice'
+import { addProjects } from '../features/projectSlice'
+import { addServices } from '../features/serviceSlice'
+import { setSiteSettings } from '../features/siteSettingsSlice'
+import { addSkills } from '../features/skillSlice'
+import { addTesti } from '../features/testimonialSlice'
+import { addVisitorsCount } from '../features/visitorsSlice'
 
-import Preloader from './Preloader';
+import Preloader from './Preloader'
 
 // 📋 PUBLIC DATA CONFIG
 const PUBLIC_DATA_CONFIG = [
@@ -88,12 +88,12 @@ const PUBLIC_DATA_CONFIG = [
     transform: (d) => ({ visitorsCount: d?.visitorsCount || 0 }),
     skipLoading: true,
   },
-];
+]
 
 const AppInitializer = ({ children }) => {
-  const dispatch = useDispatch();
-  const processedRefs = useRef(new Map());
-  const isFirstLoad = useRef(true);
+  const dispatch = useDispatch()
+  const processedRefs = useRef(new Map())
+  const isFirstLoad = useRef(true)
 
   // ✅ Public queries - RTK Query handles caching automatically
   const queries = {
@@ -116,91 +116,91 @@ const AppInitializer = ({ children }) => {
     visitorsCount: useGetVisitorsCount(undefined, {
       refetchOnMountOrArgChange: false,
     }),
-  };
+  }
 
   // 🎯 Stable sync function with proper dependency tracking
   const syncData = useCallback(() => {
-    const updates = [];
-    const loadingStates = [];
-    let hasNewData = false;
+    const updates = []
+    const loadingStates = []
+    let hasNewData = false
 
     PUBLIC_DATA_CONFIG.forEach(({ key, action, transform, skipLoading }) => {
-      const query = queries[key];
-      if (!query) return;
+      const query = queries[key]
+      if (!query) return
 
-      const isLoading = query.isFetching || query.isPending;
-      const hasData = query.data !== undefined && query.data !== null;
+      const isLoading = query.isFetching || query.isPending
+      const hasData = query.data !== undefined && query.data !== null
 
       // 🔑 Use data fingerprint for change detection
-      const dataFingerprint = hasData ? JSON.stringify(query.data).slice(0, 500) : 'no-data';
-      const stateKey = `${key}-${isLoading}-${dataFingerprint}`;
-      const lastProcessed = processedRefs.current.get(key);
+      const dataFingerprint = hasData ? JSON.stringify(query.data).slice(0, 500) : 'no-data'
+      const stateKey = `${key}-${isLoading}-${dataFingerprint}`
+      const lastProcessed = processedRefs.current.get(key)
 
       // Skip if already processed this exact state
-      if (lastProcessed === stateKey) return;
-      processedRefs.current.set(key, stateKey);
+      if (lastProcessed === stateKey) return
+      processedRefs.current.set(key, stateKey)
 
       if (!skipLoading) {
-        loadingStates.push({ action, isLoading });
+        loadingStates.push({ action, isLoading })
       }
 
       // ✅ Only dispatch data when NOT loading and data exists
       if (!isLoading && hasData && !query.isError) {
-        const payload = transform(query.data);
+        const payload = transform(query.data)
         const hasValidData = Object.values(payload).some((v) =>
           Array.isArray(v) ? v.length > 0 : Object.keys(v).length > 0
-        );
+        )
 
         if (hasValidData) {
-          updates.push({ action, payload: { ...payload, isLoading: false } });
-          hasNewData = true;
+          updates.push({ action, payload: { ...payload, isLoading: false } })
+          hasNewData = true
         }
       }
 
       // ⚠️ Handle auth errors silently
       if (query.isError) {
-        const status = query.error?.status || query.error?.response?.status;
+        const status = query.error?.status || query.error?.response?.status
         if (status === 401 || status === 403) {
-          dispatch(action({ isLoading: false, isError: false }));
+          dispatch(action({ isLoading: false, isError: false }))
         }
       }
-    });
+    })
 
     // 🚀 Batch all dispatches together
     if (loadingStates.length > 0 || updates.length > 0) {
       batch(() => {
         loadingStates.forEach(({ action, isLoading }) => {
-          dispatch(action({ isLoading }));
-        });
+          dispatch(action({ isLoading }))
+        })
         updates.forEach(({ action, payload }) => {
-          dispatch(action(payload));
-        });
-      });
+          dispatch(action(payload))
+        })
+      })
     }
 
     // Mark first load complete
     if (hasNewData && isFirstLoad.current) {
-      isFirstLoad.current = false;
+      isFirstLoad.current = false
     }
-  }, [queries, dispatch]);
+  }, [queries, dispatch])
 
   // 🎯 Run sync on mount and when queries change
   useEffect(() => {
-    syncData();
-  }, [syncData]);
+    syncData()
+  }, [syncData])
 
   // 🎯 Global state computation
   const globalState = useMemo(() => {
-    const queryArray = Object.values(queries);
+    const queryArray = Object.values(queries)
 
-    const isLoading = queryArray.some((q) => q.isFetching || q.isPending);
-    const hasData = queryArray.some((q) => q.data !== undefined && q.data !== null);
+    const isLoading = queryArray.some((q) => q.isFetching || q.isPending)
+    const hasData = queryArray.some((q) => q.data !== undefined && q.data !== null)
 
     const fatalErrors = queryArray.filter((q) => {
-      if (!q.isError) return false;
-      const status = q.error?.status || q.error?.response?.status;
-      return ![401, 403].includes(status);
-    });
+      if (!q.isError) return false
+      const status = q.error?.status || q.error?.response?.status
+      return ![401, 403].includes(status)
+    })
 
     return {
       isLoading,
@@ -208,20 +208,20 @@ const AppInitializer = ({ children }) => {
       hasFatalError: fatalErrors.length > 0,
       fatalError: fatalErrors[0]?.error,
       isFirstLoad: isFirstLoad.current,
-    };
-  }, [queries]);
+    }
+  }, [queries])
 
   // 🚨 Fatal error fallback
   if (globalState.hasFatalError) {
-    return <ErrorFallback error={globalState.fatalError} />;
+    return <ErrorFallback error={globalState.fatalError} />
   }
 
   // ⏳ Show nothing during initial load (prevents undefined flash)
   if (globalState.isLoading && !globalState.hasData && isFirstLoad.current) {
-    return <Preloader />;
+    return <Preloader />
   }
 
-  return children;
-};
+  return children
+}
 
-export default React.memo(AppInitializer, (prev, next) => prev.children === next.children);
+export default React.memo(AppInitializer, (prev, next) => prev.children === next.children)

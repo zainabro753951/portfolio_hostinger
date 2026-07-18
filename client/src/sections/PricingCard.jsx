@@ -1,12 +1,12 @@
-import { THEME } from '@/components/UI';
-import { motion } from 'framer-motion';
-import { ArrowRight, Check, Crown, Sparkles, Zap } from 'lucide-react';
-import { useCallback, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { THEME } from '@/components/UI'
+import { motion } from 'framer-motion'
+import { ArrowRight, Check, Crown, Sparkles, Zap } from 'lucide-react'
+import { useCallback, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const PricingCard = ({ plans }) => {
-  const [hoveredIndex, setHoveredIndex] = useState(null);
-  const navigate = useNavigate(); // ✅ Initialize navigate
+  const [hoveredIndex, setHoveredIndex] = useState(null)
+  const navigate = useNavigate() // ✅ Initialize navigate
 
   // ✅ New function: Handle plan selection & navigate to contact with params
   const handlePlanSelect = useCallback(
@@ -18,23 +18,23 @@ const PricingCard = ({ plans }) => {
         currency: plan?.currency || 'USD',
         subject: `Interested in ${plan?.planName || 'Pricing'} Plan`,
         message: `Hi, I'm interested in your "${plan?.planName || 'Plan'}" pricing plan.\n\nPlan Details:\n• Price: ${plan?.currency || '$'}${plan?.price || '0'}${plan?.period || '/month'}\n• Features:\n${plan?.featurePoints?.map((f) => `  - ${f.name}`).join('\n') || '  - No features listed'}\n\nPlease let me know the next steps.\n\nBest regards,`,
-      });
-      navigate(`/contact?${params.toString()}`);
+      })
+      navigate(`/contact?${params.toString()}`)
     },
     [navigate]
-  );
+  )
 
   const getPlanIcon = (planName) => {
-    const name = planName?.toLowerCase();
+    const name = planName?.toLowerCase()
     if (name === 'standard')
-      return <Crown size={20} style={{ color: '#fbbf24' }} aria-hidden="true" />;
+      return <Crown size={20} style={{ color: '#fbbf24' }} aria-hidden="true" />
     if (name === 'premium')
-      return <Sparkles size={20} style={{ color: THEME.purple }} aria-hidden="true" />;
-    return <Zap size={20} style={{ color: THEME.cyan }} aria-hidden="true" />;
-  };
+      return <Sparkles size={20} style={{ color: THEME.purple }} aria-hidden="true" />
+    return <Zap size={20} style={{ color: THEME.cyan }} aria-hidden="true" />
+  }
 
   const prefersReducedMotion =
-    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
   return (
     <div className="relative rounded-2xl" role="list" aria-label="Pricing Plans List">
@@ -54,9 +54,9 @@ const PricingCard = ({ plans }) => {
         }
       >
         {plans?.map((plan, index) => {
-          const isPopular = plan?.planName?.toLowerCase() === 'standard';
-          const isHovered = hoveredIndex === index;
-          const planId = plan?.id || `plan-${index}`;
+          const isPopular = plan?.planName?.toLowerCase() === 'standard'
+          const isHovered = hoveredIndex === index
+          const planId = plan?.id || `plan-${index}`
 
           return (
             <motion.div
@@ -200,7 +200,7 @@ const PricingCard = ({ plans }) => {
 
                 {/* Features */}
                 <ul
-                  className="space-y-3 sm:space-y-4 mb-6 sm:mb-8 flex-grow px-1"
+                  className="space-y-3 sm:space-y-4 mb-6 sm:mb-8 flex-grow px-1 "
                   aria-label="Plan Features"
                 >
                   {plan?.featurePoints?.map(({ name: feature }, fIndex) => (
@@ -209,7 +209,7 @@ const PricingCard = ({ plans }) => {
                       initial={prefersReducedMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
                       animate={prefersReducedMotion ? undefined : { opacity: 1, x: 0 }}
                       transition={prefersReducedMotion ? {} : { delay: 0.3 + fIndex * 0.1 }}
-                      className="flex items-start gap-2.5 sm:gap-3 group/item"
+                      className="flex  gap-2.5 sm:gap-3 group/item items-center"
                     >
                       <div
                         className="w-4 h-4 sm:w-5 sm:h-5 rounded-md sm:rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-300"
@@ -227,7 +227,7 @@ const PricingCard = ({ plans }) => {
                         />
                       </div>
                       <span
-                        className="text-xs sm:text-sm leading-relaxed transition-colors duration-300 group-hover/item:text-white"
+                        className="text-xs sm:text-sm leading-relaxed transition-colors duration-300 group-hover/item:text-white text-start"
                         style={{ color: THEME.textGray }}
                       >
                         {feature || ''}
@@ -258,16 +258,16 @@ const PricingCard = ({ plans }) => {
                   onMouseEnter={
                     !isPopular
                       ? (e) => {
-                          e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-                          e.currentTarget.style.borderColor = THEME.borderHover;
+                          e.currentTarget.style.background = 'rgba(255,255,255,0.1)'
+                          e.currentTarget.style.borderColor = THEME.borderHover
                         }
                       : undefined
                   }
                   onMouseLeave={
                     !isPopular
                       ? (e) => {
-                          e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                          e.currentTarget.style.borderColor = THEME.border;
+                          e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
+                          e.currentTarget.style.borderColor = THEME.border
                         }
                       : undefined
                   }
@@ -303,7 +303,7 @@ const PricingCard = ({ plans }) => {
                 )}
               </article>
             </motion.div>
-          );
+          )
         })}
       </motion.div>
 
@@ -328,7 +328,7 @@ const PricingCard = ({ plans }) => {
         </p>
       </motion.div>
     </div>
-  );
-};
+  )
+}
 
-export default PricingCard;
+export default PricingCard
