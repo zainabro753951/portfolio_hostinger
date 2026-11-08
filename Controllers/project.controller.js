@@ -78,7 +78,7 @@ export const addOrUpdateProject = async (req, res) => {
       if (!data) return null;
       if (typeof data === "string") {
         try {
-          return JSON.parse(data);
+          return safeParseJSON(data);
         } catch {
           return data;
         }
@@ -243,7 +243,7 @@ export const deleteProject = async (req, res) => {
     const parseJSON = (str) => {
       if (!str) return null;
       try {
-        return JSON.parse(str);
+        return safeParseJSON(str);
       } catch (e) {
         console.error("JSON parse error:", e);
         return null;

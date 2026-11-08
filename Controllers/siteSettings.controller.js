@@ -1,62 +1,75 @@
-import pool from '../db.config.js'
-import { safeParse } from '../Utils/SafeParser.js'
-import { deleteFromLocal, uploadToLocal } from '../Utils/uploadToLocal.js'
+import pool from "../db.config.js";
+import { safeParseJSON } from "../Utils/safeParseJSON.js";
+import { safeParse } from "../Utils/SafeParser.js";
+import { deleteFromLocal, uploadToLocal } from "../Utils/uploadToLocal.js";
 
 // Helper function for safe JSON parsing
 const parseJSON = (data) => {
-  if (!data) return null
-  return typeof data === 'string' ? safeParse(data) : data
-}
+  if (!data) return null;
+  return typeof data === "string" ? safeParse(data) : data;
+};
 
 export const addSiteSettings = async (req, res) => {
-  let { contactInfo, seoPages = [], siteInfo, deletedSeoPageIds = [] } = req.body
+  let {
+    contactInfo,
+    seoPages = [],
+    siteInfo,
+    deletedSeoPageIds = [],
+  } = req.body;
 
   // 1. Safe Parsing
-  siteInfo = parseJSON(siteInfo)
-  contactInfo = parseJSON(contactInfo)
-  seoPages = Array.isArray(seoPages) ? seoPages : parseJSON(seoPages) || []
+  siteInfo = parseJSON(siteInfo);
+  contactInfo = parseJSON(contactInfo);
+  seoPages = Array.isArray(seoPages) ? seoPages : parseJSON(seoPages) || [];
   deletedSeoPageIds = Array.isArray(deletedSeoPageIds)
     ? deletedSeoPageIds
-    : parseJSON(deletedSeoPageIds) || []
+    : parseJSON(deletedSeoPageIds) || [];
 
-  const { websiteName, tagline, footerText, googleAnalytics, logoImageOBJ, faviconOBJ } =
-    siteInfo || {}
+  const {
+    websiteName,
+    tagline,
+    footerText,
+    googleAnalytics,
+    logoImageOBJ,
+    faviconOBJ,
+  } = siteInfo || {};
 
-  const { linkedin, github, facebook, instagram, email, contactPhone } = contactInfo || {}
+  const { linkedin, github, facebook, instagram, email, contactPhone } =
+    contactInfo || {};
 
-  const parsedLogo = parseJSON(logoImageOBJ)
-  const parsedFavicon = parseJSON(faviconOBJ)
+  const parsedLogo = parseJSON(logoImageOBJ);
+  const parsedFavicon = parseJSON(faviconOBJ);
 
-  const newFilesKeys = []
-  let connection
+  const newFilesKeys = [];
+  let connection;
 
   try {
     // 2. Get DB Connection for Transaction (Massive Performance Boost)
-    connection = await pool.getConnection()
-    await connection.beginTransaction()
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
 
     // 3. Upload images in Parallel
     const [logoResult, faviconResult] = await Promise.all([
-      req.files?.['siteInfo[logoImage]']?.[0]
-        ? uploadToLocal(req.files['siteInfo[logoImage]'][0], 'site/logo')
+      req.files?.["siteInfo[logoImage]"]?.[0]
+        ? uploadToLocal(req.files["siteInfo[logoImage]"][0], "site/logo")
         : Promise.resolve(null),
-      req.files?.['siteInfo[favicon]']?.[0]
-        ? uploadToLocal(req.files['siteInfo[favicon]'][0], 'site/favicon')
+      req.files?.["siteInfo[favicon]"]?.[0]
+        ? uploadToLocal(req.files["siteInfo[favicon]"][0], "site/favicon")
         : Promise.resolve(null),
-    ])
+    ]);
 
-    if (logoResult) newFilesKeys.push(logoResult.key)
-    if (faviconResult) newFilesKeys.push(faviconResult.key)
+    if (logoResult) newFilesKeys.push(logoResult.key);
+    if (faviconResult) newFilesKeys.push(faviconResult.key);
 
     const finalLogoOBJ = JSON.stringify({
       key: logoResult?.key || parsedLogo?.key || null,
       url: logoResult?.url || parsedLogo?.url || null,
-    })
+    });
 
     const finalFaviconOBJ = JSON.stringify({
       key: faviconResult?.key || parsedFavicon?.key || null,
       url: faviconResult?.url || parsedFavicon?.url || null,
-    })
+    });
 
     // 4. UPSERT site_info (Replaces SELECT + INSERT/UPDATE)
     // Note: Ensure 'websiteName' or a specific ID is used as the unique constraint,
@@ -67,8 +80,15 @@ export const addSiteSettings = async (req, res) => {
        ON DUPLICATE KEY UPDATE
        websiteName=VALUES(websiteName), tagline=VALUES(tagline), footerText=VALUES(footerText),
        googleAnalytics=VALUES(googleAnalytics), logoImage=VALUES(logoImage), favicon=VALUES(favicon)`,
-      [websiteName, tagline, footerText, googleAnalytics, finalLogoOBJ, finalFaviconOBJ]
-    )
+      [
+        websiteName,
+        tagline,
+        footerText,
+        googleAnalytics,
+        finalLogoOBJ,
+        finalFaviconOBJ,
+      ],
+    );
 
     // 5. UPSERT contact_info
     await connection.query(
@@ -77,12 +97,14 @@ export const addSiteSettings = async (req, res) => {
        ON DUPLICATE KEY UPDATE
        linkedin=VALUES(linkedin), github=VALUES(github), facebook=VALUES(facebook),
        instagram=VALUES(instagram), email=VALUES(email), contactPhone=VALUES(contactPhone)`,
-      [linkedin, github, facebook, instagram, email, contactPhone]
-    )
+      [linkedin, github, facebook, instagram, email, contactPhone],
+    );
 
     // 6. Delete SEO Pages (Batch Delete)
     if (deletedSeoPageIds.length > 0) {
-      await connection.query(`DELETE FROM seo_pages WHERE id IN (?)`, [deletedSeoPageIds])
+      await connection.query(`DELETE FROM seo_pages WHERE id IN (?)`, [
+        deletedSeoPageIds,
+      ]);
     }
 
     // 7. Bulk UPSERT for SEO Pages (The Biggest Performance Fix)
@@ -99,9 +121,11 @@ export const addSiteSettings = async (req, res) => {
         page.twitterCardType,
         page.metaRobots,
         page.id || null, // Used for ON DUPLICATE KEY UPDATE
-      ])
+      ]);
 
-      const placeholders = values.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').join(', ')
+      const placeholders = values
+        .map(() => "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        .join(", ");
 
       await connection.query(
         `INSERT INTO seo_pages (siteInfoId, pageSlug, metaTitle, metaDescription, metaKeyword, canonicalURL, OGTitle, OGDescription, twitterCardType, metaRobots, id)
@@ -110,45 +134,51 @@ export const addSiteSettings = async (req, res) => {
          pageSlug=VALUES(pageSlug), metaTitle=VALUES(metaTitle), metaDescription=VALUES(metaDescription),
          metaKeyword=VALUES(metaKeyword), canonicalURL=VALUES(canonicalURL), OGTitle=VALUES(OGTitle),
          OGDescription=VALUES(OGDescription), twitterCardType=VALUES(twitterCardType), metaRobots=VALUES(metaRobots)`,
-        values.flat()
-      )
+        values.flat(),
+      );
     }
 
     // 8. Commit Transaction
-    await connection.commit()
+    await connection.commit();
 
     // 9. Cleanup old files ONLY after successful DB commit
     if (logoResult && parsedLogo?.key && logoResult.key !== parsedLogo.key) {
-      await deleteFromLocal(parsedLogo.key).catch(console.error)
+      await deleteFromLocal(parsedLogo.key).catch(console.error);
     }
-    if (faviconResult && parsedFavicon?.key && faviconResult.key !== parsedFavicon.key) {
-      await deleteFromLocal(parsedFavicon.key).catch(console.error)
+    if (
+      faviconResult &&
+      parsedFavicon?.key &&
+      faviconResult.key !== parsedFavicon.key
+    ) {
+      await deleteFromLocal(parsedFavicon.key).catch(console.error);
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Settings saved successfully and blazing fast! 🚀',
-    })
+      message: "Settings saved successfully and blazing fast! 🚀",
+    });
   } catch (error) {
     // Rollback DB changes on error
-    if (connection) await connection.rollback()
+    if (connection) await connection.rollback();
 
-    console.error('❌ SiteSettings Error:', error)
+    console.error("❌ SiteSettings Error:", error);
 
     // Rollback newly uploaded files on error
     for (const key of newFilesKeys) {
-      await deleteFromLocal(key).catch((e) => console.error('File Rollback failed:', e))
+      await deleteFromLocal(key).catch((e) =>
+        console.error("File Rollback failed:", e),
+      );
     }
 
     return res.status(500).json({
       success: false,
-      message: 'Internal Server Error. Changes rolled back safely.',
-    })
+      message: "Internal Server Error. Changes rolled back safely.",
+    });
   } finally {
     // Always release the connection back to the pool
-    if (connection) connection.release()
+    if (connection) connection.release();
   }
-}
+};
 
 export const getSiteSettings = async (req, res) => {
   try {
@@ -164,24 +194,24 @@ export const getSiteSettings = async (req, res) => {
       LEFT JOIN contact_info ci ON si.id = ci.siteInfoId
       LEFT JOIN seo_pages sp ON si.id = sp.siteInfoId
       WHERE si.id = 1
-      ORDER BY sp.id ASC`
-    )
+      ORDER BY sp.id ASC`,
+    );
 
     if (!rows || rows.length === 0 || !rows[0].siteInfoId) {
       return res.status(404).json({
         success: false,
-        message: 'No site settings found!',
-      })
+        message: "No site settings found!",
+      });
     }
 
     // Safe JSON parsing with fallback
     const parseSafe = (str) => {
       try {
-        return str ? JSON.parse(str) : {}
+        return str ? safeParseJSON(str) : {};
       } catch (e) {
-        return {}
+        return {};
       }
-    }
+    };
 
     const siteSettings = {
       siteInfo: {
@@ -194,12 +224,12 @@ export const getSiteSettings = async (req, res) => {
         favicon: parseSafe(rows[0].favicon),
       },
       contactInfo: {
-        linkedin: rows[0].linkedin || '',
-        github: rows[0].github || '',
-        facebook: rows[0].facebook || '',
-        instagram: rows[0].instagram || '',
-        email: rows[0].email || '',
-        contactPhone: rows[0].contactPhone || '',
+        linkedin: rows[0].linkedin || "",
+        github: rows[0].github || "",
+        facebook: rows[0].facebook || "",
+        instagram: rows[0].instagram || "",
+        email: rows[0].email || "",
+        contactPhone: rows[0].contactPhone || "",
       },
       seoPages: rows
         .filter((row) => row.seoPageId !== null)
@@ -215,18 +245,18 @@ export const getSiteSettings = async (req, res) => {
           twitterCardType: row.twitterCardType,
           metaRobots: row.metaRobots,
         })),
-    }
+    };
 
     return res.status(200).json({
       success: true,
       siteSettings,
-    })
+    });
   } catch (error) {
-    console.error('❌ getSiteSettings Error:', error)
+    console.error("❌ getSiteSettings Error:", error);
     return res.status(500).json({
       success: false,
-      errorCode: 'SERVER_ERROR',
-      message: 'Internal Server Error!',
-    })
+      errorCode: "SERVER_ERROR",
+      message: "Internal Server Error!",
+    });
   }
-}
+};

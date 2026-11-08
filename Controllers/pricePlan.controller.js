@@ -1,6 +1,7 @@
 import pool from "../db.config.js";
 import { body, validationResult } from "express-validator";
 import { safeParse } from "../Utils/SafeParser.js";
+import { safeParseJSON } from "../Utils/safeParseJSON.js";
 
 export const AddPlanValidation = [
   body("planName").notEmpty().withMessage("Plan name is required!"),
@@ -157,7 +158,7 @@ export const getPricePlan = async (req, res) => {
     // Mapping over plans to parse featurePoints
     const formattedPlans = plans.map((item) => ({
       ...item,
-      featurePoints: JSON.parse(item.featurePoints),
+      featurePoints: safeParseJSON(item.featurePoints),
     }));
 
     return res.status(200).json({

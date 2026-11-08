@@ -4,6 +4,7 @@ import pool from '../db.config.js';
 import { safeParse } from '../Utils/SafeParser.js';
 import { logActivity } from '../Utils/activityLogger.js';
 import { deleteFromLocal, uploadToLocal } from '../Utils/uploadToLocal.js';
+import { safeParseJSON } from '../Utils/safeParseJSON.js';
 
 export const AddAboutValidator = [
   body('fullName').trim().notEmpty().withMessage('Full name is required'),
@@ -205,8 +206,8 @@ export const getAbout = async (req, res) => {
       message: 'About fetched successfully.',
       about: {
         ...about,
-        aboutImage: JSON.parse(about.aboutImage),
-        poseImage: JSON.parse(about.poseImage),
+        aboutImage: safeParseJSON(about.aboutImage),
+        poseImage: safeParseJSON(about.poseImage),
       },
     });
   } catch (error) {
