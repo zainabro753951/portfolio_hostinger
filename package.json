@@ -26,16 +26,19 @@
     "express": "^5.2.0",
     "express-rate-limit": "^8.1.1",
     "express-validator": "^7.2.1",
-    "geoip-lite": "^1.4.10",
+    "geoip-lite": "^2.0.3",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.12.1",
     "multer": "^2.5.0",
     "mysql2": "^3.23.1",
-    "nodemailer": "^8.0.9",
-    "sharp": "^0.34.4",
+    "nodemailer": "^10.4.0",
+    "sharp": "^0.35.5",
     "socket.io": "^4.8.3",
     "ua-parser-js": "^2.0.10",
     "winston": "^3.19.0"
+  },
+  "allowScripts": {
+    "bcrypt@6.0.0": true
   }
 }
