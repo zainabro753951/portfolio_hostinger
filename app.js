@@ -1,44 +1,45 @@
-import dotenv from 'dotenv'
-dotenv.config()
+import dotenv from "dotenv";
+dotenv.config();
 
-import compression from 'compression'
-import cookieParser from 'cookie-parser'
-import cors from 'cors'
-import express from 'express'
-import rateLimit from 'express-rate-limit'
-import helmet from 'helmet'
-import morgan from 'morgan'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import compression from "compression";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import express from "express";
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
+import morgan from "morgan";
+import path from "path";
+import fs from "node:fs/promises";
+import { fileURLToPath } from "url";
 
-import logger from './Utils/logger.js'
-import errorHandler from './middlewares/errorHandler.js'
+import logger from "./Utils/logger.js";
+import errorHandler from "./middlewares/errorHandler.js";
 
 // Routes
-import aboutRoute from './Routes/about.route.js'
-import adminRoute from './Routes/admin.route.js'
-import contactMsgRoute from './Routes/contactMsg.route.js'
-import educationRoute from './Routes/education.route.js'
-import expRoute from './Routes/experience.route.js'
-import faqsRoute from './Routes/faqs.route.js'
-import pricePlanRoute from './Routes/pricePlan.route.js'
-import projectsRoute from './Routes/projects.route.js'
-import activitiesRoute from './Routes/recentActivities.route.js'
-import serviceRoute from './Routes/services.route.js'
-import siteSettingsRoute from './Routes/siteSettings.route.js'
-import skillsRoute from './Routes/skills.route.js'
-import testiRoute from './Routes/testimonials.route.js'
-import visitorsRoute from './Routes/visitors.route.js'
+import aboutRoute from "./Routes/about.route.js";
+import adminRoute from "./Routes/admin.route.js";
+import contactMsgRoute from "./Routes/contactMsg.route.js";
+import educationRoute from "./Routes/education.route.js";
+import expRoute from "./Routes/experience.route.js";
+import faqsRoute from "./Routes/faqs.route.js";
+import pricePlanRoute from "./Routes/pricePlan.route.js";
+import projectsRoute from "./Routes/projects.route.js";
+import activitiesRoute from "./Routes/recentActivities.route.js";
+import serviceRoute from "./Routes/services.route.js";
+import siteSettingsRoute from "./Routes/siteSettings.route.js";
+import skillsRoute from "./Routes/skills.route.js";
+import testiRoute from "./Routes/testimonials.route.js";
+import visitorsRoute from "./Routes/visitors.route.js";
 
-const app = express()
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-const isProduction = process.env.NODE_ENV === 'production'
+const app = express();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const isProduction = process.env.NODE_ENV === "production";
 
 /* =========================
    Trust Proxy (Hostinger)
 ========================= */
-app.set('trust proxy', isProduction ? 1 : 0)
+app.set("trust proxy", isProduction ? 1 : 0);
 
 /* =========================
    Security: Helmet (Environment-Based)
@@ -48,184 +49,226 @@ if (!isProduction) {
     helmet({
       crossOriginEmbedderPolicy: false,
       crossOriginOpenerPolicy: false,
-      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      crossOriginResourcePolicy: { policy: "cross-origin" },
       contentSecurityPolicy: false,
       originAgentCluster: false,
-    })
-  )
+    }),
+  );
 } else {
   app.use(
     helmet({
       crossOriginEmbedderPolicy: false,
-      crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
-      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+      crossOriginResourcePolicy: { policy: "cross-origin" },
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'", 'https://*.google.com'],
-          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-          fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-          imgSrc: ["'self'", 'data:', 'https:', 'http:'],
+          scriptSrc: ["'self'", "'unsafe-inline'", "https://*.google.com"],
+          styleSrc: [
+            "'self'",
+            "'unsafe-inline'",
+            "https://fonts.googleapis.com",
+          ],
+          fontSrc: ["'self'", "https://fonts.gstatic.com"],
+          imgSrc: ["'self'", "data:", "https:", "http:"],
           connectSrc: [
             "'self'",
-            'https://www.zaincode.io',
-            'https://zaincode.io',
-            'https://api.zaincode.io',
+            "https://www.zaincode.io",
+            "https://zaincode.io",
+            "https://api.zaincode.io",
           ],
-          frameSrc: ["'self'", 'https://www.youtube.com'],
+          frameSrc: ["'self'", "https://www.youtube.com"],
         },
       },
-      strictTransportSecurity: { maxAge: 31536000, includeSubDomains: true, preload: true },
+      strictTransportSecurity: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      },
       xPoweredBy: false,
-    })
-  )
+    }),
+  );
 }
 
-app.disable('x-powered-by')
+app.disable("x-powered-by");
 
 /* =========================
    Performance: Compression
 ========================= */
-app.use(compression())
+app.use(compression());
 
 /* =========================
    Logger: Optimized for Shared Hosting
    (Short format in prod to save Disk I/O)
 ========================= */
 app.use(
-  morgan(isProduction ? 'short' : 'combined', {
+  morgan(isProduction ? "short" : "combined", {
     skip: (req, res) => isProduction && res.statusCode < 400, // Optional: Sirf errors/slow requests log karein prod mein (agar aur fast chahiye)
     stream: {
       write: (message) => logger.info(message.trim()),
     },
-  })
-)
+  }),
+);
 
 /* =========================
    Body Parsers
 ========================= */
-app.use(express.json({ limit: '10kb' }))
-app.use(express.urlencoded({ extended: true, limit: '10kb' }))
-app.use(cookieParser())
+app.use(express.json({ limit: "10kb" }));
+app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+app.use(cookieParser());
 
 /* =========================
    CORS
 ========================= */
 if (!isProduction) {
-  app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:5174'], credentials: true }))
+  app.use(
+    cors({
+      origin: ["http://localhost:5173", "http://localhost:5174"],
+      credentials: true,
+    }),
+  );
 } else {
   app.use(
     cors({
       origin: function (origin, callback) {
-        if (!origin) return callback(null, true)
+        if (!origin) return callback(null, true);
         const allowed = (
-          process.env.FRONTEND_URLS || 'https://www.zaincode.io,https://zaincode.io'
-        ).split(',')
+          process.env.FRONTEND_URLS ||
+          "https://www.zaincode.io,https://zaincode.io"
+        ).split(",");
         if (allowed.map((u) => u.trim()).includes(origin)) {
-          return callback(null, true)
+          return callback(null, true);
         }
-        callback(new Error('Not allowed by CORS'))
+        callback(new Error("Not allowed by CORS"));
       },
       credentials: true,
-    })
-  )
+    }),
+  );
 }
 
 /* =========================
    Rate Limiting (API only)
 ========================= */
 app.use(
-  '/api',
+  "/api",
   rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 500,
     standardHeaders: true,
     legacyHeaders: false,
-  })
-)
+  }),
+);
 
 /* =========================
    WWW Redirect (Production)
 ========================= */
 app.use((req, res, next) => {
-  if (isProduction && req.hostname === 'zaincode.io') {
-    return res.redirect(301, `https://www.zaincode.io${req.url}`)
+  if (isProduction && req.hostname === "zaincode.io") {
+    return res.redirect(301, `https://www.zaincode.io${req.url}`);
   }
-  next()
-})
+  next();
+});
 
 /* =========================
    Static Uploads (With Caching)
 ========================= */
 app.use(
-  '/uploads',
-  express.static(path.join(__dirname, 'uploads'), {
-    maxAge: '30d', // Browser 30 days tak cache karega
+  "/uploads",
+  express.static(path.join(__dirname, "uploads"), {
+    maxAge: "30d", // Browser 30 days tak cache karega
     immutable: true,
-  })
-)
+  }),
+);
 
 /* =========================
    API Routes
 ========================= */
-app.use('/api', adminRoute)
-app.use('/api', projectsRoute)
-app.use('/api', aboutRoute)
-app.use('/api', skillsRoute)
-app.use('/api', educationRoute)
-app.use('/api', testiRoute)
-app.use('/api', pricePlanRoute)
-app.use('/api', siteSettingsRoute)
-app.use('/api', contactMsgRoute)
-app.use('/api', expRoute)
-app.use('/api', serviceRoute)
-app.use('/api', faqsRoute)
-app.use('/api', activitiesRoute)
-app.use('/api', visitorsRoute)
+app.use("/api", adminRoute);
+app.use("/api", projectsRoute);
+app.use("/api", aboutRoute);
+app.use("/api", skillsRoute);
+app.use("/api", educationRoute);
+app.use("/api", testiRoute);
+app.use("/api", pricePlanRoute);
+app.use("/api", siteSettingsRoute);
+app.use("/api", contactMsgRoute);
+app.use("/api", expRoute);
+app.use("/api", serviceRoute);
+app.use("/api", faqsRoute);
+app.use("/api", activitiesRoute);
+app.use("/api", visitorsRoute);
 
 /* =========================
    Health Check
 ========================= */
-app.get('/health', (req, res) => {
-  res.status(200).send('OK')
-})
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
 
 /* =========================
    Frontend Serve (PROD Optimized)
 ========================= */
 if (isProduction) {
-  const clientBuildPath = path.join(__dirname, 'client', 'dist')
+  const clientBuildPath = path.join(__dirname, "client", "dist");
 
+  // AI Agent: Markdown Support
+  app.get("/", async (req, res, next) => {
+    const accept = req.headers.accept || "";
+
+    if (!accept.toLowerCase().includes("text/markdown")) {
+      return next();
+    }
+
+    try {
+      const markdownPath = path.join(clientBuildPath, "llms.txt");
+
+      const markdown = await fs.readFile(markdownPath, "utf-8");
+
+      res.setHeader("Content-Type", "text/markdown; charset=utf-8");
+      res.setHeader("Vary", "Accept");
+
+      return res.status(200).send(markdown);
+    } catch (error) {
+      logger.error("MARKDOWN_READ_ERROR:", error);
+      return next(error);
+    }
+  });
+
+  // Static frontend files
   app.use(
     express.static(clientBuildPath, {
-      maxAge: '1y', // Assets (JS/CSS/Images) ko 1 saal cache karein
+      maxAge: "1y",
       immutable: true,
       setHeaders: (res, filePath) => {
-        // HTML file ko kabhi cache na karein taake naye updates foran dikhein
-        if (path.extname(filePath) === '.html') {
-          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+        const ext = path.extname(filePath);
+
+        if ([".html", ".txt", ".xml", ".md"].includes(ext)) {
+          res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
         }
       },
-    })
-  )
+    }),
+  );
 
-  // SPA fallback (Sirf non-API routes ke liye)
+  // SPA fallback
   app.get(/^(.*)$/, (req, res, next) => {
-    if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) return next()
-    res.sendFile(path.join(clientBuildPath, 'index.html'))
-  })
+    if (req.path.startsWith("/api") || req.path.startsWith("/socket.io")) {
+      return next();
+    }
+
+    res.sendFile(path.join(clientBuildPath, "index.html"));
+  });
 }
 
 /* =========================
    API 404
 ========================= */
-app.use('/api', (req, res) => {
-  res.status(404).json({ success: false, message: 'API route not found' })
-})
+app.use("/api", (req, res) => {
+  res.status(404).json({ success: false, message: "API route not found" });
+});
 
 /* =========================
    Global Error Handler
 ========================= */
-app.use(errorHandler)
+app.use(errorHandler);
 
-export default app
+export default app;
