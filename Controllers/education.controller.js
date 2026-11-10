@@ -12,8 +12,6 @@ export const AddEducationValidation = [
 
   body("fieldStudy").notEmpty().withMessage("Field of study is required!"),
 
-  body("grade").notEmpty().withMessage("Grade is required!"),
-
   body("startYear").notEmpty().withMessage("Start year is required!"),
 
   body("location").notEmpty().withMessage("Location is required!"),

@@ -137,6 +137,8 @@ const DAddEducation = () => {
       }
     }
     if (isError) {
+      console.log(error?.response);
+      
       glassToast.error(
         error?.response?.data?.message || "Failed to save education",
       );
