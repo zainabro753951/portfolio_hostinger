@@ -9,6 +9,7 @@ import App from './App';
 import { store } from './app/store';
 import DeleteEntryProvider from './context/DeleteEntryProvider.jsx';
 import './index.css';
+import './design-tokens.css';
 import { queryClient } from './queryClient.js';
 import SocketProvider from './socket/SocketProvider';
 

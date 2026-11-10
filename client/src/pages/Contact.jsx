@@ -1,176 +1,96 @@
-import { GlassCard, GradientText, THEME } from '@/components/UI';
-import { useGSAP } from '@gsap/react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ChevronDown, Sparkles } from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
-import ContactSection from '../sections/ContactSection';
-import Particles from '../sections/Particles';
+import { motion, AnimatePresence } from 'motion/react';
+import { ChevronDown, HelpCircle, Sparkles } from 'lucide-react';
 
-gsap.registerPlugin(ScrollTrigger, useGSAP);
+import ContactSection from '../sections/ContactSection';
+import { useMotionPrefs, fadeUp, staggerParent, VIEWPORT_ONCE } from '@/lib/motion';
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 🧩 FAQ ITEM COMPONENT
+// 🧩 FAQ ITEM ACCORDION COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════
 const FaqItem = memo(({ faq, index, isOpen, onToggle }) => {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mq.matches);
-    const handler = (e) => setPrefersReducedMotion(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
+  const { prefersReducedMotion } = useMotionPrefs();
 
   return (
-    <GlassCard className="faq-item mb-3 sm:mb-4" hover={false}>
-      <motion.button
+    <div
+      className={`rounded-2xl transition-all duration-300 overflow-hidden ${
+        isOpen
+          ? 'bg-surface-card border border-brand-cyan/40 shadow-glow-cyan'
+          : 'bg-surface-card/70 hover:bg-surface-card border border-line-subtle hover:border-brand-cyan/25'
+      }`}
+    >
+      <button
+        type="button"
         onClick={onToggle}
-        className="w-full p-4 sm:p-5 md:p-6 flex items-center justify-between text-left focus:outline-none rounded-t-xl"
-        whileHover={
-          prefersReducedMotion ? undefined : { backgroundColor: 'rgba(255,255,255,0.03)' }
-        }
+        className="w-full p-4 sm:p-5 md:p-6 flex items-center justify-between text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan/50 gap-4"
         aria-expanded={isOpen}
         aria-controls={`faq-answer-${index}`}
+        id={`faq-question-${index}`}
       >
-        <h3
-          className="text-sm sm:text-base md:text-lg font-semibold pr-2 sm:pr-4 transition-colors duration-300 text-left"
-          style={{ color: THEME.textWhite }}
-        >
+        <span className="font-heading text-sm sm:text-base md:text-lg font-semibold text-ink leading-snug">
           {faq.question}
-        </h3>
+        </span>
         <motion.div
           animate={prefersReducedMotion ? undefined : { rotate: isOpen ? 180 : 0 }}
-          transition={prefersReducedMotion ? {} : { duration: 0.3 }}
-          className="flex-shrink-0 ml-2 sm:ml-4"
+          transition={{ duration: 0.25, ease: 'easeInOut' }}
+          className="flex-shrink-0 w-8 h-8 rounded-lg bg-surface-elevated/80 border border-line-subtle flex items-center justify-center text-brand-cyan"
+          aria-hidden="true"
         >
-          <ChevronDown
-            size={18}
-            className="sm:w-5 sm:h-5 md:w-6 md:h-6"
-            style={{ color: THEME.cyan }}
-            aria-hidden="true"
-          />
+          <ChevronDown size={18} />
         </motion.div>
-      </motion.button>
-      <AnimatePresence>
+      </button>
+
+      <AnimatePresence initial={false}>
         {isOpen && (
           <motion.div
-            initial={
-              prefersReducedMotion ? { height: 'auto', opacity: 1 } : { height: 0, opacity: 0 }
-            }
-            animate={prefersReducedMotion ? undefined : { height: 'auto', opacity: 1 }}
-            exit={prefersReducedMotion ? undefined : { height: 0, opacity: 0 }}
-            transition={prefersReducedMotion ? {} : { duration: 0.3, ease: 'easeInOut' }}
-            className="overflow-hidden"
             id={`faq-answer-${index}`}
             role="region"
+            aria-labelledby={`faq-question-${index}`}
+            initial={prefersReducedMotion ? { opacity: 1 } : { height: 0, opacity: 0 }}
+            animate={prefersReducedMotion ? { opacity: 1 } : { height: 'auto', opacity: 1 }}
+            exit={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
           >
-            <p
-              className="px-4 sm:px-5 md:px-6 py-4 sm:py-5 md:py-6 leading-relaxed text-xs sm:text-sm md:text-base"
-              style={{ color: THEME.textGray }}
-            >
-              {faq.answer}
-            </p>
+            <div className="px-4 sm:px-5 md:px-6 pb-4 sm:pb-5 md:pb-6 pt-1 text-ink-secondary text-xs sm:text-sm md:text-base leading-relaxed border-t border-white/8">
+              <p>{faq.answer}</p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </GlassCard>
+    </div>
   );
 });
+
 FaqItem.displayName = 'FaqItem';
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 📝 CONTACT PAGE
+// 📝 CONTACT PAGE MAIN
 // ═══════════════════════════════════════════════════════════════════════════
 const Contact = memo(() => {
-  const faqSectionRef = useRef(null);
-  const containerRef = useRef(null);
   const [searchParams] = useSearchParams();
   const [openFaq, setOpenFaq] = useState(null);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const { FAQs } = useSelector((state) => state.FAQ);
+  const { prefersReducedMotion } = useMotionPrefs();
+  const { FAQs = [] } = useSelector((state) => state.FAQ);
 
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mq.matches);
-    const handler = (e) => setPrefersReducedMotion(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-
-  // Auto-open FAQ based on URL param
+  // Auto-open FAQ based on URL param (?faq=0)
   useEffect(() => {
     const faqIndex = searchParams.get('faq');
-    if (faqIndex && !isNaN(faqIndex)) {
+    if (faqIndex !== null && !isNaN(Number(faqIndex))) {
       setOpenFaq(Number(faqIndex));
     }
   }, [searchParams]);
-
-  useGSAP(
-    () => {
-      if (prefersReducedMotion) return;
-
-      const faqItems = faqSectionRef.current?.querySelectorAll('.faq-item');
-      gsap.to('.gradient-orb', {
-        scale: 1.2,
-        duration: 4,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      });
-
-      if (faqItems?.length) {
-        gsap.from(faqItems, {
-          y: 30,
-          opacity: 0,
-          duration: 0.5,
-          stagger: 0.1,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: faqSectionRef.current,
-            start: 'top 85%',
-            toggleActions: 'play none none none',
-            once: true,
-          },
-        });
-      }
-    },
-    { scope: containerRef, dependencies: [prefersReducedMotion] }
-  );
 
   const handleToggleFaq = useCallback((index) => {
     setOpenFaq((prev) => (prev === index ? null : index));
   }, []);
 
-  // const faqs = useMemo(
-  //   () => [
-  //     {
-  //       q: 'What is your typical project timeline?',
-  //       a: 'Project timelines vary based on complexity. A simple website takes 1-2 weeks, while complex applications may take 4-8 weeks.',
-  //     },
-  //     {
-  //       q: 'Do you offer ongoing support?',
-  //       a: 'Yes! I offer maintenance packages to keep your website running smoothly with regular updates and support.',
-  //     },
-  //     {
-  //       q: 'What are your payment terms?',
-  //       a: 'I typically require a 50% deposit to start, with the remaining 50% due upon project completion.',
-  //     },
-  //     {
-  //       q: 'Can you work with existing designs?',
-  //       a: 'Absolutely! I can work with your existing designs or create new ones from scratch based on your requirements.',
-  //     },
-  //   ],
-  //   []
-  // );
-
-  // SEO Structured Data
-  const structuredData = useMemo(
-    () => ({
+  // SEO Schema.org Structured Data
+  const structuredData = useMemo(() => {
+    if (!FAQs?.length) return null;
+    return {
       '@context': 'https://schema.org',
       '@type': 'FAQPage',
       mainEntity: FAQs.map((faq) => ({
@@ -181,33 +101,27 @@ const Contact = memo(() => {
           text: faq.answer,
         },
       })),
-    }),
-    [FAQs]
-  );
+    };
+  }, [FAQs]);
 
-  const contactInfoData = useMemo(
-    () => ({
+  const contactInfoData = useMemo(() => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    return {
       '@context': 'https://schema.org',
       '@type': 'LocalBusiness',
-      name: 'Portfolio Contact',
-      description: 'Contact information and inquiry form for project collaboration.',
+      name: 'Full Stack Engineering & Product Development',
+      description: 'Contact information and consultation form for web development projects.',
       contactPoint: {
         '@type': 'ContactPoint',
-        contactType: 'customer support',
-        url: `${window.location.origin}/contact`,
+        contactType: 'technical sales',
+        url: `${origin}/contact`,
       },
-    }),
-    []
-  );
+    };
+  }, []);
 
   return (
-    <main
-      ref={containerRef}
-      className="relative  overflow-x-hidden"
-      style={{ backgroundColor: THEME.bg, fontFamily: "'Inter', sans-serif" }}
-      aria-label="Contact Page"
-    >
-      {/* Structured Data */}
+    <div id="contact-page" className="relative min-h-screen text-ink overflow-x-clip bg-surface-base">
+      {/* Schema.org Structured Data */}
       {structuredData && (
         <script
           type="application/ld+json"
@@ -219,140 +133,108 @@ const Contact = memo(() => {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(contactInfoData) }}
       />
 
-      {/* 🌌 BACKGROUND LAYERS */}
-      <div
-        className="fixed inset-0 pointer-events-none overflow-hidden"
-        style={{ zIndex: 0 }}
-        aria-hidden="true"
-      >
-        <div
-          className="gradient-orb absolute top-1/4 left-1/4 w-48 h-48 sm:w-72 sm:h-72 md:w-96 md:h-96 rounded-full blur-[80px] md:blur-[120px] animate-pulse"
-          style={{ background: 'rgba(2, 211, 254, 0.12)' }}
-        />
-        <div
-          className="gradient-orb absolute bottom-1/4 right-1/4 w-48 h-48 sm:w-72 sm:h-72 md:w-96 md:h-96 rounded-full blur-[80px] md:blur-[120px] animate-pulse"
-          style={{ animationDelay: '1s', background: 'rgba(78, 144, 225, 0.12)' }}
-        />
-        <div
-          className="gradient-orb absolute top-1/2 left-1/2 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 rounded-full blur-[60px] md:blur-[100px] animate-pulse"
-          style={{ animationDelay: '2s', background: 'rgba(154, 92, 183, 0.1)' }}
-        />
+      {/* 🌌 AMBIENT BACKGROUND GLOWS (Pure CSS, 0 JS load) */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute top-1/4 left-1/4 h-80 w-80 sm:h-96 sm:w-96 rounded-full bg-brand-cyan/10 blur-[130px]" />
+        <div className="absolute top-2/3 right-1/4 h-80 w-80 sm:h-96 sm:w-96 rounded-full bg-brand-blue/10 blur-[140px]" />
+        <div className="absolute bottom-1/4 left-1/3 h-72 w-72 rounded-full bg-brand-purple/10 blur-[150px]" />
       </div>
 
-      {/* Particles */}
-      <Particles />
-
-      {/* 🦸 HERO SECTION */}
-      <header
-        className="relative pt-16 sm:pt-20 md:pt-24 pb-6 sm:pb-8 md:pb-12"
-        style={{ zIndex: 2 }}
-      >
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-8 sm:py-12 md:py-16">
-          <motion.div
-            initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-            animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-            transition={prefersReducedMotion ? {} : { duration: 0.8, ease: 'easeOut' }}
-            className="text-center"
-          >
-            <span
-              className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium mb-4 sm:mb-6"
-              style={{
-                background: 'rgba(2, 211, 254, 0.1)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(2, 211, 254, 0.2)',
-                color: THEME.cyan,
-              }}
+      <div className="relative z-10">
+        {/* ═══════════════════════════════════════════════════════════════════
+            HERO HEADER
+           ═══════════════════════════════════════════════════════════════════ */}
+        <section className="pt-24 sm:pt-32 pb-8 sm:pb-12 text-center">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6">
+            <motion.div
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
             >
-              <Sparkles size={12} className="sm:w-3.5 sm:h-3.5" aria-hidden="true" />
-              Get In Touch
-            </span>
-            <h1
-              className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-3 sm:mb-4 md:mb-6 px-2 leading-tight"
-              style={{ color: THEME.textWhite }}
-            >
-              Let's <GradientText>Talk</GradientText>
-            </h1>
-            <p
-              className="text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed px-4"
-              style={{ color: THEME.textGray }}
-            >
-              Have a project in mind or just want to say hello? I'd love to hear from you. Let's
-              create something amazing together.
-            </p>
-          </motion.div>
-        </div>
-      </header>
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono font-medium text-brand-cyan bg-brand-cyan/10 border border-brand-cyan/20 mb-4 sm:mb-6 shadow-glow-cyan">
+                <Sparkles size={13} className="text-brand-cyan" aria-hidden="true" />
+                Let's Connect
+              </span>
 
-      {/* 📧 CONTACT FORM SECTION */}
-      <section
-        className="relative py-10 sm:py-16 md:py-24"
-        style={{ zIndex: 2 }}
-        aria-label="Contact Form"
-      >
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6">
-          <ContactSection />
-        </div>
-      </section>
+              <h1 className="font-heading text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-ink mb-4 sm:mb-6 leading-tight">
+                Let's Build Something{' '}
+                <span className="bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple bg-clip-text text-transparent">
+                  Exceptional
+                </span>
+              </h1>
 
-      {/* ❓ FAQ SECTION */}
-      <section
-        ref={faqSectionRef}
-        className="relative py-10 sm:py-16 md:py-24"
-        style={{ zIndex: 2 }}
-        aria-labelledby="faq-heading"
-      >
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 sm:w-[500px] sm:h-[500px] md:w-[600px] md:h-[600px] rounded-full blur-[100px] sm:blur-[120px] md:blur-[150px] pointer-events-none"
-          style={{ background: 'rgba(2, 211, 254, 0.05)' }}
-          aria-hidden="true"
-        />
-
-        <div className="max-w-3xl sm:max-w-4xl mx-auto px-3 sm:px-4 md:px-6 relative">
-          <motion.div
-            initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-            whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-            viewport={prefersReducedMotion ? undefined : { once: true }}
-            transition={prefersReducedMotion ? {} : { duration: 0.6 }}
-            className="text-center mb-8 sm:mb-10 md:mb-12 lg:mb-16"
-          >
-            <span
-              className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium mb-3 sm:mb-4"
-              style={{
-                background: 'rgba(78, 144, 225, 0.1)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(78, 144, 225, 0.2)',
-                color: THEME.blue,
-              }}
-            >
-              FAQ
-            </span>
-            <h2
-              id="faq-heading"
-              className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 px-2 leading-tight"
-              style={{ color: THEME.textWhite }}
-            >
-              Frequently Asked <GradientText>Questions</GradientText>
-            </h2>
-          </motion.div>
-
-          <div
-            className="space-y-3 sm:space-y-4"
-            role="list"
-            aria-label="Frequently asked questions"
-          >
-            {FAQs.map((faq, index) => (
-              <FaqItem
-                key={index}
-                faq={faq}
-                index={index}
-                isOpen={openFaq === index}
-                onToggle={() => handleToggleFaq(index)}
-              />
-            ))}
+              <p className="text-ink-secondary text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
+                Have a new product to architect, a technical question, or an ambitious project?
+                Send a transmission or reach out through my direct channels.
+              </p>
+            </motion.div>
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════════════════════
+            INTERACTIVE CONTACT FORM & DETAILS SECTION
+           ═══════════════════════════════════════════════════════════════════ */}
+        <section className="py-8 sm:py-12 md:py-16" aria-label="Contact channels">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <ContactSection />
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════════════════════
+            FAQ ACCORDION SECTION
+           ═══════════════════════════════════════════════════════════════════ */}
+        {FAQs.length > 0 && (
+          <section
+            className="py-16 sm:py-24"
+            aria-labelledby="faq-section-heading"
+          >
+            <div className="max-w-4xl mx-auto px-4 sm:px-6">
+              <motion.div
+                variants={fadeUp}
+                initial={prefersReducedMotion ? false : 'hidden'}
+                whileInView="visible"
+                viewport={VIEWPORT_ONCE}
+                className="text-center mb-10 sm:mb-14"
+              >
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-medium text-brand-blue bg-brand-blue/10 border border-brand-blue/20 mb-3">
+                  <HelpCircle size={13} className="text-brand-blue" aria-hidden="true" />
+                  Common Questions
+                </span>
+                <h2
+                  id="faq-section-heading"
+                  className="font-heading text-2xl sm:text-4xl md:text-5xl font-bold text-ink"
+                >
+                  Frequently Asked{' '}
+                  <span className="bg-gradient-to-r from-brand-cyan to-brand-blue bg-clip-text text-transparent">
+                    Inquiries
+                  </span>
+                </h2>
+              </motion.div>
+
+              <motion.div
+                variants={staggerParent}
+                initial={prefersReducedMotion ? false : 'hidden'}
+                whileInView="visible"
+                viewport={VIEWPORT_ONCE}
+                className="space-y-3.5 sm:space-y-4"
+                role="list"
+                aria-label="Frequently asked questions list"
+              >
+                {FAQs.map((faq, index) => (
+                  <FaqItem
+                    key={faq.id || index}
+                    faq={faq}
+                    index={index}
+                    isOpen={openFaq === index}
+                    onToggle={() => handleToggleFaq(index)}
+                  />
+                ))}
+              </motion.div>
+            </div>
+          </section>
+        )}
+      </div>
+    </div>
   );
 });
 

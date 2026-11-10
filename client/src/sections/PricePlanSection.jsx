@@ -1,16 +1,20 @@
-import { GradientText, THEME } from '@/components/UI';
-import { motion } from 'framer-motion';
-import { memo, useMemo, useRef } from 'react';
+import { fadeUp, useMotionPrefs, VIEWPORT_ONCE } from '@/lib/motion';
+import { motion } from 'motion/react';
+import { memo, useMemo } from 'react';
 import { useSelector } from 'react-redux';
+import PricePlanSkeleton from './PricePlanSkeleton';
 import PricingCard from './PricingCard';
 
 const PricePlanSection = memo(() => {
-  const containerRef = useRef(null);
   const { plans, isLoading } = useSelector((state) => state.plan);
+  const { reduced, isMobile } = useMotionPrefs();
+
+  const prefs = useMemo(() => ({ reduced, isMobile }), [reduced, isMobile]);
+  const headerVariants = useMemo(() => fadeUp(prefs, 0), [prefs]);
 
   // SEO Structured Data
   const structuredData = useMemo(() => {
-    if (!plans || plans.length === 0) return null;
+    if (!plans || plans.length === 0 || typeof window === 'undefined') return null;
     return {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
@@ -19,42 +23,25 @@ const PricePlanSection = memo(() => {
       itemListElement: plans.map((plan, index) => ({
         '@type': 'Offer',
         position: index + 1,
-        name: plan.title || 'Pricing Plan',
-        description: plan.description || `Plan ${index + 1} for services`,
+        name: plan.planName || 'Pricing Plan',
+        description: plan.shortDesc || `Plan ${index + 1} for services`,
         price: plan.price || 0,
-        priceCurrency: 'USD', // Assuming USD, or adjust if plan has currency
+        priceCurrency: plan.currency || 'USD',
         availability: 'https://schema.org/InStock',
-        url: `${window.location.origin}/services/${plan.slug || ''}`,
+        url: `${window.location.origin}/contact?plan=${encodeURIComponent(plan.planName || '')}`,
       })),
     };
   }, [plans]);
 
   if (isLoading) {
-    return (
-      <section
-        className="relative overflow-hidden flex items-center justify-center py-24 sm:py-32"
-        style={{ backgroundColor: THEME.bg }}
-        aria-label="Loading pricing plans"
-        role="status"
-      >
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 0.9, repeat: Infinity, ease: 'linear' }}
-          className="w-10 h-10 rounded-full border-2 border-t-transparent"
-          style={{ borderColor: THEME.cyan }}
-        />
-      </section>
-    );
+    return <PricePlanSkeleton />;
   }
 
   return (
     <section
-      ref={containerRef}
-      className="relative py-16 sm:py-20 md:py-24 overflow-hidden"
-      style={{ backgroundColor: THEME.bg, fontFamily: "'Inter', sans-serif" }}
-      aria-label="Pricing Plans Section"
-      role="region"
       id="pricing"
+      className="relative py-16 sm:py-20 lg:py-28 overflow-hidden isolate"
+      aria-label="Pricing Plans"
     >
       {/* Structured Data for SEO */}
       {structuredData && (
@@ -64,55 +51,54 @@ const PricePlanSection = memo(() => {
         />
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-6 relative" style={{ zIndex: 2 }}>
+      {/* Subtle background glow */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(45%_50%_at_50%_60%,rgb(var(--brand-purple)/0.06),transparent)]"
+      />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <header className="text-center mb-10 sm:mb-12 md:mb-16">
+        <div className="text-center mb-12 sm:mb-16 max-w-3xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-50px' }}
-            transition={{ duration: 0.5 }}
+            variants={headerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={VIEWPORT_ONCE}
+            className="mb-4 inline-block"
           >
-            <span
-              className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium mb-4"
-              style={{
-                background: 'rgba(154, 92, 183, 0.1)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(154, 92, 183, 0.2)',
-                color: THEME.purple,
-              }}
-            >
-              Pricing Plans
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-brand-purple border border-brand-purple/20 bg-brand-purple/10">
+              Investment Options
             </span>
           </motion.div>
 
           <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-50px' }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 leading-tight px-2"
-            style={{ color: THEME.textWhite }}
+            variants={headerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={VIEWPORT_ONCE}
+            className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink mb-4 sm:mb-5"
           >
-            Choose Your <GradientText>Plan</GradientText>
+            Transparent{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple">
+              Pricing Plans
+            </span>
           </motion.h2>
 
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-50px' }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="max-w-2xl mx-auto text-sm sm:text-base md:text-lg px-2"
-            style={{ color: THEME.textGray }}
+            variants={headerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={VIEWPORT_ONCE}
+            className="text-sm sm:text-base leading-relaxed text-ink-secondary"
           >
-            Flexible pricing options designed to fit your needs and budget. Get started today!
+            Predictable, value-driven rates designed to match your project scale from MVP launch to
+            enterprise growth.
           </motion.p>
-        </header>
+        </div>
 
         {/* Pricing Cards Grid */}
-        <div aria-label="Available Pricing Options">
-          <PricingCard plans={plans} />
-        </div>
+        <PricingCard plans={plans} />
       </div>
     </section>
   );

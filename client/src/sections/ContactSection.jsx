@@ -1,5 +1,8 @@
-import { GlassCard, GradientText, THEME } from '@/components/UI';
-import { AnimatePresence, motion } from 'framer-motion';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useForm } from 'react-hook-form';
+import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   AlertCircle,
   CheckCircle,
@@ -12,196 +15,175 @@ import {
   MapPin,
   Phone,
   Send,
+  Sparkles,
 } from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom';
+
 import { useSendMessage } from '../Queries/SendMessage';
+import { useMotionPrefs, fadeUp, VIEWPORT_ONCE } from '@/lib/motion';
 
 const ContactSection = memo(() => {
   const contactRef = useRef(null);
-  const formRef = useRef(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  const subject = searchParams.get('subject');
-  const message = searchParams.get('message');
+  const subjectParam = searchParams.get('subject');
+  const messageParam = searchParams.get('message');
+  const planParam = searchParams.get('plan');
+  const serviceParam = searchParams.get('service');
   const paramsProcessed = useRef(false);
+
   const { contact_info } = useSelector((state) => state.siteSettings);
+  const { prefersReducedMotion } = useMotionPrefs();
+
+  // Combine URL parameters intelligently
+  const initialSubject = useMemo(() => {
+    if (subjectParam) return subjectParam;
+    if (planParam) return `Inquiry regarding ${planParam} Plan`;
+    if (serviceParam) return `Inquiry regarding ${serviceParam} Service`;
+    return '';
+  }, [subjectParam, planParam, serviceParam]);
+
+  const initialMessage = useMemo(() => {
+    if (messageParam) return messageParam;
+    if (planParam) return `Hello, I am interested in discussing the ${planParam} plan for my upcoming project.`;
+    if (serviceParam) return `Hello, I would like to get more details and a quote for the ${serviceParam} service.`;
+    return '';
+  }, [messageParam, planParam, serviceParam]);
 
   const {
     register,
     handleSubmit,
     reset,
-    watch,
-    formState: { errors, isSubmitted },
+    formState: { errors, isSubmitting },
     clearErrors,
   } = useForm({
     defaultValues: { fullName: '', email: '', subject: '', message: '' },
     mode: 'onBlur',
   });
 
-  const [focusedField, setFocusedField] = useState(null);
   const { mutate, isSuccess, isError, error, isPending } = useSendMessage();
 
-  // Track values for floating label animation without DOM queries
-  const watchedValues = watch(['fullName', 'email', 'subject', 'message']);
-  const hasValue = (fieldName, index) => {
-    const value = watchedValues[index];
-    return typeof value === 'string' ? value.trim().length > 0 : false;
-  };
-
-  // Process URL params
+  // Process URL params on mount or when searchParams change
   useEffect(() => {
-    if ((subject || message) && !paramsProcessed.current) {
+    if ((initialSubject || initialMessage) && !paramsProcessed.current) {
       paramsProcessed.current = true;
-      reset({ fullName: '', email: '', subject: subject || '', message: message || '' });
+      reset({
+        fullName: '',
+        email: '',
+        subject: initialSubject,
+        message: initialMessage,
+      });
+      // Clear URL params cleanly without reloading
       setSearchParams({}, { replace: true });
-    } else if (!subject && !message && !paramsProcessed.current) {
-      reset({ fullName: '', email: '', subject: '', message: '' });
     }
-  }, [subject, message, reset, setSearchParams]);
+  }, [initialSubject, initialMessage, reset, setSearchParams]);
 
-  // Reset form on success
+  // Reset form on successful submission
   useEffect(() => {
     if (isSuccess) {
       const timer = setTimeout(() => {
         reset({ fullName: '', email: '', subject: '', message: '' });
         paramsProcessed.current = false;
         clearErrors();
-      }, 5000);
+      }, 6000);
       return () => clearTimeout(timer);
     }
   }, [isSuccess, reset, clearErrors]);
 
-  // Memoized static data
+  // Contact detail cards
   const contactInfo = useMemo(
     () => [
       {
         icon: Mail,
-        label: 'Email',
-        value: contact_info?.email || 'contact@example.com',
-        href: `mailto:${contact_info?.email}`,
-        gradient: THEME.gradientCyanBlue,
+        label: 'Direct Email',
+        value: contact_info?.email || 'contact@developer.com',
+        href: `mailto:${contact_info?.email || 'contact@developer.com'}`,
+        gradient: 'from-brand-cyan/20 to-brand-blue/20',
+        borderColor: 'border-brand-cyan/30',
+        textColor: 'text-brand-cyan',
       },
       {
         icon: Phone,
-        label: 'Phone',
+        label: 'Direct Line / WhatsApp',
         value: contact_info?.contactPhone || '+92 303 215 0993',
         href: `tel:${(contact_info?.contactPhone || '+923032150993').replace(/\s/g, '')}`,
-        gradient: 'linear-gradient(135deg, #10b981, #059669)',
+        gradient: 'from-emerald-500/20 to-teal-500/20',
+        borderColor: 'border-emerald-500/30',
+        textColor: 'text-emerald-400',
       },
       {
         icon: MapPin,
-        label: 'Location',
-        value: 'Tando Muhammad Khan, Sindh, Pakistan',
+        label: 'Location & Timezone',
+        value: 'Sindh, Pakistan (UTC+5 / PKT)',
         href: '#',
-        gradient: THEME.gradientBluePurple,
+        gradient: 'from-brand-purple/20 to-brand-blue/20',
+        borderColor: 'border-brand-purple/30',
+        textColor: 'text-brand-purple',
       },
     ],
     [contact_info]
   );
 
+  // Social platform links
   const socialLinks = useMemo(
     () => [
-      { icon: Github, href: contact_info?.github || '#', label: 'GitHub', hoverColor: '#e2e8f0' },
+      {
+        icon: Github,
+        href: contact_info?.github || 'https://github.com',
+        label: 'GitHub',
+      },
       {
         icon: Linkedin,
-        href: contact_info?.linkedin || '#',
+        href: contact_info?.linkedin || 'https://linkedin.com',
         label: 'LinkedIn',
-        hoverColor: '#3b82f6',
       },
       {
         icon: Facebook,
         href: contact_info?.facebook || '#',
         label: 'Facebook',
-        hoverColor: '#0ea5e9',
       },
       {
         icon: Instagram,
         href: contact_info?.instagram || '#',
         label: 'Instagram',
-        hoverColor: '#ec4899',
       },
-    ],
+    ].filter((s) => s.href && s.href !== '#'),
     [contact_info]
-  );
-
-  const inputFields = useMemo(
-    () => [
-      {
-        name: 'fullName',
-        type: 'text',
-        label: 'Your Name',
-        idx: 0,
-        validation: {
-          required: 'Name is required',
-          minLength: { value: 2, message: 'Minimum 2 characters' },
-          maxLength: { value: 50, message: 'Maximum 50 characters' },
-        },
-      },
-      {
-        name: 'email',
-        type: 'email',
-        label: 'Your Email',
-        idx: 1,
-        validation: {
-          required: 'Email is required',
-          pattern: {
-            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-            message: 'Invalid email address',
-          },
-        },
-      },
-      {
-        name: 'subject',
-        type: 'text',
-        label: 'Subject',
-        idx: 2,
-        validation: {
-          required: 'Subject is required',
-          minLength: { value: 3, message: 'Minimum 3 characters' },
-          maxLength: { value: 100, message: 'Maximum 100 characters' },
-        },
-      },
-    ],
-    []
   );
 
   const onSubmit = useCallback(
     (formData) => {
       mutate(formData, {
         onSuccess: () => reset({ fullName: '', email: '', subject: '', message: '' }),
-        onError: (err) => console.error('Submission error:', err),
+        onError: (err) => console.error('Message submission error:', err),
       });
     },
     [mutate, reset]
   );
 
-  const getBackendErrorMessage = useCallback(() => {
+  const backendErrorMessage = useMemo(() => {
     if (!error) return null;
     return (
       error?.response?.data?.message ||
       error?.response?.data?.error ||
       error?.message ||
-      'Something went wrong. Please try again later.'
+      'Unable to deliver message. Please try again or reach out directly via email.'
     );
   }, [error]);
 
-  // Structured Data for SEO
+  // Schema.org Structured Data
   const structuredData = useMemo(() => {
     if (!contact_info) return null;
     return {
       '@context': 'https://schema.org',
       '@type': 'Organization',
-      name: 'Portfolio',
+      name: 'Portfolio Developer Services',
       contactPoint: {
         '@type': 'ContactPoint',
         telephone: contact_info.contactPhone,
-        contactType: 'customer service',
+        contactType: 'technical sales & client support',
         email: contact_info.email,
         availableLanguage: ['English', 'Urdu'],
       },
-      sameAs: socialLinks.filter((s) => s.href !== '#').map((s) => s.href),
+      sameAs: socialLinks.map((s) => s.href),
     };
   }, [contact_info, socialLinks]);
 
@@ -213,399 +195,377 @@ const ContactSection = memo(() => {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
       )}
-      <section
+
+      <div
         ref={contactRef}
-        className="relative w-full"
-        style={{ zIndex: 2 }}
-        aria-label="Contact Form and Information"
+        className="w-full relative z-10"
+        aria-label="Contact channels and message form"
       >
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 xl:gap-16">
-            {/* Contact Info */}
-            <div className="order-2 lg:order-1">
-              <motion.div
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                viewport={{ once: true, margin: '-50px' }}
-                className="mb-6 sm:mb-8 lg:mb-12"
-              >
-                <h2
-                  className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 lg:mb-6 leading-tight"
-                  style={{ color: THEME.textWhite }}
-                >
-                  Contact <GradientText>Information</GradientText>
-                </h2>
-                <p
-                  className="leading-relaxed text-sm sm:text-base max-w-md"
-                  style={{ color: THEME.textGray }}
-                >
-                  Feel free to reach out through any of these channels. I'm always open to
-                  discussing new projects and opportunities.
-                </p>
-              </motion.div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+          {/* ═════════════════════════════════════════════════════════════════
+              LEFT COLUMN: CONTACT INFORMATION & CHANNELS
+             ═════════════════════════════════════════════════════════════════ */}
+          <div className="lg:col-span-5 order-2 lg:order-1 flex flex-col gap-6">
+            <motion.div
+              variants={fadeUp}
+              initial={prefersReducedMotion ? false : 'hidden'}
+              whileInView="visible"
+              viewport={VIEWPORT_ONCE}
+            >
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-medium text-brand-cyan bg-brand-cyan/10 border border-brand-cyan/20 mb-3 shadow-glow-cyan">
+                <Sparkles size={13} className="text-brand-cyan" aria-hidden="true" />
+                Direct Communication
+              </span>
+              <h2 className="font-heading text-2xl sm:text-3xl font-bold text-ink mb-3 tracking-tight">
+                Get In <span className="text-brand-cyan">Touch</span>
+              </h2>
+              <p className="text-ink-secondary text-sm sm:text-base leading-relaxed">
+                Whether you're looking for full-stack engineering, performance audits, or architecture
+                consultation, my inbox is always open.
+              </p>
+            </motion.div>
 
-              {/* Contact Details */}
-              <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8 lg:mb-12">
-                {contactInfo.map((item, index) => (
-                  <motion.a
-                    key={index}
-                    href={item.href}
-                    className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl transition-all duration-300 group focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-[#0a0a0f]"
-                    style={{
-                      background: THEME.bgCard,
-                      backdropFilter: 'blur(10px)',
-                      border: `1px solid ${THEME.border}`,
-                    }}
-                    whileHover={{ x: 6, scale: 1.01 }}
-                    whileTap={{ scale: 0.98 }}
-                    initial={{ x: -24, opacity: 0 }}
-                    whileInView={{ x: 0, opacity: 1 }}
-                    transition={{ duration: 0.4, ease: 'backOut', delay: index * 0.08 }}
-                    viewport={{ once: true, margin: '-50px' }}
-                    aria-label={`Contact via ${item.label}`}
+            {/* Contact channels list */}
+            <div className="space-y-3.5">
+              {contactInfo.map((item, index) => (
+                <motion.a
+                  key={item.label}
+                  href={item.href}
+                  target={item.href.startsWith('http') ? '_blank' : undefined}
+                  rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                  variants={fadeUp}
+                  initial={prefersReducedMotion ? false : 'hidden'}
+                  whileInView="visible"
+                  viewport={VIEWPORT_ONCE}
+                  whileHover={prefersReducedMotion ? undefined : { x: 4 }}
+                  className="flex items-center gap-4 p-4 rounded-2xl bg-surface-card/80 backdrop-blur-md border border-line-subtle hover:border-brand-cyan/40 hover:shadow-glow-cyan transition-all duration-300 group focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan"
+                  aria-label={`Contact via ${item.label}: ${item.value}`}
+                >
+                  <div
+                    className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${item.gradient} border ${item.borderColor} ${item.textColor} group-hover:scale-105 transition-transform duration-300 shadow-md`}
+                    aria-hidden="true"
                   >
-                    <div
-                      className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center transition-transform duration-300 shadow-lg flex-shrink-0"
-                      style={{ background: item.gradient }}
-                    >
-                      <item.icon
-                        size={20}
-                        className="sm:w-6 sm:h-6 md:w-6 md:h-6"
-                        style={{ color: '#ffffff' }}
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div className="text-start min-w-0">
-                      <p className="text-xs sm:text-sm" style={{ color: THEME.textGrayDark }}>
-                        {item.label}
-                      </p>
-                      <p
-                        className="text-sm sm:text-base font-medium truncate transition-colors duration-300 group-hover:text-cyan-400"
-                        style={{ color: THEME.textWhite }}
-                      >
-                        {item.value}
-                      </p>
-                    </div>
-                  </motion.a>
-                ))}
-              </div>
+                    <item.icon size={20} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-mono text-ink-muted uppercase tracking-wider mb-0.5">
+                      {item.label}
+                    </p>
+                    <p className="text-sm sm:text-base font-medium text-ink truncate group-hover:text-brand-cyan transition-colors">
+                      {item.value}
+                    </p>
+                  </div>
+                </motion.a>
+              ))}
+            </div>
 
-              {/* Social Links */}
+            {/* Social media presence */}
+            {socialLinks.length > 0 && (
               <motion.div
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                viewport={{ once: true, margin: '-50px' }}
+                variants={fadeUp}
+                initial={prefersReducedMotion ? false : 'hidden'}
+                whileInView="visible"
+                viewport={VIEWPORT_ONCE}
+                className="pt-2"
               >
-                <h3
-                  className="text-base sm:text-lg md:text-xl font-semibold mb-3 sm:mb-4"
-                  style={{ color: THEME.textWhite }}
-                >
-                  Follow Me
+                <h3 className="text-xs font-mono uppercase tracking-wider text-ink-secondary mb-3">
+                  Online Profiles
                 </h3>
                 <nav aria-label="Social media links">
-                  <ul className="flex gap-2 sm:gap-3 flex-wrap">
-                    {socialLinks.map((social, index) => (
-                      <li key={index}>
-                        <motion.a
+                  <ul className="flex items-center gap-2.5 flex-wrap">
+                    {socialLinks.map((social) => (
+                      <li key={social.label}>
+                        <a
                           href={social.href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          aria-label={`Visit ${social.label}`}
-                          whileHover={{ scale: 1.1, y: -4 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-xl flex items-center justify-center transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                          style={{
-                            background: THEME.bgCard,
-                            border: `1px solid ${THEME.border}`,
-                            color: THEME.textGray,
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.color = social.hoverColor;
-                            e.currentTarget.style.borderColor = social.hoverColor;
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.color = THEME.textGray;
-                            e.currentTarget.style.borderColor = THEME.border;
-                          }}
+                          aria-label={`Visit ${social.label} profile`}
+                          className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-surface-card/80 hover:bg-surface-elevated border border-line-subtle hover:border-brand-cyan/50 text-ink-secondary hover:text-brand-cyan flex items-center justify-center transition-all duration-200 hover:shadow-glow-cyan focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan"
                         >
-                          <social.icon size={18} className="sm:w-5 sm:h-5" aria-hidden="true" />
-                        </motion.a>
+                          <social.icon size={18} aria-hidden="true" />
+                        </a>
                       </li>
                     ))}
                   </ul>
                 </nav>
               </motion.div>
-            </div>
+            )}
+          </div>
 
-            {/* Contact Form */}
-            <motion.div
-              ref={formRef}
-              className="order-1 lg:order-2"
-              initial={{ x: 24, opacity: 0 }}
-              whileInView={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.5, ease: 'backOut' }}
-              viewport={{ once: true, margin: '-50px' }}
-            >
-              <GlassCard className="p-4 sm:p-5 md:p-6 lg:p-8 shadow-2xl" hover={false}>
-                <h2
-                  className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6"
-                  style={{ color: THEME.textWhite }}
-                >
+          {/* ═════════════════════════════════════════════════════════════════
+              RIGHT COLUMN: INTERACTIVE MESSAGE FORM
+             ═════════════════════════════════════════════════════════════════ */}
+          <div className="lg:col-span-7 order-1 lg:order-2">
+            <div className="relative rounded-3xl bg-surface-card/90 backdrop-blur-xl border border-line-subtle p-6 sm:p-8 md:p-10 shadow-2xl overflow-hidden">
+              {/* Subtle top ambient accent line */}
+              <div
+                className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple"
+                aria-hidden="true"
+              />
+
+              <div className="mb-6">
+                <h3 className="font-heading text-xl sm:text-2xl font-bold text-ink mb-1">
                   Send a Message
-                </h2>
+                </h3>
+                <p className="text-xs sm:text-sm text-ink-secondary">
+                  Fill in your details and I'll get back to you promptly.
+                </p>
+              </div>
 
-                <AnimatePresence mode="wait">
-                  {isSuccess ? (
-                    <motion.div
-                      key="success"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{ type: 'spring', stiffness: 200 }}
-                      className="text-center py-8 sm:py-10 md:py-12"
-                      role="alert"
-                    >
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-lg"
-                        style={{
-                          background: 'linear-gradient(135deg, #10b981, #059669)',
-                          boxShadow: '0 0 30px rgba(16, 185, 129, 0.3)',
-                        }}
-                      >
-                        <CheckCircle
-                          size={32}
-                          className="sm:w-10 sm:h-10"
-                          style={{ color: '#ffffff' }}
-                          aria-hidden="true"
-                        />
-                      </motion.div>
-                      <h3
-                        className="text-xl sm:text-2xl font-bold mb-2"
-                        style={{ color: THEME.textWhite }}
-                      >
-                        Message Sent!
-                      </h3>
-                      <p className="text-sm sm:text-base px-4" style={{ color: THEME.textGray }}>
-                        Thank you for reaching out. I'll get back to you soon.
-                      </p>
-                    </motion.div>
-                  ) : (
-                    <motion.form
-                      key="form"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      onSubmit={handleSubmit(onSubmit)}
-                      className="space-y-5 sm:space-y-6 md:space-y-8"
-                      noValidate
-                      aria-label="Contact form"
-                    >
-                      {/* Backend Error */}
-                      <AnimatePresence>
-                        {isError && (
-                          <motion.div
-                            initial={{ opacity: 0, y: -8, height: 0 }}
-                            animate={{ opacity: 1, y: 0, height: 'auto' }}
-                            exit={{ opacity: 0, y: -8, height: 0 }}
-                            className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-xl border"
-                            style={{
-                              background: 'rgba(239, 68, 68, 0.1)',
-                              borderColor: 'rgba(239, 68, 68, 0.3)',
-                            }}
-                            role="alert"
-                            aria-live="polite"
-                          >
-                            <AlertCircle
-                              size={18}
-                              className="sm:w-5 sm:h-5 mt-0.5 shrink-0"
-                              style={{ color: '#f87171' }}
-                              aria-hidden="true"
-                            />
-                            <div className="flex-1">
-                              <p className="font-medium text-sm" style={{ color: '#fca5a5' }}>
-                                Submission Failed
-                              </p>
-                              <p className="text-xs sm:text-sm mt-0.5" style={{ color: '#fecaca' }}>
-                                {getBackendErrorMessage()}
-                              </p>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
-                      {/* Input Fields */}
-                      {inputFields.map((field) => {
-                        const hasError = !!errors[field.name];
-                        const isFocused = focusedField === field.name;
-                        const hasVal = hasValue(field.name, field.idx);
-
-                        return (
-                          <div key={field.name} className="relative pt-2">
-                            <motion.label
-                              htmlFor={field.name}
-                              animate={{
-                                y: isFocused || hasVal ? -16 : 2,
-                                scale: isFocused || hasVal ? 0.85 : 1,
-                                color: hasError
-                                  ? '#f87171'
-                                  : isFocused
-                                    ? THEME.cyan
-                                    : THEME.textGrayDark,
-                                left: isFocused || hasVal ? 0 : 0,
-                              }}
-                              transition={{ duration: 0.2, ease: 'easeOut' }}
-                              className="absolute origin-left pointer-events-none font-medium text-sm sm:text-base px-0.5"
-                            >
-                              {field.label}
-                            </motion.label>
-                            <input
-                              id={field.name}
-                              type={field.type}
-                              {...register(field.name, field.validation)}
-                              onFocus={() => setFocusedField(field.name)}
-                              onBlur={() => {
-                                setFocusedField(null);
-                                // trigger validation on blur
-                                if (errors[field.name] || isSubmitted) return;
-                              }}
-                              className={`w-full bg-transparent outline-none py-2.5 sm:py-3 text-sm sm:text-base text-white transition-colors duration-300 border-b-2 ${
-                                hasError
-                                  ? 'border-red-400'
-                                  : isFocused
-                                    ? 'border-cyan-400'
-                                    : 'border-white/20 focus:border-white/40'
-                              }`}
-                              aria-invalid={hasError ? 'true' : 'false'}
-                              aria-describedby={hasError ? `${field.name}-error` : undefined}
-                              autoComplete={field.name === 'email' ? 'email' : field.name}
-                            />
-                            <AnimatePresence>
-                              {hasError && (
-                                <motion.p
-                                  id={`${field.name}-error`}
-                                  initial={{ opacity: 0, y: -4 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  exit={{ opacity: 0, y: -4 }}
-                                  className="text-red-400 text-xs mt-2 flex items-center gap-1"
-                                  role="alert"
-                                >
-                                  <AlertCircle size={12} aria-hidden="true" />{' '}
-                                  {errors[field.name].message}
-                                </motion.p>
-                              )}
-                            </AnimatePresence>
-                          </div>
-                        );
-                      })}
-
-                      {/* Message Field */}
-                      <div className="relative pt-2">
-                        <motion.label
-                          htmlFor="message"
-                          animate={{
-                            y: focusedField === 'message' || hasValue('message', 3) ? -16 : 2,
-                            scale: focusedField === 'message' || hasValue('message', 3) ? 0.85 : 1,
-                            color: errors.message
-                              ? '#f87171'
-                              : focusedField === 'message'
-                                ? THEME.cyan
-                                : THEME.textGrayDark,
-                          }}
-                          transition={{ duration: 0.2, ease: 'easeOut' }}
-                          className="absolute origin-left pointer-events-none font-medium text-sm sm:text-base px-0.5"
+              <AnimatePresence mode="wait">
+                {isSuccess ? (
+                  <motion.div
+                    key="success-state"
+                    initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.4 }}
+                    className="py-12 sm:py-16 text-center"
+                    role="alert"
+                    aria-live="polite"
+                  >
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto mb-5 shadow-[0_0_30px_rgba(16,185,129,0.25)]">
+                      <CheckCircle size={36} aria-hidden="true" />
+                    </div>
+                    <h4 className="font-heading text-xl sm:text-2xl font-bold text-ink mb-2">
+                      Message Successfully Sent!
+                    </h4>
+                    <p className="text-sm sm:text-base text-ink-secondary max-w-md mx-auto leading-relaxed">
+                      Thank you for reaching out. Your transmission has been received, and I'll review
+                      your notes and reply within 24 hours.
+                    </p>
+                  </motion.div>
+                ) : (
+                  <motion.form
+                    key="active-form"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onSubmit={handleSubmit(onSubmit)}
+                    className="space-y-4 sm:space-y-5"
+                    noValidate
+                    aria-label="Contact inquiry form"
+                  >
+                    {/* Error Banner */}
+                    <AnimatePresence>
+                      {isError && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -6, height: 0 }}
+                          animate={{ opacity: 1, y: 0, height: 'auto' }}
+                          exit={{ opacity: 0, y: -6, height: 0 }}
+                          className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 flex items-start gap-3"
+                          role="alert"
+                          aria-live="assertive"
                         >
-                          Your Message
-                        </motion.label>
-                        <textarea
-                          id="message"
-                          {...register('message', {
-                            required: 'Message is required',
-                            minLength: { value: 10, message: 'Minimum 10 characters' },
-                            maxLength: { value: 10000, message: 'Maximum 10000 characters' },
+                          <AlertCircle size={18} className="flex-shrink-0 mt-0.5" aria-hidden="true" />
+                          <div className="text-xs sm:text-sm">
+                            <p className="font-semibold text-red-300">Submission Error</p>
+                            <p className="mt-0.5 text-red-200/90">{backendErrorMessage}</p>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* Name & Email Fields Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Name */}
+                      <div className="space-y-1.5">
+                        <label
+                          htmlFor="fullName"
+                          className="block text-xs font-mono font-medium text-ink-secondary"
+                        >
+                          Your Name <span className="text-brand-cyan">*</span>
+                        </label>
+                        <input
+                          id="fullName"
+                          type="text"
+                          placeholder="Jane Doe"
+                          autoComplete="name"
+                          {...register('fullName', {
+                            required: 'Please enter your name',
+                            minLength: { value: 2, message: 'Minimum 2 characters' },
+                            maxLength: { value: 60, message: 'Maximum 60 characters' },
                           })}
-                          onFocus={() => setFocusedField('message')}
-                          onBlur={() => setFocusedField(null)}
-                          rows={8}
-                          className={`w-full bg-transparent outline-none py-2.5 sm:py-3 text-sm sm:text-base text-white transition-colors duration-300 resize-none border-b-2 ${
-                            errors.message
-                              ? 'border-red-400'
-                              : focusedField === 'message'
-                                ? 'border-cyan-400'
-                                : 'border-white/20 focus:border-white/40'
+                          style={{
+                            backgroundColor: '#0A0A0F',
+                            color: '#F5F7FA',
+                            colorScheme: 'dark',
+                          }}
+                          className={`w-full rounded-xl bg-[#0A0A0F] border px-4 py-3 text-sm text-[#F5F7FA] placeholder:text-[#737386] transition-all duration-200 outline-none focus:ring-1 ${
+                            errors.fullName
+                              ? 'border-red-400/80 focus:border-red-400 focus:ring-red-400'
+                              : 'border-white/10 focus:border-brand-cyan focus:ring-brand-cyan focus:shadow-glow-cyan'
                           }`}
-                          aria-invalid={errors.message ? 'true' : 'false'}
-                          aria-describedby={errors.message ? 'message-error' : undefined}
+                          aria-invalid={errors.fullName ? 'true' : 'false'}
+                          aria-describedby={errors.fullName ? 'fullName-error' : undefined}
                         />
-                        <AnimatePresence>
-                          {errors.message && (
-                            <motion.p
-                              id="message-error"
-                              initial={{ opacity: 0, y: -4 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -4 }}
-                              className="text-red-400 text-xs mt-2 flex items-center gap-1"
-                              role="alert"
-                            >
-                              <AlertCircle size={12} aria-hidden="true" /> {errors.message.message}
-                            </motion.p>
-                          )}
-                        </AnimatePresence>
+                        {errors.fullName && (
+                          <p
+                            id="fullName-error"
+                            className="text-xs text-red-400 flex items-center gap-1 mt-1"
+                            role="alert"
+                          >
+                            <AlertCircle size={12} aria-hidden="true" />
+                            {errors.fullName.message}
+                          </p>
+                        )}
                       </div>
 
-                      {/* Submit Button */}
-                      <motion.button
-                        type="submit"
-                        disabled={isPending}
-                        whileHover={
-                          !isPending
-                            ? { scale: 1.01, boxShadow: '0 0 30px rgba(2, 211, 254, 0.3)' }
-                            : {}
-                        }
-                        whileTap={!isPending ? { scale: 0.99 } : {}}
-                        className="w-full py-3 sm:py-4 rounded-lg font-semibold flex items-center justify-center gap-2 text-sm sm:text-base disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300 relative overflow-hidden group focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-[#0f172a]"
-                        style={{ background: THEME.gradientPrimary, color: '#ffffff' }}
-                      >
-                        <span
-                          className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-500"
+                      {/* Email */}
+                      <div className="space-y-1.5">
+                        <label
+                          htmlFor="email"
+                          className="block text-xs font-mono font-medium text-ink-secondary"
+                        >
+                          Your Email <span className="text-brand-cyan">*</span>
+                        </label>
+                        <input
+                          id="email"
+                          type="email"
+                          placeholder="jane@example.com"
+                          autoComplete="email"
+                          {...register('email', {
+                            required: 'Please enter your email',
+                            pattern: {
+                              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                              message: 'Please provide a valid email address',
+                            },
+                          })}
                           style={{
-                            background:
-                              'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
+                            backgroundColor: '#0A0A0F',
+                            color: '#F5F7FA',
+                            colorScheme: 'dark',
                           }}
-                          aria-hidden="true"
+                          className={`w-full rounded-xl bg-[#0A0A0F] border px-4 py-3 text-sm text-[#F5F7FA] placeholder:text-[#737386] transition-all duration-200 outline-none focus:ring-1 ${
+                            errors.email
+                              ? 'border-red-400/80 focus:border-red-400 focus:ring-red-400'
+                              : 'border-white/10 focus:border-brand-cyan focus:ring-brand-cyan focus:shadow-glow-cyan'
+                          }`}
+                          aria-invalid={errors.email ? 'true' : 'false'}
+                          aria-describedby={errors.email ? 'email-error' : undefined}
                         />
-                        {isPending ? (
-                          <>
-                            <Loader2
-                              size={18}
-                              className="sm:w-5 sm:h-5 animate-spin relative z-10"
-                              aria-hidden="true"
-                            />{' '}
-                            <span className="relative z-10">Sending...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Send
-                              size={18}
-                              className="sm:w-5 sm:h-5 relative z-10"
-                              aria-hidden="true"
-                            />{' '}
-                            <span className="relative z-10">Send Message</span>
-                          </>
+                        {errors.email && (
+                          <p
+                            id="email-error"
+                            className="text-xs text-red-400 flex items-center gap-1 mt-1"
+                            role="alert"
+                          >
+                            <AlertCircle size={12} aria-hidden="true" />
+                            {errors.email.message}
+                          </p>
                         )}
-                      </motion.button>
-                    </motion.form>
-                  )}
-                </AnimatePresence>
-              </GlassCard>
-            </motion.div>
+                      </div>
+                    </div>
+
+                    {/* Subject */}
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="subject"
+                        className="block text-xs font-mono font-medium text-ink-secondary"
+                      >
+                        Subject <span className="text-brand-cyan">*</span>
+                      </label>
+                      <input
+                        id="subject"
+                        type="text"
+                        placeholder="Project Consultation / Full-Stack Development"
+                        {...register('subject', {
+                          required: 'Please enter a subject',
+                          minLength: { value: 3, message: 'Minimum 3 characters' },
+                          maxLength: { value: 120, message: 'Maximum 120 characters' },
+                        })}
+                        style={{
+                          backgroundColor: '#0A0A0F',
+                          color: '#F5F7FA',
+                          colorScheme: 'dark',
+                        }}
+                        className={`w-full rounded-xl bg-[#0A0A0F] border px-4 py-3 text-sm text-[#F5F7FA] placeholder:text-[#737386] transition-all duration-200 outline-none focus:ring-1 ${
+                          errors.subject
+                            ? 'border-red-400/80 focus:border-red-400 focus:ring-red-400'
+                            : 'border-white/10 focus:border-brand-cyan focus:ring-brand-cyan focus:shadow-glow-cyan'
+                        }`}
+                        aria-invalid={errors.subject ? 'true' : 'false'}
+                        aria-describedby={errors.subject ? 'subject-error' : undefined}
+                      />
+                      {errors.subject && (
+                        <p
+                          id="subject-error"
+                          className="text-xs text-red-400 flex items-center gap-1 mt-1"
+                          role="alert"
+                        >
+                          <AlertCircle size={12} aria-hidden="true" />
+                          {errors.subject.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Message */}
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="message"
+                        className="block text-xs font-mono font-medium text-ink-secondary"
+                      >
+                        Project Details / Message <span className="text-brand-cyan">*</span>
+                      </label>
+                      <textarea
+                        id="message"
+                        rows={5}
+                        placeholder="Tell me about your product vision, timeline, target deliverables, or requirements..."
+                        {...register('message', {
+                          required: 'Please write your message',
+                          minLength: { value: 10, message: 'Minimum 10 characters' },
+                          maxLength: { value: 10000, message: 'Maximum 10,000 characters' },
+                        })}
+                        style={{
+                          backgroundColor: '#0A0A0F',
+                          color: '#F5F7FA',
+                          colorScheme: 'dark',
+                        }}
+                        className={`w-full rounded-xl bg-[#0A0A0F] border px-4 py-3 text-sm text-[#F5F7FA] placeholder:text-[#737386] transition-all duration-200 outline-none focus:ring-1 resize-none ${
+                          errors.message
+                            ? 'border-red-400/80 focus:border-red-400 focus:ring-red-400'
+                            : 'border-white/10 focus:border-brand-cyan focus:ring-brand-cyan focus:shadow-glow-cyan'
+                        }`}
+                        aria-invalid={errors.message ? 'true' : 'false'}
+                        aria-describedby={errors.message ? 'message-error' : undefined}
+                      />
+                      {errors.message && (
+                        <p
+                          id="message-error"
+                          className="text-xs text-red-400 flex items-center gap-1 mt-1"
+                          role="alert"
+                        >
+                          <AlertCircle size={12} aria-hidden="true" />
+                          {errors.message.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Submit Button */}
+                    <button
+                      type="submit"
+                      disabled={isPending || isSubmitting}
+                      className="w-full mt-2 py-3.5 sm:py-4 px-6 rounded-xl font-heading font-semibold text-sm sm:text-base text-surface-base bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-cyan bg-[length:200%_auto] hover:bg-right hover:shadow-glow-cyan transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan"
+                    >
+                      {isPending ? (
+                        <>
+                          <Loader2 size={18} className="animate-spin" aria-hidden="true" />
+                          <span>Delivering Transmission...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send size={18} aria-hidden="true" />
+                          <span>Send Message</span>
+                        </>
+                      )}
+                    </button>
+                  </motion.form>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
-      </section>
+      </div>
     </>
   );
 });

@@ -1,6 +1,4 @@
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Suspense, memo, useEffect, useMemo } from 'react';
+import { Suspense, memo, useMemo } from 'react';
 import { shallowEqual, useSelector } from 'react-redux';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import './App.css';
@@ -17,27 +15,13 @@ import Login from './pages/admin/Login';
 import { adminRoutes } from './Routes/admin.route.jsx';
 import { userRoutes } from './Routes/user.route.jsx';
 
-gsap.registerPlugin(ScrollTrigger);
-
-// ⚡ Throttle utility
-const throttle = (func, limit) => {
-  let inThrottle;
-  return function (...args) {
-    if (!inThrottle) {
-      func.apply(this, args);
-      inThrottle = true;
-      setTimeout(() => (inThrottle = false), limit);
-    }
-  };
-};
-
-// 🎯 Skeleton Loader Component
+// 🎯 Minimal Skeleton Fallback during lazy loading
 const AppSkeleton = memo(() => (
   <div
     style={{
       position: 'fixed',
       inset: 0,
-      background: '#0a0a0f',
+      background: '#0A0A0F',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -46,10 +30,10 @@ const AppSkeleton = memo(() => (
   >
     <div
       style={{
-        width: 48,
-        height: 48,
-        border: '3px solid rgba(139, 92, 246, 0.2)',
-        borderTopColor: '#8b5cf6',
+        width: 44,
+        height: 44,
+        border: '3px solid rgba(2, 211, 254, 0.15)',
+        borderTopColor: '#02D3FE',
         borderRadius: '50%',
         animation: 'spin 0.8s linear infinite',
       }}
@@ -64,24 +48,6 @@ AppSkeleton.displayName = 'AppSkeleton';
 function App() {
   const isAuth = useSelector((state) => state.adminAuth?.isAuth, shallowEqual);
   const location = useLocation();
-
-  // 🚀 Throttled ScrollTrigger refresh
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const throttledRefresh = throttle(() => {
-      ScrollTrigger.refresh();
-    }, 200);
-
-    window.addEventListener('resize', throttledRefresh, { passive: true });
-
-    return () => {
-      window.removeEventListener('resize', throttledRefresh);
-      ScrollTrigger.getAll()
-        .filter((st) => st.vars?.id?.startsWith('app-'))
-        .forEach((st) => st.kill());
-    };
-  }, []);
 
   // 🎯 Memoized login element
   const loginElement = useMemo(

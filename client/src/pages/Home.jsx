@@ -1,20 +1,15 @@
-import { OutlineButton, PrimaryButton, THEME } from '@/components/UI';
+import { OutlineButton, PrimaryButton } from '@/components/UI';
+import { fadeUp, staggerParent, useMotionPrefs, VIEWPORT_ONCE } from '@/lib/motion';
 import { getClientSatisfactionRate } from '@/Utils/Utils';
-import { useGSAP } from '@gsap/react';
-import { motion } from 'framer-motion';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Award, Star, Users, Zap } from 'lucide-react';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowRight, Award, Star, Users, Zap } from 'lucide-react';
+import { motion } from 'motion/react';
+import { memo, useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
 import Hero from '../sections/Hero';
 import HeroSkeleton from '../sections/HeroSkeleton';
 import Particles from '../sections/Particles';
 import PricePlanSection from '../sections/PricePlanSection';
 import ServicesSection from '../sections/ServicesSection';
-
-gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const useHomeData = () => {
   const { data: about, isLoading: isAboutLoading } = useSelector((state) => state.about);
@@ -28,65 +23,58 @@ const useHomeData = () => {
 };
 
 const Home = memo(() => {
-  const containerRef = useRef(null);
-  const statsRef = useRef(null);
   const { testimonials } = useSelector((state) => state.testimonial);
   const { about, isLoading, projectCounts } = useHomeData();
+  const { reduced, isMobile } = useMotionPrefs();
 
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const prefs = useMemo(() => ({ reduced, isMobile }), [reduced, isMobile]);
+  const parentVariants = useMemo(() => staggerParent(0.1, 0.05), []);
+  const itemVariants = useMemo(() => fadeUp(prefs, 0), [prefs]);
 
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
-    const handler = (e) => setPrefersReducedMotion(e.matches);
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
-  }, []);
+  // Compute satisfaction safely (avoid NaN when empty)
+  const satisfaction = useMemo(() => {
+    if (!testimonials?.length) return null;
+    const rate = getClientSatisfactionRate(testimonials);
+    return Number.isFinite(rate) ? rate : null;
+  }, [testimonials]);
 
-  const satisfaction = getClientSatisfactionRate(testimonials);
-
-  const stats = useMemo(
-    () => [
-      { icon: Users, value: projectCounts?.publishedProjects || '0', label: 'Projects Completed' },
-      { icon: Star, value: testimonials?.length || '0', label: 'Happy Clients' },
-      { icon: Award, value: about?.experience || '0', label: 'Years Experience' },
-      { icon: Zap, value: `${satisfaction}%`, label: 'Satisfaction Rate' },
-    ],
-    [projectCounts?.publishedProjects, testimonials?.length, about?.experience, satisfaction]
-  );
-
-  useGSAP(
-    () => {
-      if (prefersReducedMotion) return;
-
-      gsap.fromTo(
-        '.stat-item',
-        { y: 30, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.5,
-          stagger: 0.1,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: statsRef.current,
-            start: 'top 85%',
-            toggleActions: 'play none none none',
-            once: true,
-          },
-        }
-      );
-
-      gsap.to('.gradient-orb', {
-        scale: 1.2,
-        duration: 4,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      });
-    },
-    { scope: containerRef, dependencies: [prefersReducedMotion] }
-  );
+  // Real stats only — filter out undefined/zero values
+  const stats = useMemo(() => {
+    const list = [
+      {
+        icon: Users,
+        value: projectCounts?.publishedProjects,
+        suffix: '+',
+        label: 'Projects Delivered',
+      },
+      {
+        icon: Star,
+        value: testimonials?.length,
+        suffix: '+',
+        label: 'Satisfied Clients',
+      },
+      {
+        icon: Award,
+        value: about?.experience,
+        suffix: '+',
+        label: 'Years Experience',
+      },
+      {
+        icon: Zap,
+        value: satisfaction,
+        suffix: '%',
+        label: 'Client Satisfaction',
+      },
+    ].filter(
+      (s) =>
+        s.value !== undefined &&
+        s.value !== null &&
+        s.value !== '' &&
+        String(s.value) !== '0' &&
+        String(s.value) !== 'NaN'
+    );
+    return list;
+  }, [projectCounts?.publishedProjects, testimonials?.length, about?.experience, satisfaction]);
 
   const structuredData = useMemo(() => {
     if (!about) return null;
@@ -96,7 +84,7 @@ const Home = memo(() => {
       name: `${about.fullName || 'Developer'} - Professional Portfolio`,
       description:
         about.shortDesc ||
-        'Professional portfolio showcasing web development and UI/UX design services.',
+        'Professional portfolio showcasing modern web engineering, full stack development, and UI/UX design.',
       url: typeof window !== 'undefined' ? window.location.href : '',
       mainEntity: {
         '@type': 'Person',
@@ -108,13 +96,7 @@ const Home = memo(() => {
   }, [about]);
 
   return (
-    <div
-      ref={containerRef}
-      className="relative  overflow-x-hidden"
-      style={{ backgroundColor: THEME.bg, fontFamily: "'Inter', sans-serif" }}
-      role="main"
-      aria-label="Portfolio Home Page"
-    >
+    <div className="relative isolate overflow-x-clip bg-surface-base text-ink" id="home-page">
       {structuredData && (
         <script
           type="application/ld+json"
@@ -122,180 +104,132 @@ const Home = memo(() => {
         />
       )}
 
-      {/* Background Orbs */}
-      <div className="fixed inset-0 pointer-events-none z-10 overflow-hidden" aria-hidden="true">
+      {/* Subtle fixed background gradient and ambient particles */}
+      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden" aria-hidden="true">
         <div
-          className="gradient-orb absolute top-1/4 left-1/4 w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96 rounded-full blur-[100px] lg:blur-[120px] opacity-80"
-          style={{ background: 'rgba(2, 211, 254, 0.12)', transform: 'translate(-50%, -50%)' }}
+          className="absolute top-1/4 left-1/4 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-[120px] opacity-60"
+          style={{ background: 'rgba(2, 211, 254, 0.08)' }}
         />
         <div
-          className="gradient-orb absolute bottom-1/4 right-1/4 w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96 rounded-full blur-[100px] lg:blur-[120px] opacity-80"
-          style={{
-            animationDelay: '1s',
-            background: 'rgba(78, 144, 225, 0.12)',
-            transform: 'translate(50%, 50%)',
-          }}
-        />
-        <div
-          className="gradient-orb absolute top-1/2 left-1/2 w-48 h-48 sm:w-64 sm:h-64 lg:w-64 lg:h-64 rounded-full blur-[80px] lg:blur-[100px] opacity-60"
-          style={{
-            animationDelay: '2s',
-            background: 'rgba(154, 92, 183, 0.1)',
-            transform: 'translate(-50%, -50%)',
-          }}
+          className="absolute bottom-1/3 right-1/4 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-[120px] opacity-60"
+          style={{ background: 'rgba(154, 92, 183, 0.08)' }}
         />
         <Particles />
       </div>
 
-      <div className="relative z-0">
-        {/* Hero Section */}
-        <section className="relative z-10" aria-label="Hero">
-          {isLoading ? <HeroSkeleton /> : <Hero about={{ ...about, projectCounts }} />}
-        </section>
+      {/* 🦸 HERO SECTION */}
+      <section aria-label="Hero" className="relative z-10">
+        {isLoading ? <HeroSkeleton /> : <Hero about={{ ...about, projectCounts }} />}
+      </section>
 
-        {/* Services Section */}
-        <section aria-label="Services">
-          <ServicesSection containerRef={containerRef} />
-        </section>
+      {/* 🛠️ SERVICES OVERVIEW SECTION */}
+      <section aria-label="Services Overview" className="relative z-10">
+        <ServicesSection />
+      </section>
 
-        {/* Stats Section */}
+      {/* 📊 STATS COUNTER SECTION (renders only when real data exists) */}
+      {stats.length > 0 && (
         <section
-          ref={statsRef}
-          className="relative z-10 py-12 sm:py-16 md:py-20"
-          aria-label="Professional Statistics"
+          className="relative z-10 py-12 sm:py-16 lg:py-20 overflow-hidden"
+          aria-label="Professional Metrics"
         >
-          <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div
+              variants={parentVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={VIEWPORT_ONCE}
+              className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6"
+            >
               {stats.map((stat, index) => (
                 <motion.div
                   key={`stat-${stat.label}-${index}`}
-                  className="stat-item flex flex-col items-center justify-center p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl h-full w-full"
-                  style={{
-                    background: THEME.bgCard,
-                    backdropFilter: 'blur(10px)',
-                    border: `1px solid ${THEME.border}`,
-                    transition: 'all 0.3s ease',
-                  }}
+                  variants={itemVariants}
                   whileHover={
-                    prefersReducedMotion
+                    reduced || isMobile
                       ? undefined
-                      : {
-                          y: -5,
-                          borderColor: 'rgba(2, 211, 254, 0.3)',
-                          boxShadow: '0 0 20px rgba(2, 211, 254, 0.1)',
-                        }
+                      : { y: -4, transition: { duration: 0.2 } }
                   }
-                  transition={{ type: 'spring', stiffness: 300 }}
+                  className="flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 rounded-2xl border border-line-subtle bg-surface-card/60 backdrop-blur-sm transition-[border-color,box-shadow] duration-300 hover:border-brand-cyan/30 hover:shadow-glow-cyan h-full text-center"
                   role="group"
-                  aria-label={`${stat.value} ${stat.label}`}
+                  aria-label={`${stat.value}${stat.suffix} ${stat.label}`}
                 >
                   <div
-                    className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg sm:rounded-xl mb-3 sm:mb-4 flex-shrink-0"
-                    style={{ background: 'rgba(2, 211, 254, 0.15)' }}
+                    className="grid h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 place-items-center rounded-xl bg-brand-cyan/10 border border-brand-cyan/20 text-brand-cyan mb-3 sm:mb-4 shrink-0"
+                    aria-hidden="true"
                   >
-                    <stat.icon
-                      size={20}
-                      className="sm:w-6 sm:h-6 md:w-[24px] md:h-[24px]"
-                      style={{ color: THEME.cyan }}
-                      aria-hidden="true"
-                    />
+                    <stat.icon size={20} className="sm:w-6 sm:h-6" />
                   </div>
-                  <div
-                    className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2 truncate w-full px-2 text-center"
-                    style={{ color: THEME.cyan }}
-                  >
-                    {stat.value}
+                  <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-ink mb-1 sm:mb-2">
+                    <span>{stat.value}</span>
+                    <span className="text-brand-cyan text-xl sm:text-2xl md:text-3xl ml-0.5">
+                      {stat.suffix}
+                    </span>
                   </div>
-                  <div
-                    className="text-xs sm:text-sm font-medium truncate w-full px-2 text-center"
-                    style={{ color: THEME.textGrayDark }}
-                  >
+                  <div className="text-xs sm:text-sm font-medium text-ink-secondary line-clamp-2 px-1">
                     {stat.label}
                   </div>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </section>
+      )}
 
-        {/* Pricing Section */}
-        <section aria-label="Pricing Plans">
-          <PricePlanSection />
-        </section>
+      {/* 💳 PRICING SECTION */}
+      <section aria-label="Pricing Packages" className="relative z-10">
+        <PricePlanSection />
+      </section>
 
-        {/* CTA Section */}
-        <section className="relative z-10 pb-16 sm:pb-20 md:pb-24" aria-label="Call To Action">
-          <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-6">
+      {/* 🚀 CALL TO ACTION SECTION */}
+      <section className="relative z-10 py-16 sm:py-20 lg:py-24" aria-label="Call To Action">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            variants={itemVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={VIEWPORT_ONCE}
+            className="relative overflow-hidden rounded-3xl border border-line-strong bg-gradient-to-b from-surface-card via-surface-elevated to-surface-card p-6 sm:p-10 md:p-14 lg:p-16 text-center shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+          >
+            {/* Ambient top light */}
             <div
-              className="rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-12 text-center"
-              style={{
-                background:
-                  'linear-gradient(135deg, rgba(2, 211, 254, 0.15), rgba(154, 92, 183, 0.15))',
-                border: '1px solid rgba(2, 211, 254, 0.2)',
-                boxShadow: '0 0 40px rgba(2, 211, 254, 0.05)',
-              }}
-            >
-              <motion.div
-                initial={prefersReducedMotion ? { scale: 1 } : { scale: 0 }}
-                whileInView={prefersReducedMotion ? undefined : { scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-                className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full mb-4 sm:mb-6 mx-auto"
-                style={{ background: 'rgba(2, 211, 254, 0.15)' }}
-              >
-                <Zap
-                  size={24}
-                  className="sm:w-7 sm:h-7 md:w-8 md:h-8"
-                  style={{ color: THEME.cyan }}
-                  aria-hidden="true"
-                />
-              </motion.div>
+              aria-hidden="true"
+              className="pointer-events-none absolute -inset-px rounded-3xl bg-[radial-gradient(ellipse_at_top,rgb(var(--brand-cyan)/0.14),transparent_65%)]"
+            />
 
-              <motion.h2
-                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 leading-tight"
-                style={{ color: THEME.textWhite }}
-              >
-                Ready to Start Your <span style={{ color: THEME.cyan }}>Project?</span>
-              </motion.h2>
+            <div className="relative z-10">
+              <div className="inline-flex items-center justify-center h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-brand-cyan/10 border border-brand-cyan/20 text-brand-cyan mb-5 sm:mb-6 mx-auto">
+                <Zap size={22} className="sm:w-6 sm:h-6" aria-hidden="true" />
+              </div>
 
-              <motion.p
-                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="text-sm sm:text-base md:text-lg mb-8 sm:mb-10 max-w-2xl mx-auto leading-relaxed"
-                style={{ color: THEME.textGray }}
-              >
-                Let's collaborate and bring your vision to life. I'm always excited to work on new
-                and challenging projects.
-              </motion.p>
+              <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-ink mb-4 sm:mb-5 leading-tight">
+                Ready to Build Your{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple">
+                  Next Project?
+                </span>
+              </h2>
 
-              <motion.div
-                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 w-full"
-              >
-                <Link to="/contact" className="w-full sm:w-auto">
-                  <PrimaryButton icon={Zap} className="w-full sm:w-auto justify-center">
-                    Get In Touch
-                  </PrimaryButton>
-                </Link>
-                <Link to="/projects" className="w-full sm:w-auto">
-                  <OutlineButton icon={Star} className="w-full sm:w-auto justify-center">
-                    View Projects
-                  </OutlineButton>
-                </Link>
-              </motion.div>
+              <p className="text-sm sm:text-base md:text-lg leading-relaxed text-ink-secondary mb-8 sm:mb-10 max-w-2xl mx-auto">
+                Let's collaborate to bring your vision into reality. Open for select full-stack
+                engineering contracts, performance overhauls, and design systems.
+              </p>
+
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 w-full">
+                <PrimaryButton to="/contact" icon={Zap} className="w-full sm:w-auto justify-center">
+                  Get In Touch
+                </PrimaryButton>
+                <OutlineButton
+                  to="/projects"
+                  icon={ArrowRight}
+                  className="w-full sm:w-auto justify-center"
+                >
+                  Explore Work
+                </OutlineButton>
+              </div>
             </div>
-          </div>
-        </section>
-      </div>
+          </motion.div>
+        </div>
+      </section>
     </div>
   );
 });

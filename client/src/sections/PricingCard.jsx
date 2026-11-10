@@ -1,14 +1,13 @@
-import { THEME } from '@/components/UI'
-import { motion } from 'framer-motion'
-import { ArrowRight, Check, Crown, Sparkles, Zap } from 'lucide-react'
-import { useCallback, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMotionPrefs } from '@/lib/motion';
+import { ArrowRight, Check, Crown, Sparkles, Zap } from 'lucide-react';
+import { motion } from 'motion/react';
+import { memo, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const PricingCard = ({ plans }) => {
-  const [hoveredIndex, setHoveredIndex] = useState(null)
-  const navigate = useNavigate() // ✅ Initialize navigate
+const PricingCard = memo(({ plans }) => {
+  const navigate = useNavigate();
+  const { reduced, isMobile } = useMotionPrefs();
 
-  // ✅ New function: Handle plan selection & navigate to contact with params
   const handlePlanSelect = useCallback(
     (plan) => {
       const params = new URLSearchParams({
@@ -18,317 +17,205 @@ const PricingCard = ({ plans }) => {
         currency: plan?.currency || 'USD',
         subject: `Interested in ${plan?.planName || 'Pricing'} Plan`,
         message: `Hi, I'm interested in your "${plan?.planName || 'Plan'}" pricing plan.\n\nPlan Details:\n• Price: ${plan?.currency || '$'}${plan?.price || '0'}${plan?.period || '/month'}\n• Features:\n${plan?.featurePoints?.map((f) => `  - ${f.name}`).join('\n') || '  - No features listed'}\n\nPlease let me know the next steps.\n\nBest regards,`,
-      })
-      navigate(`/contact?${params.toString()}`)
+      });
+      navigate(`/contact?${params.toString()}`);
     },
     [navigate]
-  )
+  );
 
   const getPlanIcon = (planName) => {
-    const name = planName?.toLowerCase()
-    if (name === 'standard')
-      return <Crown size={20} style={{ color: '#fbbf24' }} aria-hidden="true" />
-    if (name === 'premium')
-      return <Sparkles size={20} style={{ color: THEME.purple }} aria-hidden="true" />
-    return <Zap size={20} style={{ color: THEME.cyan }} aria-hidden="true" />
+    const name = planName?.toLowerCase();
+    if (name === 'standard') {
+      return <Crown size={18} className="text-amber-400" aria-hidden="true" />;
+    }
+    if (name === 'premium') {
+      return <Sparkles size={18} className="text-brand-purple" aria-hidden="true" />;
+    }
+    return <Zap size={18} className="text-brand-cyan" aria-hidden="true" />;
+  };
+
+  const containerVariants = useMemo(() => {
+    if (reduced) return {};
+    return {
+      hidden: { opacity: 0 },
+      visible: {
+        opacity: 1,
+        transition: { staggerChildren: isMobile ? 0.05 : 0.12, delayChildren: 0.1 },
+      },
+    };
+  }, [reduced, isMobile]);
+
+  const cardVariants = useMemo(() => {
+    if (reduced) return { hidden: { opacity: 1 }, visible: { opacity: 1 } };
+    return {
+      hidden: { opacity: 0, y: isMobile ? 12 : 24 },
+      visible: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+      },
+    };
+  }, [reduced, isMobile]);
+
+  if (!plans || plans.length === 0) {
+    return (
+      <div className="text-center py-12 rounded-2xl border border-line-subtle bg-surface-card/40">
+        <p className="text-ink-secondary text-sm">No pricing plans available at the moment.</p>
+      </div>
+    );
   }
 
-  const prefersReducedMotion =
-    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
   return (
-    <div className="relative rounded-2xl" role="list" aria-label="Pricing Plans List">
-      {/* Pricing Cards Grid */}
+    <div className="relative isolate" role="list" aria-label="Pricing Plans List">
       <motion.div
+        variants={containerVariants}
         initial="hidden"
-        animate="visible"
-        className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 relative z-10 px-3 sm:px-0"
-        variants={
-          prefersReducedMotion
-            ? {}
-            : {
-                visible: {
-                  transition: { staggerChildren: 0.15, delayChildren: 0.2 },
-                },
-              }
-        }
+        whileInView="visible"
+        viewport={{ once: true, margin: '-50px' }}
+        className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-stretch"
       >
-        {plans?.map((plan, index) => {
-          const isPopular = plan?.planName?.toLowerCase() === 'standard'
-          const isHovered = hoveredIndex === index
-          const planId = plan?.id || `plan-${index}`
+        {plans.map((plan, index) => {
+          const isPopular = plan?.planName?.toLowerCase() === 'standard';
+          const planId = plan?.id || `plan-${index}`;
 
           return (
             <motion.div
               key={planId}
-              variants={
-                prefersReducedMotion
-                  ? {}
-                  : {
-                      hidden: { opacity: 0, y: 50, scale: 0.95 },
-                      visible: {
-                        opacity: 1,
-                        y: 0,
-                        scale: 1,
-                        transition: { type: 'spring', stiffness: 100, damping: 15, duration: 0.6 },
-                      },
-                    }
+              variants={cardVariants}
+              whileHover={
+                reduced || isMobile
+                  ? undefined
+                  : { y: isPopular ? -8 : -5, transition: { duration: 0.25 } }
               }
-              onMouseEnter={() => setHoveredIndex(index)}
-              onMouseLeave={() => setHoveredIndex(null)}
-              whileHover={prefersReducedMotion ? undefined : { y: isPopular ? -12 : -8 }}
-              className={`relative group flex flex-col ${isPopular ? 'md:-mt-4 md:mb-4' : 'mt-0 mb-0'}`}
+              className={`relative flex flex-col ${isPopular ? 'md:-mt-3 md:mb-3' : ''}`}
               role="listitem"
             >
-              {/* Glow Effect */}
+              {/* Popular Glow behind card */}
               {isPopular && (
                 <div
-                  className="absolute -inset-4 rounded-3xl opacity-30 blur-2xl pointer-events-none transition-opacity duration-500 group-hover:opacity-50"
-                  style={{ background: THEME.gradientPrimary }}
                   aria-hidden="true"
-                />
-              )}
-              {!isPopular && (
-                <div
-                  className={`absolute -inset-1 rounded-2xl opacity-0 blur-lg transition-opacity duration-500 ${isHovered ? 'opacity-20' : ''}`}
-                  style={{ background: THEME.gradientCyanBlue }}
-                  aria-hidden="true"
+                  className="pointer-events-none absolute -inset-3 rounded-3xl opacity-40 blur-xl bg-gradient-to-r from-brand-cyan/20 via-brand-blue/20 to-brand-purple/20"
                 />
               )}
 
-              {/* Card */}
+              {/* Card Surface */}
               <article
-                className={`relative h-full flex flex-col rounded-2xl p-5 sm:p-6 md:p-8 overflow-visible transition-all duration-300 ${isPopular ? 'ring-1 ring-cyan-500/30' : ''}`}
-                style={{
-                  background: THEME.bgCard,
-                  backdropFilter: 'blur(10px)',
-                  border: isPopular
-                    ? `2px solid rgba(2, 211, 254, 0.3)`
-                    : `1px solid ${THEME.border}`,
-                  boxShadow: isPopular
-                    ? '0 0 40px rgba(2, 211, 254, 0.1)'
-                    : '0 10px 30px rgba(0,0,0,0.3)',
-                }}
+                className={`relative flex-1 flex flex-col justify-between rounded-2xl p-6 sm:p-8 backdrop-blur-sm transition-[border-color,box-shadow] duration-300 ${
+                  isPopular
+                    ? 'border-2 border-brand-cyan/40 bg-surface-card/90 shadow-glow-cyan'
+                    : 'border border-line-subtle bg-surface-card/60 hover:border-line-strong'
+                }`}
                 aria-label={`${plan?.planName || 'Pricing Plan'} details`}
               >
-                {/* Popular Badge */}
+                {/* Popular Pill */}
                 {isPopular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
-                    <div className="relative">
-                      <div
-                        className="absolute inset-0 rounded-full blur-md opacity-60"
-                        style={{ background: THEME.gradientCyanBlue }}
-                        aria-hidden="true"
-                      />
-                      <div
-                        className="relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-1.5 sm:py-2 rounded-full text-white text-xs sm:text-sm font-semibold whitespace-nowrap"
-                        style={{ background: THEME.gradientCyanBlue }}
-                      >
-                        <Crown
-                          size={12}
-                          className="sm:w-4 sm:h-4"
-                          style={{ color: '#fbbf24' }}
-                          aria-hidden="true"
-                        />
-                        Most Popular
-                      </div>
-                    </div>
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
+                    <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-semibold text-surface-void bg-gradient-to-r from-brand-cyan to-brand-blue shadow-md">
+                      <Crown size={12} className="text-surface-void" aria-hidden="true" />
+                      Most Popular
+                    </span>
                   </div>
                 )}
 
-                {/* Plan Header */}
-                <header className="mb-6 sm:mb-8 text-center">
-                  <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                    <div
-                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{
-                        background: isPopular
-                          ? 'rgba(2, 211, 254, 0.15)'
-                          : 'rgba(255,255,255,0.05)',
-                        border: `1px solid ${isPopular ? 'rgba(2, 211, 254, 0.3)' : THEME.border}`,
-                      }}
-                      aria-hidden="true"
-                    >
-                      {getPlanIcon(plan?.planName)}
+                <div>
+                  {/* Header: Icon & Plan Name */}
+                  <header className="mb-6 flex items-start justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <div
+                          className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border ${
+                            isPopular
+                              ? 'border-brand-cyan/30 bg-brand-cyan/10'
+                              : 'border-line-subtle bg-surface-soft'
+                          }`}
+                        >
+                          {getPlanIcon(plan?.planName)}
+                        </div>
+                        <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-ink">
+                          {plan?.planName || 'Plan'}
+                        </h3>
+                      </div>
+                      <p className="text-xs sm:text-sm text-ink-secondary leading-relaxed">
+                        {plan?.shortDesc || 'Tailored for standard project requirements'}
+                      </p>
                     </div>
-                    <h3
-                      className="text-xl sm:text-2xl font-bold"
-                      style={{ color: THEME.textWhite }}
-                    >
-                      {plan?.planName || 'Plan'}
-                    </h3>
-                  </div>
-                  <p className="text-xs sm:text-sm px-2" style={{ color: THEME.textGray }}>
-                    {plan?.shortDesc || 'Description not available'}
-                  </p>
-                </header>
+                  </header>
 
-                {/* Price */}
-                <div className="mb-6 sm:mb-8 text-center">
-                  <div className="flex items-baseline justify-center gap-0.5 sm:gap-1">
-                    <span
-                      className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight"
-                      style={{ color: THEME.textWhite }}
-                    >
-                      {Math.floor(plan?.price || 0)}
-                    </span>
-                    <span
-                      className="text-sm sm:text-lg ml-0.5 sm:ml-1"
-                      style={{ color: THEME.textGray }}
-                    >
-                      {plan?.currency || ''}
-                    </span>
+                  {/* Price display */}
+                  <div className="mb-6 pb-6 border-b border-line-subtle">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-xs sm:text-sm font-medium text-ink-muted">
+                        {plan?.currency || '$'}
+                      </span>
+                      <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-ink">
+                        {Math.floor(plan?.price || 0)}
+                      </span>
+                      <span className="text-xs sm:text-sm text-ink-muted ml-1">
+                        {plan?.period || '/month'}
+                      </span>
+                    </div>
                   </div>
-                  <p
-                    className="text-xs sm:text-sm mt-1 sm:mt-2 font-medium"
-                    style={{ color: THEME.textGrayDark }}
-                  >
-                    {plan?.period || '/month'}
-                  </p>
+
+                  {/* Feature list */}
+                  <ul className="space-y-3 mb-8" aria-label="Plan Features">
+                    {plan?.featurePoints && plan.featurePoints.length > 0 ? (
+                      plan.featurePoints.map(({ name: feature }, fIndex) => (
+                        <li key={fIndex} className="flex items-start gap-3">
+                          <div
+                            className={`grid h-5 w-5 shrink-0 place-items-center rounded-md mt-0.5 ${
+                              isPopular ? 'bg-brand-cyan/20 text-brand-cyan' : 'bg-surface-soft text-brand-blue'
+                            }`}
+                            aria-hidden="true"
+                          >
+                            <Check size={12} strokeWidth={2.5} />
+                          </div>
+                          <span className="text-xs sm:text-sm text-ink-secondary leading-relaxed">
+                            {feature}
+                          </span>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="text-xs text-ink-muted italic">Features customized per request.</li>
+                    )}
+                  </ul>
                 </div>
 
-                {/* Divider */}
-                <div
-                  className="w-full h-px mb-6 sm:mb-8"
-                  style={{
-                    background: isPopular
-                      ? 'linear-gradient(90deg, transparent, rgba(2, 211, 254, 0.5), transparent)'
-                      : THEME.border,
-                  }}
-                  aria-hidden="true"
-                />
-
-                {/* Features */}
-                <ul
-                  className="space-y-3 sm:space-y-4 mb-6 sm:mb-8 flex-grow px-1 "
-                  aria-label="Plan Features"
-                >
-                  {plan?.featurePoints?.map(({ name: feature }, fIndex) => (
-                    <motion.li
-                      key={fIndex}
-                      initial={prefersReducedMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
-                      animate={prefersReducedMotion ? undefined : { opacity: 1, x: 0 }}
-                      transition={prefersReducedMotion ? {} : { delay: 0.3 + fIndex * 0.1 }}
-                      className="flex  gap-2.5 sm:gap-3 group/item items-center"
-                    >
-                      <div
-                        className="w-4 h-4 sm:w-5 sm:h-5 rounded-md sm:rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-300"
-                        style={{
-                          background: isPopular
-                            ? 'rgba(2, 211, 254, 0.15)'
-                            : 'rgba(78, 144, 225, 0.15)',
-                        }}
-                        aria-hidden="true"
-                      >
-                        <Check
-                          size={10}
-                          className="sm:w-3 sm:h-3"
-                          style={{ color: isPopular ? THEME.cyan : THEME.blue, strokeWidth: 3 }}
-                        />
-                      </div>
-                      <span
-                        className="text-xs sm:text-sm leading-relaxed transition-colors duration-300 group-hover/item:text-white text-start"
-                        style={{ color: THEME.textGray }}
-                      >
-                        {feature || ''}
-                      </span>
-                    </motion.li>
-                  )) || (
-                    <li
-                      className="text-xs sm:text-sm text-center py-4"
-                      style={{ color: THEME.textGray }}
-                    >
-                      No features listed for this plan.
-                    </li>
-                  )}
-                </ul>
-
-                {/* CTA */}
-                <motion.button
-                  onClick={() => handlePlanSelect(plan)} // ✅ Added click handler
-                  whileHover={prefersReducedMotion ? undefined : { scale: 1.02 }}
-                  whileTap={prefersReducedMotion ? undefined : { scale: 0.98 }}
-                  className="w-full py-3.5 sm:py-4 px-4 sm:px-6 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-2 group/btn overflow-hidden relative"
-                  style={{
-                    background: isPopular ? THEME.gradientPrimary : 'rgba(255,255,255,0.05)',
-                    border: isPopular ? 'none' : `1px solid ${THEME.border}`,
-                    color: THEME.textWhite,
-                  }}
-                  aria-label={`Choose the ${plan?.planName || 'Plan'} plan`}
-                  onMouseEnter={
-                    !isPopular
-                      ? (e) => {
-                          e.currentTarget.style.background = 'rgba(255,255,255,0.1)'
-                          e.currentTarget.style.borderColor = THEME.borderHover
-                        }
-                      : undefined
-                  }
-                  onMouseLeave={
-                    !isPopular
-                      ? (e) => {
-                          e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
-                          e.currentTarget.style.borderColor = THEME.border
-                        }
-                      : undefined
-                  }
-                >
-                  <span
-                    className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-500"
-                    style={{
-                      background:
-                        'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
-                    }}
-                    aria-hidden="true"
-                  />
-                  <span className="relative z-10">
-                    {isPopular ? 'Get Started Now' : 'Choose Plan'}
-                  </span>
-                  <ArrowRight
-                    size={14}
-                    className="sm:w-4 sm:h-4 relative z-10 transition-transform duration-300 group-hover/btn:translate-x-1"
-                    aria-hidden="true"
-                  />
-                </motion.button>
-
-                {/* Bottom Line for Popular */}
-                {isPopular && (
-                  <div
-                    className="absolute bottom-0 left-4 right-4 h-px"
-                    style={{
-                      background:
-                        'linear-gradient(90deg, transparent, rgba(2, 211, 254, 0.5), transparent)',
-                    }}
-                    aria-hidden="true"
-                  />
-                )}
+                {/* Select CTA Button */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => handlePlanSelect(plan)}
+                    className={`w-full min-h-[44px] py-3 px-4 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 group/btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base ${
+                      isPopular
+                        ? 'bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple text-surface-void hover:opacity-95 shadow-glow-cyan'
+                        : 'border border-line-subtle bg-surface-soft/80 text-ink hover:border-line-strong hover:bg-surface-soft'
+                    }`}
+                    aria-label={`Select the ${plan?.planName || 'Plan'} plan`}
+                  >
+                    <span>{isPopular ? 'Get Started' : 'Choose Plan'}</span>
+                    <ArrowRight
+                      size={14}
+                      className="transition-transform duration-200 group-hover/btn:translate-x-1"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </div>
               </article>
             </motion.div>
-          )
+          );
         })}
       </motion.div>
 
-      {/* Trust Badges */}
-      <motion.div
-        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-        animate={prefersReducedMotion ? undefined : { opacity: 1 }}
-        transition={prefersReducedMotion ? {} : { delay: prefersReducedMotion ? 0 : 1 }}
-        className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 md:py-12 text-center relative z-10"
-      >
-        <p
-          className="text-xs sm:text-sm flex flex-wrap items-center justify-center gap-1.5 sm:gap-2"
-          style={{ color: THEME.textGrayDark }}
-        >
-          <Check
-            size={12}
-            className="sm:w-4 sm:h-4"
-            style={{ color: '#10b981' }}
-            aria-hidden="true"
-          />
-          No credit card required • Cancel anytime • 24/7 Support
+      {/* Trust note */}
+      <div className="mt-8 text-center">
+        <p className="inline-flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm text-ink-muted">
+          <Check size={14} className="text-emerald-400 shrink-0" aria-hidden="true" />
+          <span>Clear milestones • Transparent scope • Ongoing post-launch support</span>
         </p>
-      </motion.div>
+      </div>
     </div>
-  )
-}
+  );
+});
 
-export default PricingCard
+PricingCard.displayName = 'PricingCard';
+export default PricingCard;

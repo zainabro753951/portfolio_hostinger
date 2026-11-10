@@ -11,8 +11,33 @@ export default {
         inter: ["Inter", "sans-serif"],
         sans: ["Inter", "sans-serif"],
         display: ["Oswald", "sans-serif"],
+        heading: ["Inter", "sans-serif"],
       },
       colors: {
+        // ── DESIGN SYSTEM TOKENS (source: src/design-tokens.css) ──
+        brand: {
+          cyan: "rgb(var(--brand-cyan) / <alpha-value>)",
+          blue: "rgb(var(--brand-blue) / <alpha-value>)",
+          purple: "rgb(var(--brand-purple) / <alpha-value>)",
+        },
+        surface: {
+          void: "rgb(var(--surface-void) / <alpha-value>)",
+          base: "rgb(var(--surface-base) / <alpha-value>)",
+          secondary: "rgb(var(--surface-secondary) / <alpha-value>)",
+          elevated: "rgb(var(--surface-elevated) / <alpha-value>)",
+          card: "rgb(var(--surface-card) / <alpha-value>)",
+          soft: "rgb(var(--surface-soft) / <alpha-value>)",
+        },
+        ink: {
+          DEFAULT: "rgb(var(--ink-primary) / <alpha-value>)",
+          secondary: "rgb(var(--ink-secondary) / <alpha-value>)",
+          muted: "rgb(var(--ink-muted) / <alpha-value>)",
+        },
+        line: {
+          subtle: "var(--line-subtle)",
+          strong: "var(--line-strong)",
+        },
+        // ── LEGACY (deprecated — keep until every page is migrated) ──
         "theme-purple": "#00d596",
         "theme-cyan": "#00d3ef",
         "light-blue": "#7a89ff",
@@ -80,6 +105,9 @@ export default {
         xs: "calc(var(--radius) - 6px)",
       },
       boxShadow: {
+        "glow-cyan": "0 0 40px -8px var(--glow-cyan)",
+        "glow-blue": "0 0 40px -8px var(--glow-blue)",
+        "glow-purple": "0 0 40px -8px var(--glow-purple)",
         xs: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
       },
       keyframes: {

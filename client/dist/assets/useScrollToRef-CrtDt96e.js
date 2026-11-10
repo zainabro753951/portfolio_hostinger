@@ -1,0 +1,1 @@
+import{r as s}from"./index-B6b0WSdJ.js";const n=(r,t=[],e={},o=!0)=>{s.useEffect(()=>{!o||!r?.current||r.current.scrollIntoView({behavior:"smooth",block:"start",inline:"nearest",...e})},t)};export{n as u};

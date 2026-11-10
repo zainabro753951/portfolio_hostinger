@@ -1,60 +1,55 @@
-import { GlassCard, GradientText, THEME } from '@/components/UI';
-import { useGSAP } from '@gsap/react';
-import { motion } from 'framer-motion';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ArrowDown, Award, Code, Coffee, Heart, Lightbulb } from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import aboutImage from '@/assets/images/about-portrait.jpg';
+import LazyImage from '@/components/LazyImage';
+import { fadeUp, staggerParent, useMotionPrefs, VIEWPORT_ONCE } from '@/lib/motion';
+import { ArrowDown, Award, Briefcase, Code, Coffee, Heart, Lightbulb, Sparkles } from 'lucide-react';
+import { motion } from 'motion/react';
+import { memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import aboutImage from '../assets/images/about-portrait.jpg';
 import MarkUpTextRender from '../sections/MarkUpTextRender';
-import Particles from '../sections/Particles.jsx';
-import gardientPool from '../Utils/gardientPool.js';
-
-gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const sortByEndDate = (exps) => {
+  if (!Array.isArray(exps)) return [];
   return [...exps].sort((a, b) => (b.currentlyWorking || 0) - (a.currentlyWorking || 0));
+};
+
+const getYear = (dateStr) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const year = date.getFullYear();
+  return isNaN(year) ? dateStr : year;
 };
 
 const VALUES = [
   {
     icon: Lightbulb,
     title: 'Innovation',
-    description: 'Always exploring new technologies and creative solutions.',
+    description: 'Always exploring modern technologies, clean architectures, and creative solutions.',
   },
   {
     icon: Heart,
-    title: 'Passion',
-    description: 'Loving what I do and putting my heart into every project.',
+    title: 'Craftsmanship',
+    description: 'Deep attention to detail, micro-interactions, and refined user experience design.',
   },
   {
     icon: Award,
-    title: 'Quality',
-    description: 'Delivering high-quality work that exceeds expectations.',
+    title: 'Quality First',
+    description: 'Production-ready code built for performance, accessibility, and high scalability.',
   },
   {
     icon: Coffee,
     title: 'Dedication',
-    description: 'Committed to meeting deadlines and achieving goals.',
+    description: 'Reliable execution with clear communication, transparency, and timely delivery.',
   },
 ];
 
+const BRAND_SKILL_GRADIENTS = [
+  'from-brand-cyan to-brand-blue',
+  'from-brand-blue to-brand-purple',
+  'from-brand-cyan via-brand-blue to-brand-purple',
+  'from-brand-purple to-brand-cyan',
+];
+
 const About = memo(() => {
-  const containerRef = useRef(null);
-  const aboutRef = useRef(null);
-  const skillsRef = useRef(null);
-
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mq.matches);
-    const handler = (e) => setPrefersReducedMotion(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-
   const { data: about } = useSelector((state) => state.about);
   const { testimonials } = useSelector((state) => state.testimonial);
   const { projectCounts } = useSelector((state) => state.projects);
@@ -62,67 +57,37 @@ const About = memo(() => {
   const { experiences: exp } = useSelector((state) => state.experience);
   const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
 
+  const { reduced, isMobile } = useMotionPrefs();
+  const prefs = useMemo(() => ({ reduced, isMobile }), [reduced, isMobile]);
+
+  const parentVariants = useMemo(() => staggerParent(0.1, 0.05), []);
+  const itemVariants = useMemo(() => fadeUp(prefs, 0), [prefs]);
+
   const sortedByExpEndDate = useMemo(() => sortByEndDate(exp || []), [exp]);
 
   const skills = useMemo(() => {
     if (!skillsDB?.length) return [];
     return skillsDB.map((skill, idx) => ({
       ...skill,
-      color: gardientPool[idx % gardientPool.length],
+      gradientClass: BRAND_SKILL_GRADIENTS[idx % BRAND_SKILL_GRADIENTS.length],
     }));
   }, [skillsDB]);
+
+  const imageUrl = useMemo(() => {
+    if (!about?.poseImage?.url) return null;
+    const url = about.poseImage.url.trim();
+    if (/^https?:\/\//i.test(url)) return url;
+    if (backendUrl) {
+      return `${backendUrl.replace(/\/+$/, '')}/${url.replace(/^\/+/, '')}`;
+    }
+    return url;
+  }, [about?.poseImage?.url, backendUrl]);
 
   const scrollToDetails = useCallback(() => {
     document
       .getElementById('about-details')
-      ?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' });
-  }, [prefersReducedMotion]);
-
-  // ── GSAP ──────────────────────────────────────────────────────
-  useGSAP(
-    () => {
-      if (prefersReducedMotion) return;
-
-      const aboutTL = gsap.timeline({
-        scrollTrigger: {
-          trigger: aboutRef.current,
-          start: 'top 80%',
-          toggleActions: 'play none none none',
-          once: true,
-        },
-      });
-      aboutTL
-        .from('.about-content', { x: -60, opacity: 0, duration: 0.8, ease: 'power3.out' })
-        .from(
-          '.about-image',
-          { x: 60, opacity: 0, scale: 0.9, duration: 0.8, ease: 'power3.out' },
-          '-=0.6'
-        );
-
-      gsap.from('.skill-item', {
-        y: 40,
-        opacity: 0,
-        duration: 0.6,
-        stagger: 0.1,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: skillsRef.current,
-          start: 'top 85%',
-          toggleActions: 'play none none none',
-          once: true,
-        },
-      });
-
-      gsap.to('.gradient-orb', {
-        scale: 1.2,
-        duration: 4,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      });
-    },
-    { scope: containerRef, dependencies: [prefersReducedMotion] }
-  );
+      ?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
+  }, [reduced]);
 
   // SEO Structured Data
   const structuredData = useMemo(() => {
@@ -132,24 +97,18 @@ const About = memo(() => {
       '@type': 'Person',
       name: about.fullName || about.name || 'Developer',
       description: about.shortDesc || about.longDesc || 'About Me',
-      jobTitle: about.shortRole || 'Developer',
+      jobTitle: about.shortRole || 'Full Stack Developer',
       knowsAbout: skills.map((s) => s.skillName),
-      image: about.aboutImage?.url || undefined,
+      image: imageUrl || undefined,
       worksFor: {
         '@type': 'Organization',
         name: 'Self Employed',
       },
     };
-  }, [about, skills]);
+  }, [about, skills, imageUrl]);
 
   return (
-    <div
-      ref={containerRef}
-      className="relative min-h-screen min-h-[100dvh] overflow-x-hidden"
-      style={{ backgroundColor: THEME.bg, fontFamily: "'Inter', sans-serif" }}
-      role="main"
-      aria-label="About Me Page"
-    >
+    <div className="relative isolate overflow-x-clip bg-surface-base text-ink" id="about-page">
       {structuredData && (
         <script
           type="application/ld+json"
@@ -157,253 +116,186 @@ const About = memo(() => {
         />
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* 🌌 BACKGROUND LAYERS                                               */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }} aria-hidden="true">
+      {/* Subtle ambient lighting */}
+      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden" aria-hidden="true">
         <div
-          className="gradient-orb absolute top-1/4 left-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full blur-[100px] md:blur-[120px] animate-pulse"
-          style={{ background: 'rgba(2, 211, 254, 0.12)' }}
+          className="absolute top-1/4 left-1/4 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-[120px] opacity-60"
+          style={{ background: 'rgba(2, 211, 254, 0.08)' }}
         />
         <div
-          className="gradient-orb absolute bottom-1/4 right-1/4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full blur-[100px] md:blur-[120px] animate-pulse"
-          style={{ animationDelay: '1s', background: 'rgba(78, 144, 225, 0.12)' }}
-        />
-        <div
-          className="gradient-orb absolute top-1/2 left-1/2 w-48 h-48 sm:w-64 sm:h-64 rounded-full blur-[80px] sm:blur-[100px] animate-pulse"
-          style={{ animationDelay: '2s', background: 'rgba(154, 92, 183, 0.1)' }}
+          className="absolute bottom-1/3 right-1/4 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-[120px] opacity-60"
+          style={{ background: 'rgba(154, 92, 183, 0.08)' }}
         />
       </div>
-
-      <Particles />
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* 🦸 HERO SECTION                                                    */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <section
-        className="relative min-h-[60vh] sm:min-h-[70vh] flex items-center justify-center pt-20 sm:pt-24 pb-8 sm:pb-12"
-        style={{ zIndex: 2 }}
+        className="relative pt-28 pb-12 sm:pt-36 sm:pb-16 lg:pt-40 lg:pb-20 text-center"
         aria-label="About Page Header"
       >
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-12 sm:py-16 md:py-20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.8, ease: 'easeOut' }}
-            className="text-center"
+            variants={itemVariants}
+            initial="hidden"
+            animate="visible"
+            className="mb-4 inline-block"
           >
-            <motion.span
-              initial={prefersReducedMotion ? { scale: 1, opacity: 1 } : { scale: 0.9, opacity: 0 }}
-              animate={prefersReducedMotion ? undefined : { scale: 1, opacity: 1 }}
-              transition={prefersReducedMotion ? {} : { delay: 0.2 }}
-              className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium mb-4 sm:mb-6"
-              style={{
-                background: 'rgba(2, 211, 254, 0.1)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(2, 211, 254, 0.2)',
-                color: THEME.cyan,
-              }}
-            >
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-brand-cyan border border-brand-cyan/20 bg-brand-cyan/10">
+              <Sparkles size={12} className="text-brand-cyan" aria-hidden="true" />
               About Me
-            </motion.span>
-            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 leading-tight px-2">
-              Get To Know <GradientText>Me</GradientText>
-            </h1>
-            <p
-              className="text-base sm:text-lg max-w-2xl mx-auto px-4"
-              style={{ color: THEME.textGray }}
-            >
-              I'm a passionate developer and designer dedicated to creating exceptional digital
-              experiences.
-            </p>
-            <motion.button
-              initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-              animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-              transition={prefersReducedMotion ? {} : { delay: 0.4 }}
-              onClick={scrollToDetails}
-              className="mt-6 sm:mt-8 inline-flex items-center gap-2 cursor-pointer py-2"
-              style={{ color: THEME.textGrayDark }}
-              aria-label="Scroll to details"
-            >
-              <span className="text-xs uppercase tracking-widest">Scroll</span>
-              <ArrowDown size={16} aria-hidden="true" />
-            </motion.button>
+            </span>
           </motion.div>
+
+          <motion.h1
+            variants={itemVariants}
+            initial="hidden"
+            animate="visible"
+            className="text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-ink mb-4 sm:mb-6 leading-tight"
+          >
+            Get To Know{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple">
+              My Story
+            </span>
+          </motion.h1>
+
+          <motion.p
+            variants={itemVariants}
+            initial="hidden"
+            animate="visible"
+            className="text-sm sm:text-base md:text-lg leading-relaxed text-ink-secondary max-w-2xl mx-auto mb-8 sm:mb-10"
+          >
+            {about?.shortDesc ||
+              'A passionate software engineer and digital designer dedicated to creating scalable applications and exceptional user experiences.'}
+          </motion.p>
+
+          <motion.button
+            variants={itemVariants}
+            initial="hidden"
+            animate="visible"
+            onClick={scrollToDetails}
+            className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-ink-muted hover:text-brand-cyan transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan rounded-lg p-2"
+            aria-label="Scroll to detailed biography"
+          >
+            <span>Scroll Down</span>
+            <ArrowDown size={14} className="animate-bounce motion-reduce:animate-none" aria-hidden="true" />
+          </motion.button>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* 📋 ABOUT CONTENT                                                   */}
+      {/* 📋 EDITORIAL BIOGRAPHY & PORTRAIT                                  */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <section
         id="about-details"
-        ref={aboutRef}
-        className="relative py-12 sm:py-16 md:py-24"
-        style={{ zIndex: 2 }}
+        className="relative py-12 sm:py-16 lg:py-24"
+        aria-label="Biography and Background"
       >
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6">
-          <div className="grid lg:grid-cols-2 gap-10 sm:gap-12 md:gap-16 items-center">
-            {/* Text Content */}
-            <article className="about-content">
-              <h2
-                className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 leading-tight"
-                style={{ color: THEME.textWhite }}
-              >
-                Crafting Digital <GradientText>Experiences</GradientText>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-10 sm:gap-14 lg:gap-16 items-center">
+            {/* Column 1: Editorial Content */}
+            <article className="order-2 lg:order-1">
+              <div className="mb-4">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-brand-blue border border-brand-blue/20 bg-brand-blue/10">
+                  Engineering &amp; Design
+                </span>
+              </div>
+
+              <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold tracking-tight text-ink mb-6 leading-tight">
+                Crafting High-Performance{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple">
+                  Digital Products
+                </span>
               </h2>
 
-              <div
-                className="prose prose-invert max-w-none mb-8 sm:mb-10 text-sm sm:text-base"
-                style={{ color: THEME.textGray }}
-              >
+              <div className="text-sm sm:text-base leading-relaxed text-ink-secondary mb-8 sm:mb-10">
                 <MarkUpTextRender markedDesc={about?.longDesc}>
-                  <p>
-                    Hello! I'm{' '}
-                    <strong style={{ color: THEME.textWhite }}>
-                      {about?.fullName || 'Zain Ul Abbas'}
-                    </strong>
-                    , a creative developer and designer with over {about?.experience || '1'} years
-                    of experience in building modern web applications. I specialize in creating
-                    beautiful, functional, and user-friendly digital experiences.
+                  <p className="mb-4">
+                    Hello! I'm <strong className="text-ink font-semibold">{about?.fullName || 'Zain Ul Abbas'}</strong>
+                    , a full-stack engineer and UI/UX specialist with over{' '}
+                    <span className="text-brand-cyan font-medium">{about?.experience || '2'}+ years</span> of experience
+                    architecting modern web applications, scalable APIs, and pixel-perfect design systems.
+                  </p>
+                  <p className="mb-4">
+                    My approach balances clean, maintainable code with thoughtful user empathy. I believe
+                    in engineering solutions that are as robust under the hood as they are delightful on screen.
                   </p>
                   <p>
-                    My journey in web development started with a curiosity for how things work on
-                    the internet. That curiosity quickly turned into a passion, and I've been honing
-                    my skills ever since.
-                  </p>
-                  <p>
-                    I believe in the power of clean code, thoughtful design, and smooth animations
-                    to create memorable user experiences. Every project I work on is an opportunity
-                    to push boundaries and create something unique.
+                    Every collaboration is an opportunity to solve intricate engineering challenges, streamline
+                    workflows, and build lasting technological value.
                   </p>
                 </MarkUpTextRender>
               </div>
 
-              {/* Quick Stats */}
-              <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              {/* Quick Metrics Bar */}
+              <div className="grid grid-cols-3 gap-3 sm:gap-4 pt-4 border-t border-line-subtle">
                 {[
-                  { value: projectCounts?.publishedProjects || '0', label: 'Projects' },
-                  { value: testimonials?.length || '0', label: 'Clients' },
-                  { value: about?.experience || '0', label: 'Years' },
+                  {
+                    value: projectCounts?.publishedProjects ? `${projectCounts.publishedProjects}+` : '10+',
+                    label: 'Projects',
+                  },
+                  {
+                    value: testimonials?.length ? `${testimonials.length}+` : '100%',
+                    label: testimonials?.length ? 'Clients' : 'Satisfaction',
+                  },
+                  {
+                    value: about?.experience ? `${about.experience}+` : '2+',
+                    label: 'Years Exp',
+                  },
                 ].map((stat, index) => (
-                  <motion.div
-                    key={index}
-                    whileHover={prefersReducedMotion ? undefined : { y: -5 }}
-                    className="text-center p-3 sm:p-4 rounded-xl w-full"
-                    style={{
-                      background: THEME.bgCard,
-                      backdropFilter: 'blur(10px)',
-                      border: `1px solid ${THEME.border}`,
-                    }}
-                    aria-label={`${stat.value} ${stat.label}`}
+                  <div
+                    key={`about-stat-${index}`}
+                    className="p-3 sm:p-4 rounded-xl border border-line-subtle bg-surface-card/60 text-center"
                   >
-                    <div
-                      className="text-xl sm:text-2xl font-bold mb-0.5 sm:mb-1 truncate"
-                      style={{ color: THEME.cyan }}
-                    >
+                    <div className="text-xl sm:text-2xl font-extrabold text-brand-cyan mb-0.5">
                       {stat.value}
                     </div>
-                    <div
-                      className="text-[10px] sm:text-xs truncate"
-                      style={{ color: THEME.textGrayDark }}
-                    >
-                      {stat.label}
-                    </div>
-                  </motion.div>
+                    <div className="text-xs text-ink-muted font-medium">{stat.label}</div>
+                  </div>
                 ))}
               </div>
             </article>
 
-            {/* Image */}
-            <div className="about-image relative hidden lg:block">
-              <div className="relative group">
+            {/* Column 2: Portrait */}
+            <div className="order-1 lg:order-2">
+              <div className="relative mx-auto w-full max-w-sm sm:max-w-md lg:max-w-none">
+                {/* Glow behind frame */}
                 <div
-                  className="absolute -inset-4 rounded-3xl opacity-30 blur-2xl pointer-events-none transition-opacity duration-500 group-hover:opacity-50"
-                  style={{ background: THEME.gradientPrimary }}
                   aria-hidden="true"
+                  className="pointer-events-none absolute -inset-4 sm:-inset-6 rounded-3xl bg-[radial-gradient(closest-side,rgb(var(--brand-cyan)/0.15),rgb(var(--brand-purple)/0.10)_60%,transparent)]"
                 />
-                <div
-                  className="relative rounded-2xl overflow-hidden border"
-                  style={{
-                    boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
-                    borderColor: 'rgba(2, 211, 254, 0.1)',
-                  }}
-                >
-                  <img
-                    src={about?.poseImage ? `${backendUrl}${about?.poseImage?.url}` : aboutImage}
-                    alt={`${about?.fullName || 'Developer'} Pose Portrait`}
-                    className="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-700"
-                    loading="lazy"
-                    width="600"
-                    height="800"
+
+                {/* Frame with LazyImage */}
+                <div className="relative overflow-hidden rounded-2xl border border-line-strong bg-surface-card shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)]">
+                  <LazyImage
+                    src={imageUrl}
+                    alt={`${about?.fullName || 'Developer'} Portrait`}
+                    fallback={aboutImage}
+                    className="aspect-[4/5] w-full object-cover"
+                    objectFit="cover"
+                    objectPosition="center"
                   />
                   <div
-                    className="absolute inset-0 pointer-events-none"
-                    style={{
-                      background:
-                        'linear-gradient(to top, rgba(10,10,15,0.8), rgba(10,10,15,0.2), transparent)',
-                    }}
                     aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 bg-gradient-to-t from-surface-base/60 via-transparent to-transparent"
                   />
                 </div>
 
-                {/* Floating Badge */}
-                <motion.div
-                  initial={
-                    prefersReducedMotion
-                      ? { opacity: 1, scale: 1, y: 0 }
-                      : { opacity: 0, scale: 0.8, y: 20 }
-                  }
-                  whileInView={prefersReducedMotion ? undefined : { opacity: 1, scale: 1, y: 0 }}
-                  transition={
-                    prefersReducedMotion ? {} : { delay: 0.5, type: 'spring', stiffness: 200 }
-                  }
-                  viewport={{ once: true }}
-                  whileHover={prefersReducedMotion ? undefined : { scale: 1.05 }}
-                  className="absolute -bottom-6 -left-6 p-3 sm:p-4 rounded-2xl"
-                  style={{
-                    background: 'rgba(15, 23, 42, 0.6)',
-                    backdropFilter: 'blur(10px)',
-                    border: `1px solid ${THEME.border}`,
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-                  }}
-                >
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div
-                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ background: THEME.gradientCyanBlue }}
-                    >
-                      <Code
-                        size={18}
-                        className="sm:w-5 sm:h-5"
-                        style={{ color: '#ffffff' }}
-                        aria-hidden="true"
-                      />
+                {/* Floating Experience Pill (Desktop & Tablet) */}
+                <div className="absolute -bottom-4 -left-4 sm:-bottom-5 sm:-left-5 p-3 sm:p-4 rounded-2xl border border-line-strong bg-surface-card/90 backdrop-blur-md shadow-lg hidden sm:block">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-10 w-10 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-xl bg-brand-cyan/15 border border-brand-cyan/30 text-brand-cyan">
+                      <Code size={20} aria-hidden="true" />
                     </div>
                     <div>
-                      <div
-                        className="font-semibold text-sm sm:text-base"
-                        style={{ color: THEME.textWhite }}
-                      >
-                        {about?.experience || '5+'}+ Years
+                      <div className="text-sm sm:text-base font-bold text-ink">
+                        {about?.experience || '2'}+ Years
                       </div>
-                      <div className="text-xs sm:text-sm" style={{ color: THEME.textGray }}>
-                        Experience
-                      </div>
+                      <div className="text-xs text-ink-secondary">Professional Experience</div>
                     </div>
                   </div>
-                </motion.div>
-
-                <div
-                  className="absolute -top-4 -right-4 w-20 h-20 sm:w-24 sm:h-24 rounded-full blur-xl animate-pulse"
-                  style={{ background: 'rgba(2, 211, 254, 0.2)' }}
-                  aria-hidden="true"
-                />
-                <div
-                  className="absolute -bottom-4 -left-4 w-28 h-28 sm:w-32 sm:h-32 rounded-full blur-xl animate-pulse"
-                  style={{ animationDelay: '1s', background: 'rgba(78, 144, 225, 0.2)' }}
-                  aria-hidden="true"
-                />
+                </div>
               </div>
             </div>
           </div>
@@ -411,308 +303,294 @@ const About = memo(() => {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* 💻 SKILLS SECTION                                                  */}
+      {/* 💻 SKILLS & TECHNOLOGIES SECTION                                   */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <section
-        ref={skillsRef}
-        className="relative py-12 sm:py-16 md:py-24 overflow-hidden"
-        style={{ zIndex: 2 }}
-        aria-label="Skills and Technologies"
-      >
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] md:w-[600px] md:h-[600px] rounded-full blur-[120px] md:blur-[150px]"
-          style={{ background: 'rgba(2, 211, 254, 0.05)' }}
-          aria-hidden="true"
-        />
+      {skills.length > 0 && (
+        <section
+          className="relative py-16 sm:py-20 lg:py-24 overflow-hidden isolate"
+          aria-label="Skills and Technical Proficiencies"
+        >
+          {/* Subtle background glow */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(40%_50%_at_50%_50%,rgb(var(--brand-cyan)/0.05),transparent)]"
+          />
 
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 relative">
-          <header className="text-center mb-10 sm:mb-12 md:mb-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12 sm:mb-16 max-w-3xl mx-auto">
+              <motion.div
+                variants={itemVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={VIEWPORT_ONCE}
+                className="mb-4 inline-block"
+              >
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-brand-cyan border border-brand-cyan/20 bg-brand-cyan/10">
+                  Technical Stack
+                </span>
+              </motion.div>
+
+              <motion.h2
+                variants={itemVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={VIEWPORT_ONCE}
+                className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink mb-4"
+              >
+                Skills &amp;{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple">
+                  Technologies
+                </span>
+              </motion.h2>
+
+              <motion.p
+                variants={itemVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={VIEWPORT_ONCE}
+                className="text-sm sm:text-base leading-relaxed text-ink-secondary"
+              >
+                Core competencies developed across front-end engineering, back-end infrastructure, and database systems.
+              </motion.p>
+            </div>
+
             <motion.div
-              initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-              whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
+              variants={parentVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={VIEWPORT_ONCE}
+              className="rounded-2xl border border-line-subtle bg-surface-card/60 p-5 sm:p-8 lg:p-10 backdrop-blur-sm"
             >
-              <span
-                className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium mb-4"
-                style={{
-                  background: 'rgba(78, 144, 225, 0.1)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(78, 144, 225, 0.2)',
-                  color: THEME.blue,
-                }}
-              >
-                My Expertise
-              </span>
-              <h2
-                className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 px-2 leading-tight"
-                style={{ color: THEME.textWhite }}
-              >
-                Skills & <GradientText>Technologies</GradientText>
-              </h2>
-            </motion.div>
-          </header>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8">
+                {skills.map((skill, index) => {
+                  const proficiency = Math.min(100, Math.max(0, Number(skill.proficiency) || 0));
 
-          <GlassCard className="p-4 sm:p-6 md:p-8">
-            <div className="grid md:grid-cols-2 gap-6 sm:gap-8">
-              {skills?.map((skill, index) => {
-                const gradientClass = skill?.color || 'from-cyan-500 to-blue-500';
+                  return (
+                    <div key={skill.id || `skill-${index}`} className="group">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-semibold text-sm sm:text-base text-ink group-hover:text-brand-cyan transition-colors duration-200">
+                          {skill.skillName}
+                        </span>
+                        <span className="text-xs sm:text-sm font-bold text-brand-cyan">
+                          {proficiency}%
+                        </span>
+                      </div>
 
-                // ✅ Mobile-safe viewport config
-                const viewportConfig = {
-                  once: true,
-                  margin:
-                    typeof window !== 'undefined' && window.innerWidth < 768 ? '-50px' : '-100px',
-                  amount: 'some', // ✅ "some" = thoda sa dikhte hi trigger karega
-                };
-
-                return (
-                  <div key={skill.id || index} className="skill-item group">
-                    <div className="flex justify-between items-center mb-2 sm:mb-3">
-                      <span
-                        className="font-medium text-sm sm:text-base transition-colors duration-300 group-hover:text-cyan-400 truncate mr-2"
-                        style={{ color: THEME.textWhite }}
-                      >
-                        {skill.skillName}
-                      </span>
-                      <span
-                        className="font-semibold text-sm sm:text-base flex-shrink-0"
-                        style={{ color: THEME.cyan }}
-                      >
-                        {skill.proficiency}%
-                      </span>
-                    </div>
-
-                    {/* Track Background */}
-                    <div className="h-2.5 sm:h-3 rounded-full overflow-hidden bg-white/5">
-                      {/* ✅ Animated Progress Bar */}
-                      <motion.div
-                        className={`h-full rounded-full relative overflow-hidden bg-gradient-to-r ${gradientClass}`}
-                        // ✅ Animation Props
-                        initial={{ width: 0 }}
-                        whileInView={{ width: `${skill.proficiency}%` }}
-                        viewport={viewportConfig} // ✅ Mobile-optimized viewport
-                        transition={{
-                          duration: 1.2,
-                          delay: index * 0.1, // ✅ Mobile par bhi stagger kaam karega
-                          ease: 'easeOut',
-                          // ✅ Mobile performance ke liye
-                          type: 'tween',
-                        }}
-                        // ✅ Fallback: Agar whileInView fail ho to direct style lag jaye
-                        style={{
-                          width: prefersReducedMotion ? `${skill.proficiency}%` : undefined,
-                          willChange: 'width', // ✅ Mobile GPU acceleration ke liye
-                        }}
-                      >
-                        {/* Shine Effect */}
-                        <div
-                          className="absolute inset-0 opacity-30"
+                      {/* Track */}
+                      <div className="h-2 sm:h-2.5 rounded-full overflow-hidden bg-surface-soft border border-white/8">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          whileInView={{ width: `${proficiency}%` }}
+                          viewport={VIEWPORT_ONCE}
+                          transition={{
+                            duration: reduced ? 0.01 : 1.0,
+                            delay: reduced ? 0 : index * 0.04,
+                            ease: [0.16, 1, 0.3, 1],
+                          }}
+                          className={`h-full rounded-full bg-gradient-to-r ${skill.gradientClass}`}
                           style={{
-                            background:
-                              'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
-                            animation: prefersReducedMotion ? 'none' : 'shine 2s infinite',
+                            width: reduced ? `${proficiency}%` : undefined,
                           }}
                         />
-                      </motion.div>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </GlassCard>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* 📅 EXPERIENCE TIMELINE                                             */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      <section
-        className="relative py-12 sm:py-16 md:py-24"
-        style={{ zIndex: 2 }}
-        aria-label="Work Experience"
-      >
-        <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-6">
-          <header className="text-center mb-10 sm:mb-12 md:mb-16">
-            <motion.div
-              initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-              whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              <span
-                className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium mb-4"
-                style={{
-                  background: 'rgba(154, 92, 183, 0.1)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(154, 92, 183, 0.2)',
-                  color: THEME.purple,
-                }}
-              >
-                My Journey
-              </span>
-              <h2
-                className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 px-2 leading-tight"
-                style={{ color: THEME.textWhite }}
-              >
-                Work <GradientText>Experience</GradientText>
-              </h2>
+                  );
+                })}
+              </div>
             </motion.div>
-          </header>
-
-          <div className="timeline relative">
-            <div
-              className="absolute left-4 md:left-1/2 top-0 bottom-0 w-px"
-              style={{ background: 'linear-gradient(to bottom, #4e90e1, #9a5cb7, #02d3fe)' }}
-              aria-hidden="true"
-            />
-
-            {sortedByExpEndDate.map((expItem, index) => {
-              const startYear = expItem?.startedAt
-                ? new Date(expItem.startedAt).getFullYear()
-                : 'N/A';
-              const endDate = expItem?.endDate
-                ? new Date(expItem.endDate).getFullYear()
-                : 'Present';
-
-              return (
-                <motion.div
-                  key={expItem.id || `exp-${index}`}
-                  initial={
-                    prefersReducedMotion
-                      ? { opacity: 1, x: 0 }
-                      : { opacity: 0, x: index % 2 === 0 ? -50 : 50 }
-                  }
-                  whileInView={prefersReducedMotion ? undefined : { opacity: 1, x: 0 }}
-                  transition={prefersReducedMotion ? {} : { duration: 0.6, delay: index * 0.2 }}
-                  viewport={{ once: true, margin: '-50px' }}
-                  className="timeline-item relative flex items-start mb-8 sm:mb-12 pl-10 md:pl-0"
-                >
-                  {/* Dot */}
-                  <div
-                    className="absolute left-4 md:left-1/2 -translate-x-1/2 top-0 w-4 h-4 rounded-full border-4 shadow-lg z-10"
-                    style={{
-                      background: THEME.cyan,
-                      borderColor: THEME.bg,
-                      boxShadow: '0 0 10px rgba(2, 211, 254, 0.5)',
-                    }}
-                    aria-hidden="true"
-                  />
-
-                  {/* Content */}
-                  <div
-                    className={`w-full ${index % 2 === 0 ? 'md:pr-12' : 'md:pl-12 md:ml-auto'} md:w-1/2`}
-                  >
-                    <GlassCard className="p-4 sm:p-6 cursor-default w-full" hover={false}>
-                      <span
-                        className="inline-block px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium mb-2 sm:mb-3"
-                        style={{ background: 'rgba(2, 211, 254, 0.1)', color: THEME.cyan }}
-                      >
-                        {startYear} - {expItem?.currentlyWorking === 1 ? 'Present' : endDate}
-                      </span>
-                      <h3
-                        className="text-lg sm:text-xl font-semibold mb-1 leading-tight"
-                        style={{ color: THEME.textWhite }}
-                      >
-                        {expItem.position}
-                      </h3>
-                      <p
-                        className="mb-2 sm:mb-3 font-medium text-sm sm:text-base"
-                        style={{ color: THEME.purple }}
-                      >
-                        {expItem.company}
-                      </p>
-                      <p
-                        className="text-xs sm:text-sm leading-relaxed"
-                        style={{ color: THEME.textGray }}
-                      >
-                        {expItem.description}
-                      </p>
-                    </GlassCard>
-                  </div>
-                </motion.div>
-              );
-            })}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* 💡 VALUES SECTION                                                  */}
+      {/* 📅 WORK EXPERIENCE TIMELINE                                        */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {sortedByExpEndDate.length > 0 && (
+        <section
+          className="relative py-16 sm:py-20 lg:py-24"
+          aria-label="Work Experience and History"
+        >
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12 sm:mb-16">
+              <motion.div
+                variants={itemVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={VIEWPORT_ONCE}
+                className="mb-4 inline-block"
+              >
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-brand-purple border border-brand-purple/20 bg-brand-purple/10">
+                  Career Trajectory
+                </span>
+              </motion.div>
+
+              <motion.h2
+                variants={itemVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={VIEWPORT_ONCE}
+                className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink mb-4"
+              >
+                Work{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple">
+                  Experience
+                </span>
+              </motion.h2>
+            </div>
+
+            <div className="relative pl-6 sm:pl-8 md:pl-0">
+              {/* Timeline Center/Left Line */}
+              <div
+                className="absolute left-6 md:left-1/2 -translate-x-1/2 top-3 bottom-3 w-px bg-gradient-to-b from-brand-cyan via-brand-blue to-brand-purple opacity-40"
+                aria-hidden="true"
+              />
+
+              <div className="space-y-8 sm:space-y-12">
+                {sortedByExpEndDate.map((expItem, index) => {
+                  const startYear = getYear(expItem?.startedAt) || 'N/A';
+                  const isCurrent = expItem?.currentlyWorking === 1 || expItem?.currentlyWorking === true;
+                  const endYear = isCurrent ? 'Present' : getYear(expItem?.endDate) || 'N/A';
+                  const isEven = index % 2 === 0;
+
+                  return (
+                    <motion.div
+                      key={expItem.id || `exp-${index}`}
+                      variants={itemVariants}
+                      initial="hidden"
+                      whileInView="visible"
+                      viewport={VIEWPORT_ONCE}
+                      className="relative flex items-start md:items-center"
+                    >
+                      {/* Timeline Glowing Node */}
+                      <div
+                        className="absolute -left-6 md:left-1/2 -translate-x-1/2 top-4 md:top-auto z-10 grid h-5 w-5 place-items-center rounded-full border-2 border-surface-base bg-brand-cyan shadow-[0_0_12px_rgba(2,211,254,0.6)]"
+                        aria-hidden="true"
+                      >
+                        <div className="h-1.5 w-1.5 rounded-full bg-surface-base" />
+                      </div>
+
+                      {/* Card Content */}
+                      <div
+                        className={`w-full md:w-[calc(50%-2rem)] ${
+                          isEven ? 'md:mr-auto md:text-right' : 'md:ml-auto md:text-left'
+                        }`}
+                      >
+                        <div className="rounded-2xl border border-line-subtle bg-surface-card/70 p-5 sm:p-6 backdrop-blur-sm transition-[border-color,box-shadow] duration-300 hover:border-line-strong hover:shadow-glow-cyan text-left">
+                          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                            <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold text-brand-cyan bg-brand-cyan/10 border border-brand-cyan/20">
+                              {startYear} – {endYear}
+                            </span>
+                            {isCurrent && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                Current
+                              </span>
+                            )}
+                          </div>
+
+                          <h3 className="text-lg sm:text-xl font-bold text-ink mb-1">
+                            {expItem.position}
+                          </h3>
+                          <p className="text-sm font-semibold text-brand-purple mb-3">
+                            {expItem.company}
+                          </p>
+                          <p className="text-xs sm:text-sm leading-relaxed text-ink-secondary">
+                            {expItem.description}
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* 💡 CORE VALUES SECTION                                             */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <section
-        className="relative py-12 sm:py-16 md:py-24 overflow-hidden"
-        style={{ zIndex: 2 }}
-        aria-label="Core Values"
+        className="relative py-16 sm:py-20 lg:py-24 overflow-hidden isolate"
+        aria-label="Core Engineering Values"
       >
-        <div
-          className="absolute bottom-0 left-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full blur-[100px] md:blur-[120px]"
-          style={{ background: 'rgba(154, 92, 183, 0.1)' }}
-          aria-hidden="true"
-        />
-
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 relative">
-          <header className="text-center mb-10 sm:mb-12 md:mb-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 sm:mb-16 max-w-3xl mx-auto">
             <motion.div
-              initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-              whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
+              variants={itemVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={VIEWPORT_ONCE}
+              className="mb-4 inline-block"
             >
-              <span
-                className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium mb-4"
-                style={{
-                  background: 'rgba(2, 211, 254, 0.1)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(2, 211, 254, 0.2)',
-                  color: THEME.cyan,
-                }}
-              >
-                What Drives Me
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-brand-cyan border border-brand-cyan/20 bg-brand-cyan/10">
+                Guiding Principles
               </span>
-              <h2
-                className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 px-2 leading-tight"
-                style={{ color: THEME.textWhite }}
-              >
-                My <span style={{ color: THEME.cyan }}>Values</span>
-              </h2>
             </motion.div>
-          </header>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <motion.h2
+              variants={itemVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={VIEWPORT_ONCE}
+              className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink mb-4"
+            >
+              Core{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple">
+                Values
+              </span>
+            </motion.h2>
+
+            <motion.p
+              variants={itemVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={VIEWPORT_ONCE}
+              className="text-sm sm:text-base leading-relaxed text-ink-secondary"
+            >
+              The foundational pillars that direct my architectural choices, design thinking, and code execution.
+            </motion.p>
+          </div>
+
+          <motion.div
+            variants={parentVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={VIEWPORT_ONCE}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
+          >
             {VALUES.map((value, index) => (
-              <GlassCard key={value.title} className="p-4 sm:p-6 text-center h-full">
-                <motion.div
-                  whileHover={prefersReducedMotion ? undefined : { rotate: 360, scale: 1.1 }}
-                  transition={prefersReducedMotion ? {} : { duration: 0.6 }}
-                  className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg"
-                  style={{
-                    background: index % 2 === 0 ? THEME.gradientCyanBlue : THEME.gradientBluePurple,
-                  }}
+              <motion.div
+                key={value.title}
+                variants={itemVariants}
+                whileHover={
+                  reduced || isMobile
+                    ? undefined
+                    : { y: -4, transition: { duration: 0.2 } }
+                }
+                className="rounded-2xl border border-line-subtle bg-surface-card/60 p-6 sm:p-8 text-center backdrop-blur-sm transition-[border-color,box-shadow] duration-300 hover:border-brand-cyan/30 hover:shadow-glow-cyan h-full flex flex-col items-center"
+              >
+                <div
+                  className="grid h-12 w-12 sm:h-14 sm:w-14 place-items-center rounded-2xl bg-brand-cyan/10 border border-brand-cyan/20 text-brand-cyan mb-5 shrink-0"
+                  aria-hidden="true"
                 >
-                  <value.icon
-                    size={20}
-                    className="sm:w-6 sm:h-6"
-                    style={{ color: '#ffffff' }}
-                    aria-hidden="true"
-                  />
-                </motion.div>
-                <h3
-                  className="text-base sm:text-lg font-semibold mb-2 transition-colors duration-300 hover:text-cyan-400"
-                  style={{ color: THEME.textWhite }}
-                >
+                  <value.icon size={22} className="sm:w-6 sm:h-6" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-ink mb-2">
                   {value.title}
                 </h3>
-                <p className="text-xs sm:text-sm" style={{ color: THEME.textGray }}>
+                <p className="text-xs sm:text-sm text-ink-secondary leading-relaxed">
                   {value.description}
                 </p>
-              </GlassCard>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
     </div>
   );
 });
 
+About.displayName = 'About';
 export default About;

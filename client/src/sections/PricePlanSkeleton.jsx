@@ -1,166 +1,98 @@
-import { THEME } from '@/components/UI';
-import { motion } from 'framer-motion';
-import { useRef } from 'react';
+import { memo } from 'react';
 
-// Reusable Shimmer Block
 const Shimmer = ({ className = '' }) => (
-  <div className={`relative overflow-hidden rounded ${className}`}>
+  <div
+    className={`relative overflow-hidden rounded-lg bg-surface-soft/60 border border-line-subtle ${className}`}
+    aria-hidden="true"
+  >
     <div
-      className="absolute inset-0"
+      className="absolute inset-0 pointer-events-none"
       style={{
-        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)',
+        background:
+          'linear-gradient(90deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.01) 100%)',
         backgroundSize: '200% 100%',
-        animation: 'skeleton-shimmer 1.5s infinite linear',
+        animation: 'pricing-skeleton-shimmer 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite',
       }}
     />
   </div>
 );
 
-const PricePlanSkeleton = () => {
-  const pricingRef = useRef(null);
-
+const PricePlanSkeleton = memo(() => {
   return (
-    <section
-      ref={pricingRef}
-      className="relative py-24 overflow-hidden"
-      style={{ backgroundColor: THEME.bg, fontFamily: "'Inter', sans-serif" }}
+    <div
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28"
+      role="status"
+      aria-label="Loading pricing plans"
     >
-      {/* 🌌 BACKGROUND LAYERS */}
-      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
-        <div
-          className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-[120px] animate-pulse"
-          style={{ background: 'rgba(2, 211, 254, 0.12)' }}
-        />
-        <div
-          className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-[120px] animate-pulse"
-          style={{ animationDelay: '1s', background: 'rgba(78, 144, 225, 0.12)' }}
-        />
-        <div
-          className="absolute top-1/2 left-1/2 w-64 h-64 rounded-full blur-[100px] animate-pulse"
-          style={{ animationDelay: '2s', background: 'rgba(154, 92, 183, 0.1)' }}
-        />
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 relative" style={{ zIndex: 2 }}>
-        {/* Section Header Skeleton */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          {/* Badge Skeleton */}
-          <div
-            className="inline-block px-4 py-2 rounded-full mb-4"
-            style={{
-              background: THEME.bgCard,
-              backdropFilter: 'blur(10px)',
-              border: `1px solid ${THEME.border}`,
-            }}
-          >
-            <Shimmer className="w-24 h-4 bg-white/5" />
-          </div>
-
-          {/* Title Skeleton */}
-          <div className="flex justify-center mb-6">
-            <Shimmer className="w-64 sm:w-80 lg:w-96 h-12 rounded-lg bg-white/10" />
-          </div>
-
-          {/* Description Skeleton */}
-          <div className="max-w-2xl mx-auto space-y-2">
-            <Shimmer className="w-full h-4 bg-white/5" />
-            <Shimmer className="w-4/5 h-4 bg-white/5 mx-auto" />
-          </div>
-        </motion.div>
-
-        {/* Pricing Cards Grid */}
-        <div className="grid md:grid-cols-3 gap-8 items-center">
-          {[0, 1, 2].map((index) => (
-            <div key={index} className={`relative ${index === 1 ? 'md:-mt-4 md:mb-4' : ''}`}>
-              <div
-                className="relative p-8 rounded-2xl h-full overflow-hidden"
-                style={{
-                  background: THEME.bgCard,
-                  backdropFilter: 'blur(10px)',
-                  border: `1px solid ${THEME.border}`,
-                  boxShadow:
-                    index === 1 ? '0 0 40px rgba(2, 211, 254, 0.1)' : '0 10px 30px rgba(0,0,0,0.3)',
-                }}
-              >
-                {/* Popular Badge Skeleton */}
-                {index === 1 && (
-                  <div
-                    className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full"
-                    style={{ background: THEME.gradientCyanBlue }}
-                  >
-                    <Shimmer className="w-20 h-4 bg-white/10 rounded" />
-                  </div>
-                )}
-
-                {/* Plan Name Skeleton */}
-                <Shimmer className="w-32 h-6 bg-white/10 mb-2" />
-
-                {/* Description Skeleton */}
-                <Shimmer className="w-full h-4 bg-white/5 mb-6" />
-
-                {/* Price Skeleton */}
-                <div className="flex items-baseline gap-2 mb-8">
-                  <Shimmer className="w-12 h-12 bg-white/10" />
-                  <Shimmer className="w-24 h-12 bg-white/10" />
-                  <Shimmer className="w-12 h-4 bg-white/5 mt-2" />
-                </div>
-
-                {/* Divider Skeleton */}
-                <div className="w-full h-px mb-8" style={{ background: THEME.border }} />
-
-                {/* Features List Skeleton */}
-                <ul className="space-y-4 mb-8">
-                  {[0, 1, 2, 3, 4].map((fIndex) => (
-                    <li key={fIndex} className="flex items-center gap-3">
-                      <div
-                        className="w-5 h-5 rounded flex-shrink-0"
-                        style={{
-                          background:
-                            index === 1 ? 'rgba(2, 211, 254, 0.15)' : 'rgba(78, 144, 225, 0.15)',
-                        }}
-                      />
-                      <Shimmer className="flex-1 h-4 bg-white/5" />
-                    </li>
-                  ))}
-                </ul>
-
-                {/* CTA Button Skeleton */}
-                <div
-                  className="w-full py-4 rounded-lg flex items-center justify-center"
-                  style={{
-                    background: index === 1 ? THEME.gradientPrimary : 'rgba(255,255,255,0.05)',
-                  }}
-                >
-                  <Shimmer className="w-24 h-5 bg-white/10 rounded" />
-                </div>
-
-                {/* Glow for Featured */}
-                {index === 1 && (
-                  <div
-                    className="absolute inset-0 rounded-2xl opacity-30 blur-2xl pointer-events-none"
-                    style={{ background: THEME.gradientPrimary }}
-                  />
-                )}
-              </div>
-            </div>
-          ))}
+      {/* Header Skeleton */}
+      <div className="text-center mb-12 sm:mb-16 max-w-2xl mx-auto space-y-4">
+        <div className="flex justify-center">
+          <Shimmer className="h-7 w-32 rounded-full" />
         </div>
+        <Shimmer className="h-10 sm:h-12 w-3/4 mx-auto rounded-xl" />
+        <Shimmer className="h-4 w-5/6 mx-auto rounded-md" />
       </div>
 
-      {/* Custom Shimmer Animation */}
+      {/* Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-stretch">
+        {[0, 1, 2].map((index) => {
+          const isFeatured = index === 1;
+          return (
+            <div
+              key={`price-skel-${index}`}
+              className={`relative rounded-2xl border p-6 sm:p-8 flex flex-col justify-between bg-surface-card/60 ${
+                isFeatured ? 'border-brand-cyan/30 md:-mt-3 md:mb-3 shadow-glow-cyan' : 'border-line-subtle'
+              }`}
+            >
+              {isFeatured && (
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                  <Shimmer className="h-7 w-28 rounded-full" />
+                </div>
+              )}
+
+              <div>
+                <div className="flex items-center gap-3 mb-6">
+                  <Shimmer className="h-11 w-11 rounded-xl" />
+                  <div className="space-y-1.5 flex-1">
+                    <Shimmer className="h-5 w-24" />
+                    <Shimmer className="h-3 w-36" />
+                  </div>
+                </div>
+
+                <div className="mb-6 space-y-2">
+                  <div className="flex items-baseline gap-2">
+                    <Shimmer className="h-10 w-20" />
+                    <Shimmer className="h-4 w-12" />
+                  </div>
+                </div>
+
+                <div className="h-px w-full bg-line-subtle mb-6" />
+
+                <div className="space-y-3 mb-8">
+                  {[0, 1, 2, 3].map((f) => (
+                    <div key={f} className="flex items-center gap-3">
+                      <Shimmer className="h-4 w-4 rounded-md shrink-0" />
+                      <Shimmer className="h-3.5 w-4/5" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Shimmer className="h-12 w-full rounded-xl" />
+            </div>
+          );
+        })}
+      </div>
+
       <style>{`
-        @keyframes skeleton-shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
+        @keyframes pricing-skeleton-shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
         }
       `}</style>
-    </section>
+    </div>
   );
-};
+});
 
+PricePlanSkeleton.displayName = 'PricePlanSkeleton';
 export default PricePlanSkeleton;

@@ -1,29 +1,51 @@
-import { GradientText, ServiceCard, THEME } from '@/components/UI';
+import { ServiceCard } from '@/components/UI';
 import useCreatedAtSorted from '@/hooks/useCreatedAtSorted';
-import { useGSAP } from '@gsap/react';
-import { motion } from 'framer-motion';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { memo, useMemo, useRef } from 'react';
+import { fadeUp, staggerParent, useMotionPrefs, VIEWPORT_ONCE } from '@/lib/motion';
+import { motion } from 'motion/react';
+import { memo, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
-gsap.registerPlugin(ScrollTrigger, useGSAP);
+const ServiceSkeletonCard = () => (
+  <div
+    className="relative min-h-[300px] rounded-2xl border border-line-subtle bg-surface-card/60 p-6 flex flex-col justify-end overflow-hidden"
+    aria-hidden="true"
+  >
+    <div
+      className="absolute inset-0 pointer-events-none"
+      style={{
+        background:
+          'linear-gradient(90deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.01) 100%)',
+        backgroundSize: '200% 100%',
+        animation: 'service-shimmer 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite',
+      }}
+    />
+    <div className="space-y-3 z-10">
+      <div className="h-6 w-3/4 rounded-lg bg-surface-soft border border-line-subtle" />
+      <div className="h-4 w-full rounded-md bg-surface-soft/60" />
+      <div className="h-4 w-2/3 rounded-md bg-surface-soft/60" />
+    </div>
+  </div>
+);
 
 const ServicesSection = memo(() => {
-  const containerRef = useRef(null);
-  const { services: sr } = useSelector((state) => state.service);
+  const { services: sr, isLoading } = useSelector((state) => state.service);
   const { sortedData: sortedServices } = useCreatedAtSorted(sr);
+  const { reduced, isMobile } = useMotionPrefs();
+
+  const prefs = useMemo(() => ({ reduced, isMobile }), [reduced, isMobile]);
+  const parentVariants = useMemo(() => staggerParent(0.1, 0.1), []);
+  const itemVariants = useMemo(() => fadeUp(prefs, 0), [prefs]);
 
   const structuredData = useMemo(() => {
-    if (!sortedServices?.length) return null;
+    if (!sortedServices?.length || typeof window === 'undefined') return null;
     return {
       '@context': 'https://schema.org',
       '@type': 'Service',
-      '@graph': sortedServices.map((service, index) => ({
+      '@graph': sortedServices.map((service) => ({
         '@type': 'Service',
         name: service.title || 'Professional Service',
         description: service.description || 'High-quality digital service',
-        url: `${window.location.origin}/services/${service.slug}`,
+        url: `${window.location.origin}/services/${service.slug || ''}`,
         serviceType: service.title,
         provider: {
           '@type': 'Person',
@@ -35,11 +57,8 @@ const ServicesSection = memo(() => {
 
   return (
     <section
-      ref={containerRef}
-      className="relative py-16 sm:py-20 md:py-24  overflow-hidden"
-      style={{ backgroundColor: THEME.bg, fontFamily: "'Inter', sans-serif" }}
-      aria-label="Professional services section"
-      role="region"
+      className="relative py-16 sm:py-20 lg:py-28 overflow-hidden isolate"
+      aria-label="Professional Services"
     >
       {structuredData && (
         <script
@@ -48,57 +67,90 @@ const ServicesSection = memo(() => {
         />
       )}
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 relative" style={{ zIndex: 2 }}>
-        <header className="text-center mb-12 sm:mb-16">
+      {/* Subtle background glow */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(45%_50%_at_50%_30%,rgb(var(--brand-cyan)/0.06),transparent)]"
+      />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
+        <div className="text-center mb-12 sm:mb-16 max-w-3xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
+            variants={itemVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={VIEWPORT_ONCE}
+            className="mb-4 inline-block"
           >
-            <span
-              className="inline-block px-4 py-2 rounded-full text-xs sm:text-sm font-medium mb-4"
-              style={{
-                background: 'rgba(2, 211, 254, 0.1)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(2, 211, 254, 0.2)',
-                color: THEME.cyan,
-              }}
-            >
-              What I Do
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-brand-cyan border border-brand-cyan/20 bg-brand-cyan/10">
+              What I Offer
             </span>
           </motion.div>
 
           <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 leading-tight"
-            style={{ color: THEME.textWhite }}
+            variants={itemVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={VIEWPORT_ONCE}
+            className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink mb-4 sm:mb-5"
           >
-            My <GradientText>Services</GradientText>
+            Services &amp;{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple">
+              Expertise
+            </span>
           </motion.h2>
 
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="max-w-2xl mx-auto text-sm sm:text-base px-4"
-            style={{ color: THEME.textGray }}
+            variants={itemVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={VIEWPORT_ONCE}
+            className="text-sm sm:text-base leading-relaxed text-ink-secondary"
           >
-            I offer a wide range of digital services to help businesses grow and succeed in the
-            digital world.
+            End-to-end digital solutions crafted for high performance, modern architecture, and
+            intuitive user journeys.
           </motion.p>
-        </header>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 w-full items-stretch">
-          {sortedServices?.map((service, index) => (
-            <ServiceCard key={service.id || `service-${index}`} service={service} index={index} />
-          ))}
         </div>
+
+        {/* Services Grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 w-full">
+            {[0, 1, 2, 3].map((i) => (
+              <ServiceSkeletonCard key={`service-skeleton-${i}`} />
+            ))}
+          </div>
+        ) : sortedServices && sortedServices.length > 0 ? (
+          <motion.div
+            variants={parentVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={VIEWPORT_ONCE}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 w-full items-stretch"
+          >
+            {sortedServices.map((service, index) => (
+              <motion.div
+                key={service.id || `service-${index}`}
+                variants={itemVariants}
+                className="h-full"
+              >
+                <ServiceCard service={service} index={index} />
+              </motion.div>
+            ))}
+          </motion.div>
+        ) : (
+          <div className="text-center py-12 rounded-2xl border border-line-subtle bg-surface-card/40">
+            <p className="text-ink-secondary text-sm">Services will be listed here soon.</p>
+          </div>
+        )}
       </div>
+
+      <style>{`
+        @keyframes service-shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+      `}</style>
     </section>
   );
 });

@@ -6,143 +6,144 @@ import {
   HeroHeading,
   HeroStats,
   OutlineButton,
-  prefersReducedMotion,
   PrimaryButton,
   THEME,
 } from '@/components/UI';
-import { useGSAP } from '@gsap/react';
-import { gsap } from 'gsap';
-import { ArrowDown, Sparkles } from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { fadeUp, useMotionPrefs } from '@/lib/motion';
+import { ArrowRight, Sparkles } from 'lucide-react';
+import { motion, useMotionValue, useSpring } from 'motion/react';
+import { memo, useCallback, useMemo } from 'react';
 import { shallowEqual, useSelector } from 'react-redux';
 import { getClientSatisfactionRate } from '../Utils/Utils';
 
-gsap.registerPlugin(useGSAP);
+const hasValue = (v) => v !== undefined && v !== null && v !== '' && String(v) !== '0';
 
-export const DEFAULT_STATS = [
-  { value: '5', label: 'Years Experience' },
-  { value: '5+', label: 'Projects Completed' },
-  { value: '5', label: 'Happy Clients' },
-];
+/* ═══════════════════════════════════════════════════════════════════ */
+/* 🖼️ PORTRAIT (single image for all screens — no duplicate download)  */
+/* ═══════════════════════════════════════════════════════════════════ */
+export const HeroImageSection = memo(({ imageUrl, about, satisfaction }) => {
+  const { reduced, isMobile } = useMotionPrefs();
+  const canTilt = !reduced && !isMobile;
 
-export const HeroImageSection = memo(
-  ({ imageRef, imageUrl, about, satisfaction, handleMouseMove, handleMouseLeave }) => (
-    <div
-      className="relative z-10 hidden lg:block"
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      aria-hidden="true"
+  const rotateX = useSpring(useMotionValue(0), { stiffness: 120, damping: 18 });
+  const rotateY = useSpring(useMotionValue(0), { stiffness: 120, damping: 18 });
+
+  const handlePointerMove = useCallback(
+    (e) => {
+      if (!canTilt || e.pointerType !== 'mouse') return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      rotateY.set(x * 10);
+      rotateX.set(-y * 10);
+    },
+    [canTilt, rotateX, rotateY]
+  );
+  const handlePointerLeave = useCallback(() => {
+    rotateX.set(0);
+    rotateY.set(0);
+  }, [rotateX, rotateY]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: reduced ? 0 : isMobile ? 12 : 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: reduced ? 0.01 : 0.8, delay: reduced ? 0 : 0.2, ease: [0.16, 1, 0.3, 1] }}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+      className="relative mx-auto w-full max-w-[11rem] sm:max-w-[16rem] md:max-w-xs lg:max-w-none"
     >
-      <div ref={imageRef} className="relative" style={{ transformStyle: 'preserve-3d' }}>
+      <motion.div style={{ rotateX, rotateY, transformPerspective: 1000 }} className="relative">
+        {/* Single soft glow (no blur filter) */}
         <div
-          className="absolute -inset-4 rounded-3xl opacity-30 blur-2xl pointer-events-none"
-          style={{ background: THEME.gradientPrimary }}
           aria-hidden="true"
+          className="pointer-events-none absolute -inset-6 rounded-[2rem] bg-[radial-gradient(closest-side,rgb(var(--brand-cyan)/0.18),rgb(var(--brand-purple)/0.10)_60%,transparent)]"
         />
 
-        <div
-          className="relative rounded-2xl overflow-hidden"
-          style={{
-            boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
-            border: `1px solid rgba(2, 211, 254, 0.1)`,
-          }}
-        >
+        <div className="relative overflow-hidden rounded-2xl border border-line-strong shadow-[0_30px_60px_-20px_rgba(0,0,0,0.6)]">
           <LazyImage
             src={imageUrl}
             alt={`${about?.fullName || 'Developer'} - Professional Portrait`}
             fallback={heroImage}
             eager={true}
             crossOrigin={true}
-            className="w-full h-auto object-cover"
+            className="aspect-[4/4] w-full bg-cover"
             objectFit="cover"
             objectPosition="bottom"
             placeholderColor={THEME.bg}
           />
           <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ background: 'linear-gradient(to top, rgba(10,10,15,0.5), transparent)' }}
             aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-surface-base/50 to-transparent"
           />
         </div>
 
-        <FloatingCard delay={1.2} position="left" label="Expert UI/UX Designer badge">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: THEME.gradientCyanBlue }}
-            >
-              <Sparkles size={20} style={{ color: '#ffffff' }} aria-hidden="true" />
-            </div>
-            <div className="min-w-0">
-              <div
-                className="font-semibold text-sm sm:text-base"
-                style={{ color: THEME.textWhite }}
-              >
-                Expert
+        {/* Floating cards — desktop only; real data only */}
+        {(about?.shortRole || hasValue(about?.experience)) && (
+          <div className="hidden lg:block">
+            <FloatingCard delay={1.0} position="left" label="Role and experience">
+              <div className="flex items-center gap-3">
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-brand-cyan/30 bg-brand-cyan/10 text-brand-cyan">
+                  <Sparkles size={20} aria-hidden="true" />
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold text-ink sm:text-base">
+                    {about?.shortRole || 'Developer'}
+                  </div>
+                  {hasValue(about?.experience) && (
+                    <div className="text-xs text-ink-secondary sm:text-sm">
+                      {about.experience}+ years experience
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="text-xs sm:text-sm" style={{ color: THEME.textGray }}>
-                UI/UX Designer
+            </FloatingCard>
+          </div>
+        )}
+
+        {satisfaction !== null && (
+          <div className="hidden lg:block">
+            <FloatingCard delay={1.2} position="right" label="Client satisfaction rate">
+              <div className="text-center">
+                <div className="mb-0.5 text-2xl font-bold text-brand-purple sm:text-3xl">
+                  {satisfaction}%
+                </div>
+                <div className="text-xs text-ink-secondary sm:text-sm">Satisfaction</div>
               </div>
-            </div>
+            </FloatingCard>
           </div>
-        </FloatingCard>
-
-        <FloatingCard delay={1.4} position="right" label="Client satisfaction rate">
-          <div className="text-center">
-            <div className="text-2xl sm:text-3xl font-bold mb-0.5" style={{ color: THEME.purple }}>
-              {satisfaction}%
-            </div>
-            <div className="text-xs sm:text-sm" style={{ color: THEME.textGray }}>
-              Satisfaction
-            </div>
-          </div>
-        </FloatingCard>
-
-        <div
-          className="absolute -top-4 -right-4 w-20 h-20 sm:w-24 sm:h-24 rounded-full blur-xl animate-pulse"
-          style={{ background: 'rgba(2, 211, 254, 0.2)' }}
-          aria-hidden="true"
-        />
-        <div
-          className="absolute -bottom-4 -left-4 w-28 h-28 sm:w-32 sm:h-32 rounded-full blur-xl animate-pulse"
-          style={{ animationDelay: '1s', background: 'rgba(78, 144, 225, 0.2)' }}
-          aria-hidden="true"
-        />
-      </div>
-    </div>
-  )
-);
+        )}
+      </motion.div>
+    </motion.div>
+  );
+});
 HeroImageSection.displayName = 'HeroImageSection';
 
 /* ═══════════════════════════════════════════════════════════════════ */
-/* 🦸 MAIN HERO COMPONENT                                            */
+/* 🦸 HERO                                                             */
 /* ═══════════════════════════════════════════════════════════════════ */
-
 const Hero = memo(({ about }) => {
-  const heroRef = useRef(null);
-  const imageRef = useRef(null);
-  const headingRef = useRef(null);
-  const mouseTimeoutRef = useRef(null);
-
+  const { reduced, isMobile } = useMotionPrefs();
   const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
   const { testimonials } = useSelector((state) => state.testimonial, shallowEqual);
 
-  const satisfaction = getClientSatisfactionRate(testimonials);
+  // getClientSatisfactionRate divides by length → NaN when there are no testimonials
+  const satisfaction = useMemo(() => {
+    if (!testimonials?.length) return null;
+    const rate = getClientSatisfactionRate(testimonials);
+    return Number.isFinite(rate) ? rate : null;
+  }, [testimonials]);
 
-  /* ── Memoized Values ── */
   const imageUrl = useMemo(() => {
     if (!about?.aboutImage?.url) return null;
     const url = about.aboutImage.url.trim();
     if (/^https?:\/\//i.test(url)) return url;
     if (backendUrl) {
-      const base = backendUrl.replace(/\/+$/, '');
-      const path = url.replace(/^\/+/, '');
-      return `${base}/${path}`;
+      return `${backendUrl.replace(/\/+$/, '')}/${url.replace(/^\/+/, '')}`;
     }
     return url;
   }, [about?.aboutImage?.url, backendUrl]);
 
-  /* ── Structured Data for On-Page SEO ── */
   const structuredData = useMemo(() => {
     if (!about) return null;
     return {
@@ -164,116 +165,27 @@ const Hero = memo(({ about }) => {
     return `HI, I'M ${firstName}`;
   }, [about?.fullName]);
 
+  // Real values only — the old DEFAULT_STATS ('5', '5+', '5') were invented numbers.
   const stats = useMemo(
-    () => [
-      { value: about?.experience || DEFAULT_STATS[0].value, label: DEFAULT_STATS[0].label },
-      {
-        value: about?.projectCounts?.publishedProjects || DEFAULT_STATS[1].value,
-        label: DEFAULT_STATS[1].label,
-      },
-      { value: testimonials?.length || DEFAULT_STATS[2].value, label: DEFAULT_STATS[2].label },
-    ],
+    () =>
+      [
+        { value: about?.experience, label: 'Years Experience' },
+        { value: about?.projectCounts?.publishedProjects, label: 'Projects Completed' },
+        { value: testimonials?.length, label: 'Happy Clients' },
+      ].filter((s) => hasValue(s.value)),
     [about?.experience, about?.projectCounts?.publishedProjects, testimonials?.length]
   );
 
-  const firstName = useMemo(() => about?.fullName?.split(' ')[0] || 'Developer', [about?.fullName]);
+  const prefs = useMemo(() => ({ reduced, isMobile }), [reduced, isMobile]);
+  const roleV = useMemo(() => fadeUp(prefs, 0.4), [prefs]);
+  const descV = useMemo(() => fadeUp(prefs, 0.5), [prefs]);
+  const ctaV = useMemo(() => fadeUp(prefs, 0.6), [prefs]);
+  const statsV = useMemo(() => fadeUp(prefs, 0.7), [prefs]);
 
-  /* ── GSAP Animations ── */
-  useGSAP(
-    () => {
-      if (!about || prefersReducedMotion()) return;
-
-      const chars = headingRef.current?.querySelectorAll('.char');
-      if (chars?.length) {
-        gsap.fromTo(
-          chars,
-          { y: 100, opacity: 0 },
-          { y: 0, opacity: 1, duration: 1.2, stagger: 0.05, ease: 'power4.out', delay: 0.3 }
-        );
-      }
-
-      gsap.fromTo(
-        '.hero-subheading',
-        { y: 30, opacity: 0 },
-        { y: 0, opacity: 1, duration: 1, delay: 0.6 }
-      );
-      gsap.fromTo(
-        '.hero-description',
-        { y: 30, opacity: 0 },
-        { y: 0, opacity: 1, duration: 1, delay: 0.8 }
-      );
-
-      if (imageRef.current) {
-        gsap.fromTo(
-          imageRef.current,
-          { rotateY: 90, opacity: 0, scale: 0.8 },
-          { rotateY: 0, opacity: 1, scale: 1, duration: 1.5, delay: 0.4, ease: 'power3.out' }
-        );
-      }
-    },
-    { scope: heroRef, dependencies: [about] }
-  );
-
-  /* ── Mouse Parallax ── */
-  const handleMouseMove = useCallback((e) => {
-    if (!imageRef.current || prefersReducedMotion()) return;
-    if (mouseTimeoutRef.current) return;
-
-    mouseTimeoutRef.current = requestAnimationFrame(() => {
-      const rect = imageRef.current.getBoundingClientRect();
-      const x = (e.clientX - rect.left - rect.width / 2) / rect.width;
-      const y = (e.clientY - rect.top - rect.height / 2) / rect.height;
-
-      gsap.to(imageRef.current, {
-        rotateY: x * 10,
-        rotateX: -y * 10,
-        duration: 0.5,
-        ease: 'power2.out',
-      });
-      mouseTimeoutRef.current = null;
-    });
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    if (mouseTimeoutRef.current) {
-      cancelAnimationFrame(mouseTimeoutRef.current);
-      mouseTimeoutRef.current = null;
-    }
-    if (!imageRef.current) return;
-    gsap.to(imageRef.current, { rotateY: 0, rotateX: 0, duration: 0.5, ease: 'power2.out' });
-  }, []);
-
-  /* ── Cleanup ── */
-  useEffect(() => {
-    return () => {
-      if (mouseTimeoutRef.current) {
-        cancelAnimationFrame(mouseTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  /* ── Scroll Handlers ── */
-  const scrollToProjects = useCallback(() => {
-    document
-      .getElementById('projects')
-      ?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
-  }, []);
-
-  const scrollToContact = useCallback(() => {
-    document
-      .getElementById('contact')
-      ?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
-  }, []);
+  const role = about?.shortRole || 'Full Stack Developer';
 
   return (
-    <section
-      ref={heroRef}
-      className="relative flex items-center justify-center overflow-hidden"
-      style={{ backgroundColor: THEME.bg, fontFamily: "'Inter', sans-serif" }}
-      aria-label="Hero section"
-      role="region"
-    >
-      {/* Structured Data for SEO */}
+    <div className="relative isolate overflow-clip">
       {structuredData && (
         <script
           type="application/ld+json"
@@ -281,78 +193,71 @@ const Hero = memo(({ about }) => {
         />
       )}
 
-      {/* ─── HERO CONTENT ─── */}
+      {/* Background: one soft cyan/blue glow top-left, purple depth bottom-right */}
       <div
-        className="relative w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-12 sm:py-16 md:py-24 lg:py-32"
-        style={{ zIndex: 2 }}
-      >
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-15 items-center">
-          {/* ─── Text Content ─── */}
-          <div className="text-center lg:text-left z-10 order-2 lg:order-1 w-full">
-            <HeroBadge successNote={about?.successNote} />
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(50%_60%_at_20%_0%,rgb(var(--brand-blue)/0.12),transparent),radial-gradient(40%_50%_at_90%_90%,rgb(var(--brand-purple)/0.10),transparent)]"
+      />
 
-            <HeroHeading headingText={headingText} headingRef={headingRef} />
+      <div className="mx-auto grid w-full max-w-7xl items-center gap-10 px-4 pb-16 pt-28 sm:px-6 sm:pb-20 sm:pt-32 lg:min-h-svh lg:grid-cols-2 lg:gap-16 lg:px-8 lg:pb-28 lg:pt-36">
+        {/* Text */}
+        <div className="order-2 w-full text-center lg:order-1 lg:text-left">
+          <HeroBadge successNote={about?.successNote} />
 
-            <p
-              className="hero-subheading text-lg sm:text-xl md:text-2xl mb-3 sm:mb-4 font-light"
-              style={{ color: THEME.textGray }}
-              aria-label={`Role: ${about?.shortRole || 'Full Stack Developer'}`}
-            >
-              {about?.shortRole || 'Full Stack Developer'}
-            </p>
+          <HeroHeading headingText={headingText} />
 
-            <p
-              className="hero-description max-w-lg mx-auto lg:mx-0 mb-8 sm:mb-10 text-sm sm:text-base leading-relaxed"
-              style={{ color: THEME.textGrayDark }}
-            >
-              {about?.shortDesc ||
-                'I craft digital experiences that merge art with functionality. Specializing in modern web development and stunning UI/UX design.'}
-            </p>
+          <motion.p
+            variants={roleV}
+            initial="hidden"
+            animate="visible"
+            className="mb-3 text-lg font-light text-ink-secondary sm:mb-4 sm:text-xl md:text-2xl"
+          >
+            {role}
+          </motion.p>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start mb-6 sm:mb-8 md:mb-12 w-full sm:w-auto">
-              <PrimaryButton
-                onClick={scrollToProjects}
-                icon={ArrowDown}
-                to={'/projects'}
-                aria-label="Explore my projects and portfolio work"
-              >
-                Explore My Work
-              </PrimaryButton>
-              <OutlineButton
-                to={'/contact'}
-                onClick={scrollToContact}
-                aria-label="Get in touch and contact me"
-              >
-                Contact Me
-              </OutlineButton>
-            </div>
+          <motion.p
+            variants={descV}
+            initial="hidden"
+            animate="visible"
+            className="mx-auto mb-8 max-w-lg text-base leading-relaxed text-ink-secondary sm:mb-10 lg:mx-0"
+          >
+            {about?.shortDesc ||
+              'I craft digital experiences that merge art with functionality. Specializing in modern web development and stunning UI/UX design.'}
+          </motion.p>
 
-            {/* Stats */}
-            <HeroStats stats={stats} />
-          </div>
+          <motion.div
+            variants={ctaV}
+            initial="hidden"
+            animate="visible"
+            className="mb-10 flex flex-col justify-center gap-3 sm:flex-row sm:gap-4 lg:mb-12 lg:justify-start"
+          >
+            <PrimaryButton to="/projects" icon={ArrowRight} className="w-full sm:w-auto">
+              Explore My Work
+            </PrimaryButton>
+            <OutlineButton to="/contact" className="w-full sm:w-auto">
+              Contact Me
+            </OutlineButton>
+          </motion.div>
 
-          {/* ─── Image Section ─── */}
-          <div className="order-1 lg:order-2">
-            <HeroImageSection
-              imageRef={imageRef}
-              imageUrl={imageUrl}
-              about={about}
-              satisfaction={satisfaction}
-              handleMouseMove={handleMouseMove}
-              handleMouseLeave={handleMouseLeave}
-            />
-          </div>
+          {stats.length > 0 && (
+            <motion.div variants={statsV} initial="hidden" animate="visible">
+              <HeroStats stats={stats} />
+            </motion.div>
+          )}
+        </div>
+
+        {/* Portrait — compact on mobile, full on desktop */}
+        <div className="order-1 lg:order-2">
+          <HeroImageSection imageUrl={imageUrl} about={about} satisfaction={satisfaction} />
         </div>
       </div>
 
-      {/* Bottom Gradient Fade */}
+      {/* Fade into next section */}
       <div
-        className="absolute bottom-0 left-0 right-0 h-24 sm:h-28 md:h-32 pointer-events-none"
-        style={{ background: `linear-gradient(to top, ${THEME.bg}, transparent)` }}
         aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-surface-base to-transparent sm:h-28"
       />
-    </section>
+    </div>
   );
 });
 
