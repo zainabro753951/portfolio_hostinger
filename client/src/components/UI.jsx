@@ -1,9 +1,9 @@
-import { EASE_OUT, VIEWPORT_ONCE, useMotionPrefs } from '@/lib/motion';
-import { ArrowRight, Sparkles } from 'lucide-react';
-import { motion } from 'motion/react';
-import { Fragment, memo, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { safeParse, SERVICE_GRADIENTS } from '../Utils/Utils';
+import { EASE_OUT, VIEWPORT_ONCE, useMotionPrefs } from "@/lib/motion";
+import { ArrowRight, Sparkles } from "lucide-react";
+import { motion } from "motion/react";
+import { Fragment, memo, useMemo } from "react";
+import { Link } from "react-router-dom";
+import { safeParse, SERVICE_GRADIENTS } from "../Utils/Utils";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 🎨 THEME (LEGACY BRIDGE)
@@ -13,64 +13,69 @@ import { safeParse, SERVICE_GRADIENTS } from '../Utils/Utils';
 // (brand-*, surface-*, ink-*, line-*) instead of THEME.
 // ═══════════════════════════════════════════════════════════════════════════
 export const THEME = {
-  cyan: '#02d3fe',
-  blue: '#4e90e1',
-  purple: '#9a5cb7',
-  bg: '#0a0a0f',
-  bgCard: 'rgba(25, 25, 35, 0.6)',
-  bgCardHover: 'rgba(25, 25, 35, 0.8)',
-  border: 'rgba(255, 255, 255, 0.08)',
-  borderHover: 'rgba(2, 211, 254, 0.3)',
-  borderPurple: 'rgba(154, 92, 183, 0.3)',
-  textWhite: '#f5f7fa',
-  textGray: '#a1a1b2',
-  textGrayDark: '#737386',
-  textMuted: '#737386',
-  gradientPrimary: 'linear-gradient(135deg, #02d3fe 0%, #4e90e1 55%, #9a5cb7 100%)',
-  gradientCyanBlue: 'linear-gradient(135deg, #02d3fe, #4e90e1)',
-  gradientBluePurple: 'linear-gradient(135deg, #4e90e1, #9a5cb7)',
-  glowCyan: '0 0 40px -8px rgba(2, 211, 254, 0.16)',
-  glowPurple: '0 0 40px -8px rgba(154, 92, 183, 0.16)',
-  emerald: '#10b981',
+  cyan: "#02d3fe",
+  blue: "#4e90e1",
+  purple: "#9a5cb7",
+  bg: "#0a0a0f",
+  bgCard: "rgba(25, 25, 35, 0.6)",
+  bgCardHover: "rgba(25, 25, 35, 0.8)",
+  border: "rgba(255, 255, 255, 0.08)",
+  borderHover: "rgba(2, 211, 254, 0.3)",
+  borderPurple: "rgba(154, 92, 183, 0.3)",
+  textWhite: "#f5f7fa",
+  textGray: "#a1a1b2",
+  textGrayDark: "#737386",
+  textMuted: "#737386",
+  gradientPrimary:
+    "linear-gradient(135deg, #02d3fe 0%, #4e90e1 55%, #9a5cb7 100%)",
+  gradientCyanBlue: "linear-gradient(135deg, #02d3fe, #4e90e1)",
+  gradientBluePurple: "linear-gradient(135deg, #4e90e1, #9a5cb7)",
+  glowCyan: "0 0 40px -8px rgba(2, 211, 254, 0.16)",
+  glowPurple: "0 0 40px -8px rgba(154, 92, 183, 0.16)",
+  emerald: "#10b981",
 };
 
 export function prefersReducedMotion() {
-  if (typeof window === 'undefined') return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 const FOCUS_RING =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base';
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 🧩 PRIMITIVES — public API (props) unchanged
 // ═══════════════════════════════════════════════════════════════════════════
 
-export const GlassCard = memo(({ children, className = '', hover = true }) => (
+export const GlassCard = memo(({ children, className = "", hover = true }) => (
   <div
     className={`relative overflow-hidden rounded-2xl border border-line-subtle bg-surface-card/60 transition-[border-color,box-shadow] duration-300 motion-reduce:transition-none ${
-      hover ? 'hover:border-brand-cyan/30 hover:shadow-glow-cyan' : ''
+      hover ? "hover:border-brand-cyan/30 hover:shadow-glow-cyan" : ""
     } ${className}`}
   >
     {children}
   </div>
 ));
-GlassCard.displayName = 'GlassCard';
+GlassCard.displayName = "GlassCard";
 
 export const TechBadge = memo(({ name, icon: Icon }) => (
   <span className="inline-flex cursor-default items-center gap-2 rounded-full border border-brand-cyan/20 bg-brand-cyan/[0.08] px-3 py-1.5 text-xs font-medium text-brand-blue transition-colors duration-300 hover:border-brand-cyan/40 hover:bg-brand-cyan/15 hover:text-brand-cyan motion-reduce:transition-none sm:px-4 sm:py-2 sm:text-sm">
-    {Icon && <Icon size={14} className="shrink-0 sm:h-4 sm:w-4" aria-hidden="true" />}
+    {Icon && (
+      <Icon size={14} className="shrink-0 sm:h-4 sm:w-4" aria-hidden="true" />
+    )}
     {name}
   </span>
 ));
-TechBadge.displayName = 'TechBadge';
+TechBadge.displayName = "TechBadge";
 
-export const GradientText = memo(({ children, className = '' }) => (
-  <span className={`bg-[image:var(--gradient-brand)] bg-clip-text text-transparent ${className}`}>
+export const GradientText = memo(({ children, className = "" }) => (
+  <span
+    className={`bg-[image:var(--gradient-brand)] bg-clip-text text-transparent ${className}`}
+  >
     {children}
   </span>
 ));
-GradientText.displayName = 'GradientText';
+GradientText.displayName = "GradientText";
 
 const BTN_BASE = `inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:px-6 sm:text-base ${FOCUS_RING}`;
 // Dark text on the cyan→blue gradient: ~6–11:1 contrast (white was ~1.8:1)
@@ -78,7 +83,15 @@ const BTN_PRIMARY = `${BTN_BASE} bg-[image:var(--gradient-cyan-blue)] text-surfa
 const BTN_OUTLINE = `${BTN_BASE} border border-brand-cyan/40 text-brand-cyan hover:border-brand-cyan hover:bg-brand-cyan/10`;
 
 export const PrimaryButton = memo(
-  ({ children, href, to, onClick, icon: Icon, className = '', type = 'button' }) => {
+  ({
+    children,
+    href,
+    to,
+    onClick,
+    icon: Icon,
+    className = "",
+    type = "button",
+  }) => {
     const cls = `${BTN_PRIMARY} ${className}`;
     const inner = (
       <>
@@ -95,7 +108,13 @@ export const PrimaryButton = memo(
     }
     if (href) {
       return (
-        <a href={href} target="_blank" rel="noopener noreferrer" onClick={onClick} className={cls}>
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={onClick}
+          className={cls}
+        >
           {inner}
         </a>
       );
@@ -105,39 +124,41 @@ export const PrimaryButton = memo(
         {inner}
       </button>
     );
-  }
+  },
 );
-PrimaryButton.displayName = 'PrimaryButton';
+PrimaryButton.displayName = "PrimaryButton";
 
-export const OutlineButton = memo(({ children, href, to, onClick, icon: Icon, className = '' }) => {
-  const cls = `${BTN_OUTLINE} ${className}`;
-  const inner = (
-    <>
-      {Icon && <Icon size={18} className="shrink-0" aria-hidden="true" />}
-      <span>{children}</span>
-    </>
-  );
-  if (to) {
-    return (
-      <Link to={to} onClick={onClick} className={cls}>
-        {inner}
-      </Link>
+export const OutlineButton = memo(
+  ({ children, href, to, onClick, icon: Icon, className = "" }) => {
+    const cls = `${BTN_OUTLINE} ${className}`;
+    const inner = (
+      <>
+        {Icon && <Icon size={18} className="shrink-0" aria-hidden="true" />}
+        <span>{children}</span>
+      </>
     );
-  }
-  if (href) {
+    if (to) {
+      return (
+        <Link to={to} onClick={onClick} className={cls}>
+          {inner}
+        </Link>
+      );
+    }
+    if (href) {
+      return (
+        <a href={href} onClick={onClick} className={cls}>
+          {inner}
+        </a>
+      );
+    }
     return (
-      <a href={href} onClick={onClick} className={cls}>
+      <button onClick={onClick} type="button" className={cls}>
         {inner}
-      </a>
+      </button>
     );
-  }
-  return (
-    <button onClick={onClick} type="button" className={cls}>
-      {inner}
-    </button>
-  );
-});
-OutlineButton.displayName = 'OutlineButton';
+  },
+);
+OutlineButton.displayName = "OutlineButton";
 
 /** Metric progress bar — `width` is a 0–100 percentage. (GSAP removed) */
 export const MetricBar = memo(({ label, value, width }) => {
@@ -151,15 +172,19 @@ export const MetricBar = memo(({ label, value, width }) => {
       aria-label={`${label}: ${value}%`}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="truncate text-xs text-ink-secondary sm:text-sm">{label}</span>
-        <span className="shrink-0 text-xs font-bold text-brand-cyan sm:text-sm">{value}%</span>
+        <span className="truncate text-xs text-ink-secondary sm:text-sm">
+          {label}
+        </span>
+        <span className="shrink-0 text-xs font-bold text-brand-cyan sm:text-sm">
+          {value}%
+        </span>
       </div>
       <div className="h-2 w-full overflow-hidden rounded-full bg-surface-soft">
         <motion.div
           className="h-full rounded-full bg-[image:var(--gradient-cyan-blue)]"
           style={{ width: `${pct}%` }}
-          initial={{ x: reduced ? '0%' : '-100%' }}
-          whileInView={{ x: '0%' }}
+          initial={{ x: reduced ? "0%" : "-100%" }}
+          whileInView={{ x: "0%" }}
           viewport={VIEWPORT_ONCE}
           transition={{ duration: reduced ? 0.01 : 1.1, ease: EASE_OUT }}
         />
@@ -167,7 +192,7 @@ export const MetricBar = memo(({ label, value, width }) => {
     </div>
   );
 });
-MetricBar.displayName = 'MetricBar';
+MetricBar.displayName = "MetricBar";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 🧩 HERO PIECES
@@ -179,19 +204,27 @@ export const HeroBadge = memo(({ successNote }) => {
     <motion.div
       initial={{ opacity: 0, y: reduced ? 0 : isMobile ? 10 : 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: reduced ? 0.01 : 0.5, delay: reduced ? 0 : 0.15, ease: EASE_OUT }}
+      transition={{
+        duration: reduced ? 0.01 : 0.5,
+        delay: reduced ? 0 : 0.15,
+        ease: EASE_OUT,
+      }}
       role="status"
       aria-label="Current availability status"
       className="mx-auto mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-brand-cyan/20 bg-brand-cyan/10 px-3 py-1.5 sm:mb-6 sm:px-4 sm:py-2 md:mb-8 lg:mx-0"
     >
-      <Sparkles size={14} className="shrink-0 text-brand-cyan" aria-hidden="true" />
+      <Sparkles
+        size={14}
+        className="shrink-0 text-brand-cyan"
+        aria-hidden="true"
+      />
       <span className="max-w-[220px] truncate text-xs text-ink-secondary sm:max-w-none sm:text-sm">
-        {successNote || 'Available for work'}
+        {successNote || "Available for work"}
       </span>
     </motion.div>
   );
 });
-HeroBadge.displayName = 'HeroBadge';
+HeroBadge.displayName = "HeroBadge";
 
 /**
  * Per-character reveal (motion/react — no GSAP). `.char` class kept for styling hooks.
@@ -203,14 +236,17 @@ export const HeroHeading = memo(({ headingText, headingRef }) => {
 
   const words = useMemo(() => {
     let offset = 0;
-    return headingText.split(' ').map((word) => {
+    return headingText.split(" ").map((word) => {
       const start = offset;
       offset += word.length + 1;
       return { word, start };
     });
   }, [headingText]);
 
-  const name = useMemo(() => headingText.replace("HI, I'M ", ''), [headingText]);
+  const name = useMemo(
+    () => headingText.replace("HI, I'M ", ""),
+    [headingText],
+  );
 
   const parentVariants = useMemo(
     () => ({
@@ -222,18 +258,18 @@ export const HeroHeading = memo(({ headingText, headingRef }) => {
         },
       },
     }),
-    [reduced, isMobile]
+    [reduced, isMobile],
   );
   const charVariants = useMemo(
     () => ({
-      hidden: { y: reduced ? 0 : '105%', opacity: 0 },
+      hidden: { y: reduced ? 0 : "105%", opacity: 0 },
       visible: {
         y: 0,
         opacity: 1,
         transition: { duration: reduced ? 0.01 : 0.8, ease: EASE_OUT },
       },
     }),
-    [reduced]
+    [reduced],
   );
 
   return (
@@ -248,23 +284,23 @@ export const HeroHeading = memo(({ headingText, headingRef }) => {
       {words.map(({ word, start }, wi) => (
         <Fragment key={`hero-word-${wi}`}>
           <span className="inline-block whitespace-nowrap" aria-hidden="true">
-            {word.split('').map((char, ci) => (
+            {word.split("").map((char, ci) => (
               <motion.span
                 key={`hero-char-${wi}-${ci}`}
                 variants={charVariants}
-                className={`char inline-block ${start + ci > 6 ? 'text-brand-cyan' : 'text-ink'}`}
+                className={`char inline-block ${start + ci > 6 ? "text-brand-cyan" : "text-ink"}`}
               >
                 {char}
               </motion.span>
             ))}
           </span>
-          {wi < words.length - 1 ? ' ' : null}
+          {wi < words.length - 1 ? " " : null}
         </Fragment>
       ))}
     </motion.h1>
   );
 });
-HeroHeading.displayName = 'HeroHeading';
+HeroHeading.displayName = "HeroHeading";
 
 export const HeroStats = memo(({ stats }) => (
   <div
@@ -288,14 +324,14 @@ export const HeroStats = memo(({ stats }) => (
     ))}
   </div>
 ));
-HeroStats.displayName = 'HeroStats';
+HeroStats.displayName = "HeroStats";
 
 export const FloatingCard = memo(({ children, delay, position, label }) => {
   const { reduced, isMobile } = useMotionPrefs();
   const dist = reduced ? 0 : isMobile ? 16 : 32;
   return (
     <motion.div
-      initial={{ opacity: 0, x: position === 'left' ? -dist : dist }}
+      initial={{ opacity: 0, x: position === "left" ? -dist : dist }}
       animate={{ opacity: 1, x: 0 }}
       transition={{
         duration: reduced ? 0.01 : 0.7,
@@ -303,9 +339,9 @@ export const FloatingCard = memo(({ children, delay, position, label }) => {
         ease: EASE_OUT,
       }}
       className={`absolute z-20 max-w-[85%] rounded-2xl border border-line-subtle bg-surface-elevated/90 p-3 shadow-lg shadow-black/40 sm:p-4 ${
-        position === 'left'
-          ? 'bottom-12 left-0 sm:bottom-16 sm:left-2 md:-left-4 md:bottom-20 lg:-left-8'
-          : 'right-0 top-12 sm:-right-2 sm:top-16 md:-right-3 md:top-20 lg:-right-4'
+        position === "left"
+          ? "bottom-12 left-0 sm:bottom-16 sm:left-2 md:-left-4 md:bottom-20 lg:-left-8"
+          : "right-0 top-12 sm:-right-2 sm:top-16 md:-right-3 md:top-20 lg:-right-4"
       }`}
       role="group"
       aria-label={label}
@@ -314,97 +350,159 @@ export const FloatingCard = memo(({ children, delay, position, label }) => {
     </motion.div>
   );
 });
-FloatingCard.displayName = 'FloatingCard';
+FloatingCard.displayName = "FloatingCard";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 🧩 SERVICE CARD — data logic (safeParse, image URL, slug link) preserved
 // ═══════════════════════════════════════════════════════════════════════════
 
-export const ServiceCard = memo(({ service, index }) => {
-  const { reduced, isMobile } = useMotionPrefs();
+export const ServiceCard = memo(({ service, index = 0 }) => {
+  const { reduced } = useMotionPrefs();
+
+  // Backend data logic preserved
   const serviceImage = safeParse(service?.serviceImage);
-  const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE || '';
+
+  const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE || "";
+
   const imageUrl = serviceImage?.url
-    ? `${backendUrl.replace(/\/+$/, '')}/${serviceImage.url.replace(/^\/+/, '')}`
-    : '';
+    ? `${backendUrl.replace(/\/+$/, "")}/${serviceImage.url.replace(/^\/+/, "")}`
+    : "";
+
   const gradient = SERVICE_GRADIENTS[index % SERVICE_GRADIENTS.length];
+
   const titleId = `service-title-${service?.id || index}`;
 
   return (
-    <article
-      className="group relative h-full min-h-[280px] overflow-hidden rounded-2xl border border-line-subtle bg-surface-card/60 transition-[border-color,box-shadow] duration-300 hover:border-brand-cyan/30 hover:shadow-glow-cyan motion-reduce:transition-none"
+    <motion.article
       aria-labelledby={titleId}
+      className="group relative flex h-full min-h-[360px] flex-col overflow-hidden rounded-3xl border border-line-subtle bg-surface-card transition-[border-color,box-shadow,background-color] duration-500 hover:border-brand-cyan/40 hover:bg-surface-card/90 hover:shadow-[0_20px_60px_rgba(2,211,254,0.09)] motion-reduce:transition-none"
+      whileHover={reduced ? undefined : { y: -5 }}
+      transition={{
+        duration: 0.3,
+        ease: "easeOut",
+      }}
     >
-      {/* Background */}
-      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+      {/* Top visual area */}
+      <div className="relative h-[180px] shrink-0 overflow-hidden sm:h-[195px]">
+        {/* Service image */}
         {imageUrl ? (
           <img
             src={imageUrl}
             alt=""
-            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+            aria-hidden="true"
             loading="lazy"
             decoding="async"
-            width="400"
-            height="300"
+            width="600"
+            height="360"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
           />
         ) : (
-          <div className="absolute inset-0 opacity-20" style={{ background: gradient }} />
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 transition-transform duration-700 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+            style={{
+              background: `
+                radial-gradient(
+                  circle at 80% 20%,
+                  rgba(255,255,255,0.12),
+                  transparent 35%
+                ),
+                ${gradient}
+              `,
+            }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-surface-base/10 via-transparent to-surface-base/50" />
+
+            {/* Decorative visual */}
+            <div className="absolute -right-10 -top-12 h-48 w-48 rounded-full border border-white/10" />
+            <div className="absolute -right-3 -top-5 h-32 w-32 rounded-full border border-white/10" />
+            <div className="absolute -bottom-16 -left-10 h-40 w-40 rounded-full border border-white/10" />
+          </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-surface-base/95 via-surface-base/60 to-transparent" />
+
+        {/* Image overlays */}
         <div
-          className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-20"
-          style={{ background: gradient }}
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-surface-card via-surface-base/10 to-surface-base/20"
+        />
+
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100 motion-reduce:transition-none"
+          style={{
+            background: `linear-gradient(135deg, ${gradient}, transparent 75%)`,
+            mixBlendMode: "soft-light",
+          }}
+        />
+
+        {/* Service number */}
+        <div className="absolute left-5 top-5 z-10">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/35 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-white/90 backdrop-blur-md">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-cyan shadow-[0_0_8px_rgba(2,211,254,0.8)]" />
+            Service {String(index + 1).padStart(2, "0")}
+          </span>
+        </div>
+
+        {/* Bottom accent */}
+        <div
+          aria-hidden="true"
+          className="absolute bottom-0 left-0 h-px w-full bg-gradient-to-r from-transparent via-brand-cyan/40 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
         />
       </div>
 
-      {/* Content */}
-      <motion.div
-        initial={{ opacity: 0, y: reduced ? 0 : isMobile ? 16 : 32 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={VIEWPORT_ONCE}
-        transition={{
-          duration: reduced ? 0.01 : 0.55,
-          delay: reduced ? 0 : Math.min(index, 5) * (isMobile ? 0.05 : 0.1),
-          ease: EASE_OUT,
-        }}
-        className="relative z-10 flex h-full w-full flex-col justify-between p-4 sm:p-5 md:p-6"
-      >
-        <div>
-          <h3
-            id={titleId}
-            className="mb-2 text-lg font-bold leading-tight text-ink transition-colors duration-300 group-hover:text-brand-cyan sm:text-xl"
-          >
-            {service?.title}
-          </h3>
-          <p className="mb-4 line-clamp-3 text-sm leading-relaxed text-ink-secondary sm:mb-5">
-            {service?.description}
-          </p>
-        </div>
+      {/* Content area */}
+      <div className="relative flex flex-1 flex-col p-5 pt-1 sm:p-6 sm:pt-2">
+        {/* Decorative accent */}
+        <div
+          aria-hidden="true"
+          className="mb-4 h-1 w-9 rounded-full bg-gradient-to-r from-brand-cyan to-brand-purple transition-all duration-500 group-hover:w-16"
+        />
 
-        <Link
-          to={`/services/${service?.slug}`}
-          aria-label={`View details for ${service?.title || 'this service'}`}
-          className={`group/link inline-flex min-h-11 w-fit items-center gap-2 rounded-lg text-sm font-semibold text-brand-cyan ${FOCUS_RING}`}
+        {/* Service title */}
+        <h3
+          id={titleId}
+          className="mb-3 text-lg font-bold leading-snug tracking-tight text-ink transition-colors duration-300 group-hover:text-brand-cyan sm:text-xl"
         >
-          <span className="relative inline-block overflow-hidden leading-tight">
-            <span className="block transition-transform duration-300 group-hover/link:-translate-y-full motion-reduce:transition-none motion-reduce:group-hover/link:translate-y-0">
-              View Details
+          {service?.title}
+        </h3>
+
+        {/* Description */}
+        <p className="mb-6 line-clamp-3 text-[13px] leading-7 text-ink-secondary sm:text-sm">
+          {service?.description}
+        </p>
+
+        {/* CTA */}
+        <div className="mt-auto border-t border-line-subtle pt-4">
+          <Link
+            to={`/services/${service?.slug}`}
+            aria-label={`View details for ${service?.title || "this service"}`}
+            className={`group/link inline-flex min-h-11 items-center gap-3 rounded-lg text-sm font-bold text-brand-cyan transition-colors duration-300 hover:text-brand-blue ${FOCUS_RING}`}
+          >
+            <span className="relative overflow-hidden">
+              <span className="block transition-transform duration-300 group-hover/link:-translate-y-full motion-reduce:transition-none motion-reduce:group-hover/link:translate-y-0">
+                Explore Service
+              </span>
+
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 translate-y-full transition-transform duration-300 group-hover/link:translate-y-0 motion-reduce:hidden"
+              >
+                Learn More
+              </span>
             </span>
+
             <span
               aria-hidden="true"
-              className="absolute inset-0 translate-y-full transition-transform duration-300 group-hover/link:translate-y-0 motion-reduce:hidden"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-brand-cyan/20 bg-brand-cyan/[0.07] transition-all duration-300 group-hover/link:translate-x-1 group-hover/link:border-brand-cyan/50 group-hover/link:bg-brand-cyan/15 motion-reduce:transition-none motion-reduce:group-hover/link:translate-x-0"
             >
-              Learn More
+              <ArrowRight size={15} />
             </span>
-          </span>
-          <ArrowRight
-            size={16}
-            aria-hidden="true"
-            className="transition-transform duration-300 group-hover/link:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover/link:translate-x-0"
-          />
-        </Link>
-      </motion.div>
-    </article>
+          </Link>
+        </div>
+      </div>
+    </motion.article>
   );
 });
-ServiceCard.displayName = 'ServiceCard';
+
+ServiceCard.displayName = "ServiceCard";
