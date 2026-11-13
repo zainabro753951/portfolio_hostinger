@@ -2,7 +2,9 @@ import { body, validationResult } from "express-validator";
 import pool from "../db.config.js";
 import { hashIp } from "../Utils/hashIp.js";
 import { getGeoLocation } from "../Utils/geoLookup.js";
-import nodemailer from "nodemailer";
+import { sendEmail } from "../Utils/mailer.js";
+import { readFile } from "node:fs/promises";
+import { escapeHtml, renderEmailTemplate } from "../Utils/escapeHtml.js";
 
 export const contactMessageValidation = [
   body("fullName")
@@ -36,6 +38,7 @@ export const contactMessageValidation = [
 
 export const sendMessage = async (req, res) => {
   const errors = validationResult(req);
+
   if (!errors.isEmpty()) {
     return res.status(400).json({
       success: false,
@@ -50,10 +53,12 @@ export const sendMessage = async (req, res) => {
 
     // Validate planId if provided
     let resolvedPlanId = null;
+
     if (planId) {
       const [rows] = await pool.query(`SELECT id FROM plans WHERE id = ?`, [
         planId,
       ]);
+
       if (rows.length === 0) {
         return res.status(400).json({
           success: false,
@@ -61,21 +66,22 @@ export const sendMessage = async (req, res) => {
           message: "The selected plan does not exist.",
         });
       }
+
       resolvedPlanId = planId;
     }
 
     // Get IP + User Agent
     const rawIp =
       req.ip || req.headers["x-forwarded-for"]?.split(",")[0] || null;
+
     const user_agent = req.headers["user-agent"] || null;
 
     // Hash IP for privacy
     const hashedIp = rawIp ? await hashIp(rawIp) : null;
 
-    // Geo lookup (example using some geo service)
-    // Assume getGeoLocation returns an object like:
-    // { country, region, city, latitude, longitude, isp }
+    // Geo lookup
     const geo = rawIp ? getGeoLocation(rawIp) : {};
+
     const {
       country = null,
       region = null,
@@ -85,9 +91,7 @@ export const sendMessage = async (req, res) => {
       isp = null,
     } = geo;
 
-    console.log(`User raw IP: ${rawIp}, Geo:`, geo);
-
-    // Insert into contact_messages
+    // Insert contact message
     const sql = `
       INSERT INTO contact_messages (
         plan_id, full_name, email, subject, message,
@@ -115,7 +119,7 @@ export const sendMessage = async (req, res) => {
 
     const contactMessageId = result.insertId;
 
-    // Insert notification
+    // Insert dashboard notification
     const sqlNotification = `
       INSERT INTO notifications (type, title, message, reference_id)
       VALUES (?, ?, ?, ?)
@@ -132,16 +136,65 @@ export const sendMessage = async (req, res) => {
       contactMessageId,
     ]);
 
+    // Email notification status
+    let emailNotificationSent = false;
+
+    try {
+      // Read HTML email template using fs
+      const emailTemplate = await readFile(
+        new URL(
+          "../email/zaincode-contact-notification-email.html",
+          import.meta.url,
+        ),
+        "utf8",
+      );
+
+      // Replace dynamic placeholders
+      const html = renderEmailTemplate(emailTemplate, {
+        fullName,
+        email,
+        subject,
+        message,
+      });
+
+      // Send email using reusable Nodemailer utility
+      const info = await sendEmail({
+        to: process.env.CONTACT_NOTIFICATION_EMAIL || process.env.EMAIL_USER,
+
+        subject: `New Portfolio Inquiry: ${subject}`,
+
+        html,
+
+        fromName: "ZainCode Contact Form",
+
+        replyTo: email,
+      });
+
+      emailNotificationSent = Boolean(info?.success);
+    } catch (emailError) {
+      // Email failure should not undo a saved contact message
+      console.error("CONTACT_EMAIL_ERROR:", emailError);
+    }
+
     // Success response
     return res.status(200).json({
       success: true,
       message: "Message sent successfully!",
-      location: { country, region, city, latitude, longitude, isp },
+      location: {
+        country,
+        region,
+        city,
+        latitude,
+        longitude,
+        isp,
+      },
       referenceId: contactMessageId,
       planId: resolvedPlanId,
+      emailNotificationSent,
     });
   } catch (error) {
     console.error("SEND_MESSAGE_ERROR:", error);
+
     return res.status(500).json({
       success: false,
       errorCode: "SERVER_ERROR",
@@ -404,46 +457,40 @@ export const replyMessage = async (req, res) => {
   try {
     const { to, subject, body, originalMessageId } = req.body;
 
-    const transporter = nodemailer.createTransport({
-      host: "smtp.hostinger.com",
-      port: 465,
-      secure: true,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    // 1️⃣ Send email first
-    const info = await transporter.sendMail({
-      from: `"Support Team" <${process.env.EMAIL_USER}>`,
+    // 1. Send email using reusable utility
+    const info = await sendEmail({
       to,
       subject,
       html: body,
+      fromName: "Support Team",
     });
 
-    // 2️⃣ Then DB queries
-
+    // 2. Save email history
     await pool.query(
-      `INSERT INTO email_history 
-        (message_id, type, recipient, subject, body, status, sent_at) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO email_history
+        (message_id, type, recipient, subject, body, status, sent_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [originalMessageId, "sent", to, subject, body, "delivered", new Date()],
     );
 
-    await pool.query(`UPDATE contact_messages SET status = ? WHERE id = ?`, [
-      "replied",
-      originalMessageId,
-    ]);
+    // 3. Update contact message status
+    await pool.query(
+      `UPDATE contact_messages
+       SET status = ?
+       WHERE id = ?`,
+      ["replied", originalMessageId],
+    );
 
-    res.json({
+    // 4. Success response
+    return res.status(200).json({
       success: true,
       message: "Reply sent successfully",
       messageId: info.messageId,
     });
   } catch (error) {
-    console.error("Reply Error:", error);
-    res.status(500).json({
+    console.error("REPLY_MESSAGE_ERROR:", error);
+
+    return res.status(500).json({
       success: false,
       message: "Failed to send email",
       error: error.message,

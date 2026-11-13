@@ -1,30 +1,30 @@
-import { Suspense, memo, useMemo } from 'react';
-import { shallowEqual, useSelector } from 'react-redux';
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import './App.css';
+import { Suspense, memo, useMemo } from "react";
+import { shallowEqual, useSelector } from "react-redux";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import "./App.css";
 
-import AdminDataInitializer from './components/AdminDataInitializer';
-import AppInitializer from './components/AppInitializer';
-import MetaUpdater from './components/MetaUpdater';
-import ScrollToTop from './components/ScrollToTop';
-import AuthLoader from './context/AuthLoader';
-import ProtectedRoute from './context/ProtectedRoute';
-import DHomeCards from './pages/admin/DHome/components/DHomeCards';
-import DHomePage from './pages/admin/Layout/DHomePage';
-import Login from './pages/admin/Login';
-import { adminRoutes } from './Routes/admin.route.jsx';
-import { userRoutes } from './Routes/user.route.jsx';
+import AdminDataInitializer from "./components/AdminDataInitializer";
+import AppInitializer from "./components/AppInitializer";
+import MetaUpdater from "./components/MetaUpdater";
+import ScrollToTop from "./components/ScrollToTop";
+import AuthLoader from "./context/AuthLoader";
+import ProtectedRoute from "./context/ProtectedRoute";
+import DHomeCards from "./pages/admin/DHome/components/DHomeCards";
+import DHomePage from "./pages/admin/Layout/DHomePage";
+import Login from "./pages/admin/Login";
+import { adminRoutes } from "./Routes/admin.route.jsx";
+import { userRoutes } from "./Routes/user.route.jsx";
 
 // 🎯 Minimal Skeleton Fallback during lazy loading
 const AppSkeleton = memo(() => (
   <div
     style={{
-      position: 'fixed',
+      position: "fixed",
       inset: 0,
-      background: '#0A0A0F',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
+      background: "#0A0A0F",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
       zIndex: 9999,
     }}
   >
@@ -32,10 +32,10 @@ const AppSkeleton = memo(() => (
       style={{
         width: 44,
         height: 44,
-        border: '3px solid rgba(2, 211, 254, 0.15)',
-        borderTopColor: '#02D3FE',
-        borderRadius: '50%',
-        animation: 'spin 0.8s linear infinite',
+        border: "3px solid rgba(2, 211, 254, 0.15)",
+        borderTopColor: "#02D3FE",
+        borderRadius: "50%",
+        animation: "spin 0.8s linear infinite",
       }}
     />
     <style>{`
@@ -43,7 +43,7 @@ const AppSkeleton = memo(() => (
     `}</style>
   </div>
 ));
-AppSkeleton.displayName = 'AppSkeleton';
+AppSkeleton.displayName = "AppSkeleton";
 
 function App() {
   const isAuth = useSelector((state) => state.adminAuth?.isAuth, shallowEqual);
@@ -52,7 +52,7 @@ function App() {
   // 🎯 Memoized login element
   const loginElement = useMemo(
     () => (isAuth ? <Navigate to="/admin" replace /> : <Login />),
-    [isAuth]
+    [isAuth],
   );
 
   // 🎯 Memoized user routes to prevent re-renders
@@ -62,7 +62,7 @@ function App() {
         <Route key={route.path} path={route.path} element={route.element}>
           {route?.children?.map((childRoute) => (
             <Route
-              key={`${route.path}-${childRoute.path || 'index'}`}
+              key={`${route.path}-${childRoute.path || "index"}`}
               index={childRoute.index}
               path={childRoute.path}
               element={childRoute.element}
@@ -70,13 +70,16 @@ function App() {
           ))}
         </Route>
       )),
-    []
+    [],
   );
 
   // 🎯 Memoized admin routes
   const adminRoutesElements = useMemo(
-    () => adminRoutes.map(({ path, elem }) => <Route key={path} path={path} element={elem} />),
-    []
+    () =>
+      adminRoutes.map(({ path, elem }) => (
+        <Route key={path} path={path} element={elem} />
+      )),
+    [],
   );
 
   return (
