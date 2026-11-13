@@ -1,5 +1,5 @@
-import heroImage from '@/assets/images/hero-portrait.jpg';
-import LazyImage from '@/components/LazyImage';
+import heroImage from "@/assets/images/hero-portrait.jpg";
+import LazyImage from "@/components/LazyImage";
 import {
   FloatingCard,
   HeroBadge,
@@ -8,15 +8,16 @@ import {
   OutlineButton,
   PrimaryButton,
   THEME,
-} from '@/components/UI';
-import { fadeUp, useMotionPrefs } from '@/lib/motion';
-import { ArrowRight, Sparkles } from 'lucide-react';
-import { motion, useMotionValue, useSpring } from 'motion/react';
-import { memo, useCallback, useMemo } from 'react';
-import { shallowEqual, useSelector } from 'react-redux';
-import { getClientSatisfactionRate } from '../Utils/Utils';
+} from "@/components/UI";
+import { fadeUp, useMotionPrefs } from "@/lib/motion";
+import { ArrowRight, Sparkles } from "lucide-react";
+import { motion, useMotionValue, useSpring } from "motion/react";
+import { memo, useCallback, useMemo } from "react";
+import { shallowEqual, useSelector } from "react-redux";
+import { getClientSatisfactionRate } from "../Utils/Utils";
 
-const hasValue = (v) => v !== undefined && v !== null && v !== '' && String(v) !== '0';
+const hasValue = (v) =>
+  v !== undefined && v !== null && v !== "" && String(v) !== "0";
 
 /* ═══════════════════════════════════════════════════════════════════ */
 /* 🖼️ PORTRAIT (single image for all screens — no duplicate download)  */
@@ -30,14 +31,14 @@ export const HeroImageSection = memo(({ imageUrl, about, satisfaction }) => {
 
   const handlePointerMove = useCallback(
     (e) => {
-      if (!canTilt || e.pointerType !== 'mouse') return;
+      if (!canTilt || e.pointerType !== "mouse") return;
       const rect = e.currentTarget.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width - 0.5;
       const y = (e.clientY - rect.top) / rect.height - 0.5;
       rotateY.set(x * 10);
       rotateX.set(-y * 10);
     },
-    [canTilt, rotateX, rotateY]
+    [canTilt, rotateX, rotateY],
   );
   const handlePointerLeave = useCallback(() => {
     rotateX.set(0);
@@ -48,12 +49,19 @@ export const HeroImageSection = memo(({ imageUrl, about, satisfaction }) => {
     <motion.div
       initial={{ opacity: 0, y: reduced ? 0 : isMobile ? 12 : 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: reduced ? 0.01 : 0.8, delay: reduced ? 0 : 0.2, ease: [0.16, 1, 0.3, 1] }}
+      transition={{
+        duration: reduced ? 0.01 : 0.8,
+        delay: reduced ? 0 : 0.2,
+        ease: [0.16, 1, 0.3, 1],
+      }}
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
       className="relative mx-auto w-full max-w-[11rem] sm:max-w-[16rem] md:max-w-xs lg:max-w-none"
     >
-      <motion.div style={{ rotateX, rotateY, transformPerspective: 1000 }} className="relative">
+      <motion.div
+        style={{ rotateX, rotateY, transformPerspective: 1000 }}
+        className="relative"
+      >
         {/* Single soft glow (no blur filter) */}
         <div
           aria-hidden="true"
@@ -63,10 +71,10 @@ export const HeroImageSection = memo(({ imageUrl, about, satisfaction }) => {
         <div className="relative overflow-hidden rounded-2xl border border-line-strong shadow-[0_30px_60px_-20px_rgba(0,0,0,0.6)]">
           <LazyImage
             src={imageUrl}
-            alt={`${about?.fullName || 'Developer'} - Professional Portrait`}
+            alt={`${about?.fullName || "Developer"} - Professional Portrait`}
             fallback={heroImage}
             eager={true}
-            crossOrigin={true}
+            crossOrigin={false}
             className="aspect-[4/4] w-full bg-cover"
             objectFit="cover"
             objectPosition="bottom"
@@ -81,14 +89,18 @@ export const HeroImageSection = memo(({ imageUrl, about, satisfaction }) => {
         {/* Floating cards — desktop only; real data only */}
         {(about?.shortRole || hasValue(about?.experience)) && (
           <div className="hidden lg:block">
-            <FloatingCard delay={1.0} position="left" label="Role and experience">
+            <FloatingCard
+              delay={1.0}
+              position="left"
+              label="Role and experience"
+            >
               <div className="flex items-center gap-3">
                 <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-brand-cyan/30 bg-brand-cyan/10 text-brand-cyan">
                   <Sparkles size={20} aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
                   <div className="truncate text-sm font-semibold text-ink sm:text-base">
-                    {about?.shortRole || 'Developer'}
+                    {about?.shortRole || "Developer"}
                   </div>
                   {hasValue(about?.experience) && (
                     <div className="text-xs text-ink-secondary sm:text-sm">
@@ -103,12 +115,18 @@ export const HeroImageSection = memo(({ imageUrl, about, satisfaction }) => {
 
         {satisfaction !== null && (
           <div className="hidden lg:block">
-            <FloatingCard delay={1.2} position="right" label="Client satisfaction rate">
+            <FloatingCard
+              delay={1.2}
+              position="right"
+              label="Client satisfaction rate"
+            >
               <div className="text-center">
                 <div className="mb-0.5 text-2xl font-bold text-brand-purple sm:text-3xl">
                   {satisfaction}%
                 </div>
-                <div className="text-xs text-ink-secondary sm:text-sm">Satisfaction</div>
+                <div className="text-xs text-ink-secondary sm:text-sm">
+                  Satisfaction
+                </div>
               </div>
             </FloatingCard>
           </div>
@@ -117,15 +135,20 @@ export const HeroImageSection = memo(({ imageUrl, about, satisfaction }) => {
     </motion.div>
   );
 });
-HeroImageSection.displayName = 'HeroImageSection';
+HeroImageSection.displayName = "HeroImageSection";
 
 /* ═══════════════════════════════════════════════════════════════════ */
 /* 🦸 HERO                                                             */
 /* ═══════════════════════════════════════════════════════════════════ */
 const Hero = memo(({ about }) => {
+  console.log(about);
+
   const { reduced, isMobile } = useMotionPrefs();
   const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
-  const { testimonials } = useSelector((state) => state.testimonial, shallowEqual);
+  const { testimonials } = useSelector(
+    (state) => state.testimonial,
+    shallowEqual,
+  );
 
   // getClientSatisfactionRate divides by length → NaN when there are no testimonials
   const satisfaction = useMemo(() => {
@@ -136,32 +159,38 @@ const Hero = memo(({ about }) => {
 
   const imageUrl = useMemo(() => {
     if (!about?.aboutImage?.url) return null;
+
     const url = about.aboutImage.url.trim();
+
     if (/^https?:\/\//i.test(url)) return url;
+
     if (backendUrl) {
-      return `${backendUrl.replace(/\/+$/, '')}/${url.replace(/^\/+/, '')}`;
+      return `${backendUrl.replace(/\/+$/, "")}/${url.replace(/^\/+/, "")}`;
     }
     return url;
   }, [about?.aboutImage?.url, backendUrl]);
 
+  console.log(imageUrl);
+
   const structuredData = useMemo(() => {
     if (!about) return null;
     return {
-      '@context': 'https://schema.org',
-      '@type': 'Person',
-      name: about.fullName || 'Developer',
-      jobTitle: about.shortRole || 'Full Stack Developer',
+      "@context": "https://schema.org",
+      "@type": "Person",
+      name: about.fullName || "Developer",
+      jobTitle: about.shortRole || "Full Stack Developer",
       description:
         about.shortDesc ||
-        'Full Stack Developer specializing in modern web development and UI/UX design.',
+        "Full Stack Developer specializing in modern web development and UI/UX design.",
       image: imageUrl || undefined,
-      knowsAbout: ['Web Development', 'UI/UX Design', 'Full Stack Development'],
-      url: typeof window !== 'undefined' ? window.location.href : undefined,
+      knowsAbout: ["Web Development", "UI/UX Design", "Full Stack Development"],
+      url: typeof window !== "undefined" ? window.location.href : undefined,
     };
   }, [about, imageUrl]);
 
   const headingText = useMemo(() => {
-    const firstName = about?.fullName?.split(' ')[0]?.toUpperCase() || 'DEVELOPER';
+    const firstName =
+      about?.fullName?.split(" ")[0]?.toUpperCase() || "DEVELOPER";
     return `HI, I'M ${firstName}`;
   }, [about?.fullName]);
 
@@ -169,11 +198,18 @@ const Hero = memo(({ about }) => {
   const stats = useMemo(
     () =>
       [
-        { value: about?.experience, label: 'Years Experience' },
-        { value: about?.projectCounts?.publishedProjects, label: 'Projects Completed' },
-        { value: testimonials?.length, label: 'Happy Clients' },
+        { value: about?.experience, label: "Years Experience" },
+        {
+          value: about?.projectCounts?.publishedProjects,
+          label: "Projects Completed",
+        },
+        { value: testimonials?.length, label: "Happy Clients" },
       ].filter((s) => hasValue(s.value)),
-    [about?.experience, about?.projectCounts?.publishedProjects, testimonials?.length]
+    [
+      about?.experience,
+      about?.projectCounts?.publishedProjects,
+      testimonials?.length,
+    ],
   );
 
   const prefs = useMemo(() => ({ reduced, isMobile }), [reduced, isMobile]);
@@ -182,7 +218,7 @@ const Hero = memo(({ about }) => {
   const ctaV = useMemo(() => fadeUp(prefs, 0.6), [prefs]);
   const statsV = useMemo(() => fadeUp(prefs, 0.7), [prefs]);
 
-  const role = about?.shortRole || 'Full Stack Developer';
+  const role = about?.shortRole || "Full Stack Developer";
 
   return (
     <div className="relative isolate overflow-clip">
@@ -222,7 +258,7 @@ const Hero = memo(({ about }) => {
             className="mx-auto mb-8 max-w-lg text-base leading-relaxed text-ink-secondary sm:mb-10 lg:mx-0"
           >
             {about?.shortDesc ||
-              'I craft digital experiences that merge art with functionality. Specializing in modern web development and stunning UI/UX design.'}
+              "I craft digital experiences that merge art with functionality. Specializing in modern web development and stunning UI/UX design."}
           </motion.p>
 
           <motion.div
@@ -231,7 +267,11 @@ const Hero = memo(({ about }) => {
             animate="visible"
             className="mb-10 flex flex-col justify-center gap-3 sm:flex-row sm:gap-4 lg:mb-12 lg:justify-start"
           >
-            <PrimaryButton to="/projects" icon={ArrowRight} className="w-full sm:w-auto">
+            <PrimaryButton
+              to="/projects"
+              icon={ArrowRight}
+              className="w-full sm:w-auto"
+            >
               Explore My Work
             </PrimaryButton>
             <OutlineButton to="/contact" className="w-full sm:w-auto">
@@ -248,7 +288,11 @@ const Hero = memo(({ about }) => {
 
         {/* Portrait — compact on mobile, full on desktop */}
         <div className="order-1 lg:order-2">
-          <HeroImageSection imageUrl={imageUrl} about={about} satisfaction={satisfaction} />
+          <HeroImageSection
+            imageUrl={imageUrl}
+            about={about}
+            satisfaction={satisfaction}
+          />
         </div>
       </div>
 
@@ -261,5 +305,5 @@ const Hero = memo(({ about }) => {
   );
 });
 
-Hero.displayName = 'Hero';
+Hero.displayName = "Hero";
 export default Hero;

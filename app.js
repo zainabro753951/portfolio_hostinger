@@ -123,7 +123,13 @@ app.use(cookieParser());
 if (!isProduction) {
   app.use(
     cors({
-      origin: ["http://localhost:5173", "http://localhost:5174"],
+      origin: [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "https://www.zaincode.io",
+        "https://zaincode.io",
+      ],
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
       credentials: true,
     }),
   );

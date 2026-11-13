@@ -1,11 +1,19 @@
-import { useMotionPrefs } from '@/lib/motion';
-import { AnimatePresence, motion } from 'motion/react';
-import PropTypes from 'prop-types';
-import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useMotionPrefs } from "@/lib/motion";
+import { AnimatePresence, motion } from "motion/react";
+import PropTypes from "prop-types";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 // URL sanitizer
 const sanitizeUrl = (url) => {
-  if (!url || typeof url !== 'string') return null;
+  if (!url || typeof url !== "string") return null;
   const trimmed = url.trim();
   if (/^(javascript|vbscript):/i.test(trimmed)) return null;
   return trimmed;
@@ -13,20 +21,20 @@ const sanitizeUrl = (url) => {
 
 const LazyImage = ({
   src,
-  alt = 'Image',
+  alt = "Image",
   fallback,
-  animation = 'fade',
+  animation = "fade",
   duration = 0.5,
   delay = 0,
   onLoad,
   onError,
-  className = '',
+  className = "",
   style = {},
   eager = false,
-  crossOrigin = true,
-  placeholderColor = 'rgb(var(--surface-card))',
-  objectFit = 'cover',
-  objectPosition = 'center',
+  crossOrigin = false,
+  placeholderColor = "rgb(var(--surface-card))",
+  objectFit = "cover",
+  objectPosition = "center",
   ...rest
 }) => {
   const containerRef = useRef(null);
@@ -75,7 +83,7 @@ const LazyImage = ({
   useEffect(() => {
     if (eager || isVisible) return;
 
-    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+    if (typeof window === "undefined" || !("IntersectionObserver" in window)) {
       setIsVisible(true);
       return;
     }
@@ -87,7 +95,7 @@ const LazyImage = ({
           observer.disconnect();
         }
       },
-      { rootMargin: '200px 0px', threshold: 0 }
+      { rootMargin: "200px 0px", threshold: 0 },
     );
 
     if (containerRef.current) {
@@ -108,13 +116,13 @@ const LazyImage = ({
 
   // Preload link for eager images
   useEffect(() => {
-    if (!eager || !currentSrc || typeof document === 'undefined') return;
+    if (!eager || !currentSrc || typeof document === "undefined") return;
 
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.as = 'image';
+    const link = document.createElement("link");
+    link.rel = "preload";
+    link.as = "image";
     link.href = currentSrc;
-    if (crossOrigin) link.crossOrigin = 'anonymous';
+    if (crossOrigin) link.crossOrigin = "anonymous";
     document.head.appendChild(link);
 
     return () => {
@@ -135,7 +143,11 @@ const LazyImage = ({
     (e) => {
       const sanitizedFallback = sanitizeUrl(fallback);
       // Try fallback if primary src failed and fallback is available and not yet tried
-      if (!fallbackTriedRef.current && sanitizedFallback && sanitizedFallback !== currentSrc) {
+      if (
+        !fallbackTriedRef.current &&
+        sanitizedFallback &&
+        sanitizedFallback !== currentSrc
+      ) {
         fallbackTriedRef.current = true;
         setCurrentSrc(sanitizedFallback);
         setIsLoaded(false);
@@ -147,29 +159,29 @@ const LazyImage = ({
       setIsLoaded(false);
       onError?.(e);
     },
-    [currentSrc, fallback, onError]
+    [currentSrc, fallback, onError],
   );
 
   // Animation variants
   const animationVariants = useMemo(() => {
-    if (reduced || animation === 'none') {
+    if (reduced || animation === "none") {
       return {
         initial: { opacity: 1 },
         animate: { opacity: 1 },
       };
     }
     switch (animation) {
-      case 'slide':
+      case "slide":
         return {
           initial: { opacity: 0, y: 16 },
           animate: { opacity: 1, y: 0 },
         };
-      case 'scale':
+      case "scale":
         return {
           initial: { opacity: 0, scale: 0.96 },
           animate: { opacity: 1, scale: 1 },
         };
-      case 'fade':
+      case "fade":
       default:
         return {
           initial: { opacity: 0 },
@@ -195,9 +207,10 @@ const LazyImage = ({
             className="absolute inset-0 z-10 pointer-events-none"
             style={{
               background:
-                'linear-gradient(90deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.02) 100%)',
-              backgroundSize: '200% 100%',
-              animation: 'ds-lazy-shimmer 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite',
+                "linear-gradient(90deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.02) 100%)",
+              backgroundSize: "200% 100%",
+              animation:
+                "ds-lazy-shimmer 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite",
             }}
             aria-hidden="true"
           />
@@ -209,7 +222,7 @@ const LazyImage = ({
         <div
           className="absolute inset-0 z-10 flex flex-col items-center justify-center p-3 text-center bg-surface-card border border-line-subtle"
           role="img"
-          aria-label={alt || 'Image failed to load'}
+          aria-label={alt || "Image failed to load"}
         >
           <svg
             width="28"
@@ -237,12 +250,14 @@ const LazyImage = ({
           ref={imgRef}
           src={currentSrc}
           alt={alt}
-          loading={eager ? 'eager' : 'lazy'}
-          crossOrigin={crossOrigin ? 'anonymous' : undefined}
+          loading={eager ? "eager" : "lazy"}
+          crossOrigin={crossOrigin ? "anonymous" : undefined}
           decoding="async"
-          fetchPriority={eager ? 'high' : 'auto'}
+          fetchPriority={eager ? "high" : "auto"}
           initial={animationVariants.initial}
-          animate={isLoaded ? animationVariants.animate : animationVariants.initial}
+          animate={
+            isLoaded ? animationVariants.animate : animationVariants.initial
+          }
           transition={{
             duration: reduced ? 0.01 : duration,
             delay: reduced ? 0 : delay,
@@ -273,7 +288,7 @@ LazyImage.propTypes = {
   src: PropTypes.string,
   alt: PropTypes.string,
   fallback: PropTypes.string,
-  animation: PropTypes.oneOf(['fade', 'slide', 'scale', 'none']),
+  animation: PropTypes.oneOf(["fade", "slide", "scale", "none"]),
   duration: PropTypes.number,
   delay: PropTypes.number,
   onLoad: PropTypes.func,
@@ -283,7 +298,13 @@ LazyImage.propTypes = {
   eager: PropTypes.bool,
   crossOrigin: PropTypes.bool,
   placeholderColor: PropTypes.string,
-  objectFit: PropTypes.oneOf(['cover', 'contain', 'fill', 'none', 'scale-down']),
+  objectFit: PropTypes.oneOf([
+    "cover",
+    "contain",
+    "fill",
+    "none",
+    "scale-down",
+  ]),
   objectPosition: PropTypes.string,
 };
 
