@@ -70,7 +70,7 @@ if (!isProduction) {
             "https://fonts.googleapis.com",
           ],
           fontSrc: ["'self'", "https://fonts.gstatic.com"],
-          imgSrc: ["'self'", "data:", "https:", "http:"],
+          imgSrc: ["'self'", "data:", "blob:", "https:", "http:"],
           connectSrc: [
             "'self'",
             "https://www.zaincode.io",

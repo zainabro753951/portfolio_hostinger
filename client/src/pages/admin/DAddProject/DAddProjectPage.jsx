@@ -324,7 +324,6 @@ const DAddProjectPage = () => {
   }, [title, setValue]);
 
   // ── FIXED: addChip receives (value, inputElement) ──────────────
-
   const addChip = useCallback(
     (value, inputElement, fieldName, fields, append, minLength = 2) => {
       const trimmedValues = value

@@ -114,42 +114,64 @@ const ServiceForm = () => {
   }, [watchTitle, isUpdate, setValue]);
 
   // ── FIXED: addChip receives (value, inputElement) ──────────────
+  // ── FIXED: addChip receives (value, inputElement) ──────────────
   const addChip = useCallback(
     (value, inputElement, fieldName, fields, append, minLength = 2) => {
-      const trimmedValue = value.trim();
+      const trimmedValues = value
+        .split(",")
+        .map((tech) => tech.trim())
+        .filter(Boolean);
 
       clearErrors(fieldName);
 
-      if (!trimmedValue) {
+      if (!trimmedValues.length) {
         setError(fieldName, {
           type: "required",
           message: `${fieldName} is required`,
         });
         return;
       }
-      if (trimmedValue.length < minLength) {
-        setError(fieldName, {
-          type: "minLength",
-          message: `${fieldName} must be at least ${minLength} chars`,
-        });
-        return;
-      }
-      // ✅ FIXED: Check f.name || f.value for both structures
-      if (
-        fields.some(
-          (f) =>
-            (f.name || f.value || "").toLowerCase() ===
-            trimmedValue.toLowerCase(),
-        )
-      ) {
+
+      const existingValues = fields.map((f) =>
+        (f.name || f.value || "").toLowerCase(),
+      );
+
+      const uniqueTrimmedValues = [];
+      const duplicates = [];
+
+      trimmedValues.forEach((tech) => {
+        if (tech.length < minLength) return;
+
+        const normalized = tech.toLowerCase();
+
+        if (
+          existingValues.includes(normalized) ||
+          uniqueTrimmedValues.some((item) => item.toLowerCase() === normalized)
+        ) {
+          duplicates.push(tech);
+        } else {
+          uniqueTrimmedValues.push(tech);
+        }
+      });
+
+      if (!uniqueTrimmedValues.length) {
         setError(fieldName, {
           type: "duplicate",
-          message: `This ${fieldName} already exists`,
+          message: `All ${fieldName} already exist or are invalid`,
         });
         return;
       }
 
-      append({ name: trimmedValue });
+      append(
+        uniqueTrimmedValues.map((tech) => ({
+          name: tech,
+        })),
+      );
+
+      if (duplicates.length) {
+        console.warn(`Duplicate ${fieldName}:`, duplicates);
+      }
+
       if (inputElement) {
         inputElement.value = "";
         inputElement.focus();
