@@ -119,8 +119,6 @@ const AboutForm = () => {
     };
   }, [poseImage]);
 
-  console.log(poseImagePreview);
-
   const { mutate, isPending, isError, isSuccess, data, error } = useAddAbout();
 
   // Form Submit
