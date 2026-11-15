@@ -445,19 +445,16 @@ const RichEditor = ({ output, setOutput, placeholder = "Start typing..." }) => {
   const updateTimer = useRef(null);
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
-  const [isMounted, setIsMounted] = useState(false); // ✅ ADD THIS
 
   // Initialize editor
   const editor = useEditor({
-    content: output || `<p>${placeholder}</p>`,
+    content: typeof output === "string" ? output : "",
     extensions: [
       StarterKit.configure({
         underline: false, // ← StarterKit se hataya
         link: false,
         paragraph: { HTMLAttributes: { class: "rtp" } },
         heading: { HTMLAttributes: { class: "rth" } },
-        bulletList: true,
-        orderedList: true,
         codeBlock: {
           HTMLAttributes: {
             class: "rounded-xl bg-slate-900/80 p-16px font-mono text-14px",
@@ -581,18 +578,41 @@ const RichEditor = ({ output, setOutput, placeholder = "Start typing..." }) => {
   }, [editor]);
 
   // Sync external output changes
+
+  // Sync external content changes safely
   useEffect(() => {
-    if (!editor || !output) return;
+    if (!editor || editor.isDestroyed) return;
+
+    const nextContent = typeof output === "string" ? output : "";
+
     const currentContent = editor.getHTML();
-    if (output.trim() && currentContent !== output) {
-      editor.commands.setContent(output, false);
+
+    if (currentContent === nextContent) return;
+
+    // Cancel any pending update from previous content
+    if (updateTimer.current) {
+      clearTimeout(updateTimer.current);
+      updateTimer.current = null;
     }
+
+    // Load the latest HTML into Tiptap
+    editor.commands.setContent(nextContent);
+
+    // Update word and character counts
+    const text = editor.getText();
+
+    setCharCount(text.length);
+
+    setWordCount(text.trim().split(/\s+/).filter(Boolean).length);
   }, [editor, output]);
 
   // Cleanup timer on unmount
   useEffect(() => {
     return () => {
-      if (updateTimer.current) clearTimeout(updateTimer.current);
+      if (updateTimer.current) {
+        clearTimeout(updateTimer.current);
+        updateTimer.current = null;
+      }
     };
   }, []);
 
@@ -625,32 +645,6 @@ const RichEditor = ({ output, setOutput, placeholder = "Start typing..." }) => {
       editor.chain().focus().setLink({ href: url.trim() }).run();
     }
   }, [editor]);
-
-  useEffect(() => {
-    if (editor) {
-      setIsMounted(true); // ✅ ADD THIS
-      const text = editor.getText();
-      setCharCount(text.length);
-      setWordCount(
-        text
-          .trim()
-          .split(/\s+/)
-          .filter((w) => w.length > 0).length,
-      );
-    }
-  }, [editor]);
-
-  // Task list effect mein add karein:
-  useEffect(() => {
-    if (!editor || !isMounted) return; // ✅ isMounted check
-    // ... rest of code
-  }, [editor, isMounted]);
-
-  // Sync effect mein bhi:
-  useEffect(() => {
-    if (!editor || !output || !isMounted) return; // ✅ isMounted check
-    // ... rest of code
-  }, [editor, output, isMounted]);
 
   // Handle undo/redo
   const canUndo = editor.can().undo();

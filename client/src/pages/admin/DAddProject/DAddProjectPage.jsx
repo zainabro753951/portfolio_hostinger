@@ -146,7 +146,6 @@ ImageUploadSection.displayName = "ImageUploadSection";
 const DAddProjectPage = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
-  const prefersReducedMotion = useReducedMotion();
   const { project, projects } = useSelector((state) => state.projects);
 
   // State
@@ -156,7 +155,7 @@ const DAddProjectPage = () => {
   const [isOgImageRemoved, setIsOgImageRemoved] = useState(false);
   const [isGalleryRemoved, setIsGalleryRemoved] = useState(false);
   const [galleryPreview, setGalleryPreview] = useState([]);
-  const [output, setOutput] = useState(null);
+  const [output, setOutput] = useState("");
 
   const isSlugEdited = useRef(false);
 
@@ -171,6 +170,7 @@ const DAddProjectPage = () => {
       title: "",
       slug: "",
       shortDesc: "",
+      content: "", // Add this
       repoLink: "",
       liveDemo: "",
       category: "",
@@ -247,7 +247,7 @@ const DAddProjectPage = () => {
       reset(defaultValues);
       setHeroPreviewSrc(null);
       setOgPreviewSrc(null);
-      setOutput(null);
+      setOutput("");
       setIsHeroImageRemoved(false);
       setIsOgImageRemoved(false);
       setIsGalleryRemoved(false);
@@ -257,15 +257,22 @@ const DAddProjectPage = () => {
   // Populate form effect
   useEffect(() => {
     if (id && project?.id === Number(id)) {
+      const projectContent =
+        typeof project.content === "string" ? project.content : "";
+
       reset({
         ...defaultValues,
         ...project,
+        content: projectContent,
         heroImage: null,
         ogProjectImage: null,
         gallery: [],
       });
-      setHeroPreviewSrc(project?.heroImage?.url || null);
 
+      // Important: Load existing HTML into RichTextEditor
+      setOutput(projectContent);
+
+      setHeroPreviewSrc(project?.heroImage?.url || null);
       setOgPreviewSrc(project?.ogProjectImage?.url || null);
 
       setIsHeroImageRemoved(false);
