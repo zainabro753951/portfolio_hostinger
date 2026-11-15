@@ -2,8 +2,8 @@ import { body, validationResult } from "express-validator";
 import pool from "../db.config.js";
 import { parseBoolean, safeParse } from "../Utils/SafeParser.js";
 import { deleteFromLocal, uploadToLocal } from "../Utils/uploadToLocal.js"; // Local Storage Helpers
-import { uploadFile } from "../utils/uploadToCloudinary.js";
-import { deleteFromCloudinary } from "../utils/deleteFromCloudinary.js";
+import { uploadFile } from "../Utils/uploadToCloudinary.js";
+import { deleteFromCloudinary } from "../Utils/deleteFromCloudinary.js";
 
 /* ✅ Validation Schema */
 export const experienceValidation = [
