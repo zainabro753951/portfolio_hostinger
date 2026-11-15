@@ -1,5 +1,5 @@
-import useScrollToRef from '@/hooks/useScrollToRef';
-import { motion, useReducedMotion } from 'framer-motion';
+import useScrollToRef from "@/hooks/useScrollToRef";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   Briefcase,
   Building2,
@@ -9,42 +9,61 @@ import {
   Quote,
   Save,
   User,
-} from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
-import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
-import { clearTestimonial, testiFindById } from '../../../../features/testimonialSlice';
-import { useAddTestimonial } from '../../../../Queries/AddTestimonial';
-import { safeParse } from '../../../../Utils/Utils';
-import FileInputField from '../../Components/FileInputField';
-import FormField from '../../Components/FormField';
-import SelectField from '../../Components/SelectField';
-import TextareaField from '../../Components/TextAreaField';
-import { glassToast } from '../../Components/ToastMessage';
+} from "lucide-react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { useDispatch, useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
+import {
+  clearTestimonial,
+  testiFindById,
+} from "../../../../features/testimonialSlice";
+import { useAddTestimonial } from "../../../../Queries/AddTestimonial";
+import FileInputField from "../../Components/FileInputField";
+import FormField from "../../Components/FormField";
+import SelectField from "../../Components/SelectField";
+import TextareaField from "../../Components/TextAreaField";
+import { glassToast } from "../../Components/ToastMessage";
 
 const DTestimonialForm = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const prefersReducedMotion = useReducedMotion();
   const { projects } = useSelector((state) => state.projects);
-  const { testimonials, testimonial } = useSelector((state) => state.testimonial);
+  const { testimonials, testimonial } = useSelector(
+    (state) => state.testimonial,
+  );
   const [isUpdate, setIsUpdate] = useState(false);
   const updateTestiRef = useRef(null);
-  const clientImage = safeParse(testimonial?.clientImage);
+
+  const clientImage = useMemo(() => {
+    try {
+      const parsed =
+        typeof testimonial?.clientImage === "string"
+          ? JSON.parse(testimonial.clientImage)
+          : testimonial?.clientImage;
+
+      if (!parsed || typeof parsed !== "object") return null;
+
+      return parsed?.url ? parsed : null;
+    } catch (error) {
+      console.error("Invalid testimonial image data:", error);
+      return null;
+    }
+  }, [testimonial?.clientImage]);
 
   const defaultValues = useMemo(
     () => ({
-      clientName: '',
-      designationRole: '',
-      company: '',
+      clientName: "",
+      designationRole: "",
+      company: "",
       clientImage: null,
-      ratting: '',
-      projectId: '',
-      testimonialDate: '',
-      message: '',
+      ratting: "",
+      projectId: "",
+      testimonialDate: "",
+      message: "",
     }),
-    []
+    [],
   );
 
   const methods = useForm({
@@ -60,74 +79,103 @@ const DTestimonialForm = () => {
     formState: { errors },
   } = methods;
 
-  // Watch clientImage for debugging
-  const watchedClientImage = watch('clientImage');
-
   // Fetch testimonial for edit
   useEffect(() => {
-    if (id && testimonials?.length > 0) {
+    if (id) {
       dispatch(testiFindById(Number(id)));
     } else {
       dispatch(clearTestimonial());
       reset(defaultValues);
       setIsUpdate(false);
     }
-  }, [id, testimonials, dispatch, reset, defaultValues]);
+  }, [id, dispatch, reset, defaultValues]);
 
   // Populate form
   useEffect(() => {
-    if (id && testimonial && testimonial?.id === Number(id)) {
+    if (id && testimonial && Number(testimonial.id) === Number(id)) {
       const formattedDate = testimonial.testimonialDate
-        ? testimonial.testimonialDate.split('T')[0]
-        : '';
+        ? String(testimonial.testimonialDate).split("T")[0]
+        : "";
 
       reset({
-        clientName: testimonial?.clientName || '',
-        designationRole: testimonial?.designationRole || '',
-        company: testimonial?.company || '',
-        clientImage: testimonial?.clientImage || null,
-        ratting: testimonial?.ratting ? parseFloat(testimonial?.ratting).toString() : '',
-        projectId: testimonial?.projectId?.toString() || '',
+        clientName: testimonial?.clientName || "",
+        designationRole: testimonial?.designationRole || "",
+        company: testimonial?.company || "",
+
+        // Existing image FileInputField preview se show hogi
+        clientImage: null,
+
+        ratting:
+          testimonial?.ratting != null ? String(testimonial.ratting) : "",
+
+        projectId:
+          testimonial?.projectId != null ? String(testimonial.projectId) : "",
+
         testimonialDate: formattedDate,
-        message: testimonial?.message || '',
+        message: testimonial?.message || "",
       });
+
       setIsUpdate(true);
     }
   }, [id, testimonial, reset]);
 
   // ✅ Sirf tab scroll kare jab id  ho
-  useScrollToRef(updateTestiRef, [id], { block: 'nearest' }, !!id);
+  useScrollToRef(updateTestiRef, [id], { block: "nearest" }, !!id);
 
-  const { mutate, isPending, isError, isSuccess, data, error } = useAddTestimonial();
+  const { mutate, isPending, isError, isSuccess, data, error } =
+    useAddTestimonial();
 
   const onSubmit = useCallback(
     (formData) => {
       const fd = new FormData();
-      fd.append('isUpdate', isUpdate);
-      fd.append('testimonialID', isUpdate ? id : '');
-      fd.append('clientImageOBJ', isUpdate && clientImage ? JSON.stringify(clientImage) : '');
 
-      // File handling - check if clientImage is FileList or single file
-      if (formData.clientImage instanceof File) {
-        fd.append('clientImage', formData.clientImage);
+      fd.append("isUpdate", String(isUpdate));
+
+      if (isUpdate) {
+        fd.append("testimonialID", String(id));
       }
 
+      // Only upload a newly selected image
+      if (formData.clientImage instanceof File) {
+        fd.append("clientImage", formData.clientImage);
+      }
+
+      // Append remaining fields
       Object.entries(formData).forEach(([key, value]) => {
-        if (key !== 'clientImage' && value !== undefined && value !== null) {
-          fd.append(key, value);
+        if (key === "clientImage" || value === undefined || value === null) {
+          return;
         }
+
+        fd.append(key, String(value));
       });
+
+      // Temporary debugging
+      console.log("Testimonial FormData:");
+
+      for (const [key, value] of fd.entries()) {
+        console.log(
+          key,
+          value instanceof File
+            ? {
+                name: value.name,
+                type: value.type,
+                size: value.size,
+              }
+            : value,
+        );
+      }
 
       mutate(fd);
     },
-    [isUpdate, id, testimonial, mutate]
+    [isUpdate, id, mutate],
   );
 
   // Toast feedback
   useEffect(() => {
     if (isSuccess) {
       glassToast.success(
-        data?.message || `Testimonial ${isUpdate ? 'updated' : 'added'} successfully!`
+        data?.message ||
+          `Testimonial ${isUpdate ? "updated" : "added"} successfully!`,
       );
       if (!isUpdate) {
         reset(defaultValues);
@@ -136,7 +184,9 @@ const DTestimonialForm = () => {
     if (isError) {
       console.error(error?.response);
 
-      glassToast.error(error?.response?.data?.message || 'Failed to save testimonial');
+      glassToast.error(
+        error?.response?.data?.message || "Failed to save testimonial",
+      );
     }
   }, [isSuccess, isError, data, error, isUpdate, reset, defaultValues]);
 
@@ -155,7 +205,7 @@ const DTestimonialForm = () => {
 
   const inputClasses = (hasError) =>
     `
-    w-full bg-slate-800/50 border ${hasError ? 'border-rose-500/50' : 'border-white/10'} 
+    w-full bg-slate-800/50 border ${hasError ? "border-rose-500/50" : "border-white/10"} 
     rounded-xl outline-none text-white placeholder:text-slate-500 
     backdrop-blur-sm px-4 py-3 transition-all duration-200
     focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20
@@ -165,28 +215,33 @@ const DTestimonialForm = () => {
   // Rating options with stars
   const ratingOptions = useMemo(
     () => [
-      { value: '1', label: '⭐ 1 - Poor' },
-      { value: '2', label: '⭐⭐ 2 - Fair' },
-      { value: '3', label: '⭐⭐⭐ 3 - Good' },
-      { value: '4', label: '⭐⭐⭐⭐ 4 - Very Good' },
-      { value: '5', label: '⭐⭐⭐⭐⭐ 5 - Excellent' },
+      { value: "1", label: "⭐ 1 - Poor" },
+      { value: "2", label: "⭐⭐ 2 - Fair" },
+      { value: "3", label: "⭐⭐⭐ 3 - Good" },
+      { value: "4", label: "⭐⭐⭐⭐ 4 - Very Good" },
+      { value: "5", label: "⭐⭐⭐⭐⭐ 5 - Excellent" },
     ],
-    []
+    [],
   );
 
   // Project options
   const projectOptions = useMemo(
     () =>
-      projects.map((item) => ({
-        value: item.id,
-        label: item?.title,
+      (projects || []).map((item) => ({
+        value: String(item.id),
+        label: item?.title || "Untitled Project",
       })),
-    [projects]
+    [projects],
   );
 
   return (
     <FormProvider {...methods}>
-      <motion.div variants={containerVariants} initial="hidden" animate="show" className="w-full ">
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="w-full "
+      >
         <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-xl p-6 sm:p-8 shadow-xl">
           {/* Header */}
           <div className="flex items-center gap-3 mb-8 pb-4 border-b border-white/5">
@@ -195,10 +250,12 @@ const DTestimonialForm = () => {
             </div>
             <div>
               <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                {isUpdate ? 'Edit Testimonial' : 'Add Testimonial'}
+                {isUpdate ? "Edit Testimonial" : "Add Testimonial"}
               </h3>
               <p className="text-slate-400 text-sm">
-                {isUpdate ? 'Update client testimonial details' : 'Add a new client testimonial'}
+                {isUpdate
+                  ? "Update client testimonial details"
+                  : "Add a new client testimonial"}
               </p>
             </div>
           </div>
@@ -249,13 +306,15 @@ const DTestimonialForm = () => {
                 </label>
                 <input
                   type="date"
-                  {...register('testimonialDate', {
-                    required: 'Testimonial date is required',
+                  {...register("testimonialDate", {
+                    required: "Testimonial date is required",
                   })}
                   className={inputClasses(errors.testimonialDate)}
                 />
                 {errors.testimonialDate && (
-                  <p className="text-xs text-rose-400">{errors.testimonialDate.message}</p>
+                  <p className="text-xs text-rose-400">
+                    {errors.testimonialDate.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -286,10 +345,10 @@ const DTestimonialForm = () => {
             <FileInputField
               label="Profile Image"
               name="clientImage"
-              error={errors['clientImage']}
-              existingFileUrl={clientImage?.url || ''}
+              error={errors.clientImage}
+              existingFileUrl={clientImage?.url || ""}
               required={false}
-              accept="image/*"
+              accept="image/png,image/jpeg,image/webp,image/gif"
             />
 
             {/* Message */}
@@ -309,19 +368,23 @@ const DTestimonialForm = () => {
               <motion.button
                 type="submit"
                 disabled={isPending}
-                whileHover={prefersReducedMotion || isPending ? {} : { scale: 1.02 }}
-                whileTap={isPending ? {} : { scale: 0.98 }}
+                whileHover={
+                  prefersReducedMotion || isPending ? {} : { scale: 1.02 }
+                }
+                whileTap={
+                  prefersReducedMotion || isPending ? {} : { scale: 0.98 }
+                }
                 className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
               >
                 {isPending ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    {isUpdate ? 'Updating...' : 'Saving...'}
+                    {isUpdate ? "Updating..." : "Saving..."}
                   </>
                 ) : (
                   <>
                     <Save className="w-5 h-5" />
-                    {isUpdate ? 'Update Testimonial' : 'Add Testimonial'}
+                    {isUpdate ? "Update Testimonial" : "Add Testimonial"}
                   </>
                 )}
               </motion.button>

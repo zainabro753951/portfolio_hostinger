@@ -202,7 +202,7 @@ const FileInputField = ({
                     {/* 👇 LINK - Now clickable with higher z-index */}
                     {existingFileUrl && !selectedFile && (
                       <motion.a
-                        href={`${backendUrl}${existingFileUrl}`}
+                        href={existingFileUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         whileHover={{ scale: 1.02 }}

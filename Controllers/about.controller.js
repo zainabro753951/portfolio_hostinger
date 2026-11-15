@@ -1,10 +1,12 @@
 import { body } from "express-validator";
 import pool from "../db.config.js";
 
-import { safeParse } from "../Utils/SafeParser.js";
+import { parseBoolean, parseObject, parseStoredImage, safeParse } from "../Utils/SafeParser.js";
 import { logActivity } from "../Utils/activityLogger.js";
 import { deleteFromLocal, uploadToLocal } from "../Utils/uploadToLocal.js";
 import { safeParseJSON } from "../Utils/safeParseJSON.js";
+import { uploadFile } from "../Utils/uploadToCloudinary.js";
+import { rollbackUploads } from "../Utils/deleteFromCloudinary.js";
 
 export const AddAboutValidator = [
   body("fullName").trim().notEmpty().withMessage("Full name is required"),
@@ -23,8 +25,13 @@ export const AddAboutValidator = [
 ];
 
 export const AddAbout = async (req, res) => {
-  let newFileKey = "";
-  let newPoseFileKey = "";
+  // Track every newly uploaded file for rollback
+  const uploadedPublicIds = [];
+
+  // Keep old assets until database operation succeeds
+  let oldPublicIds = [];
+
+  let dbCommitted = false;
 
   try {
     let {
@@ -37,129 +44,165 @@ export const AddAbout = async (req, res) => {
       isUpdate,
       aboutImageOBJ,
       poseImageOBJ,
+      resumeOBJ,
       isAboutImageRemoved,
       isPoseImageRemoved,
+      isResumeRemoved,
     } = req.body;
 
-    console.log(req.files);
+    // Convert FormData values
+    isUpdate = parseBoolean(isUpdate);
 
-    // Type conversions
-    isUpdate = isUpdate === "true" || isUpdate === true;
-    if (typeof aboutImageOBJ === "string")
-      aboutImageOBJ = safeParse(aboutImageOBJ);
-    if (typeof isAboutImageRemoved === "string")
-      isAboutImageRemoved = safeParse(isAboutImageRemoved);
-    if (typeof poseImageOBJ === "string")
-      poseImageOBJ = safeParse(poseImageOBJ);
-    if (typeof isPoseImageRemoved === "string")
-      isPoseImageRemoved = safeParse(isPoseImageRemoved);
+    aboutImageOBJ = parseObject(aboutImageOBJ);
+    poseImageOBJ = parseObject(poseImageOBJ);
+    resumeOBJ = parseObject(resumeOBJ);
 
-    // ✅ 1. Upload new About image if provided
+    isAboutImageRemoved = parseBoolean(isAboutImageRemoved);
+    isPoseImageRemoved = parseBoolean(isPoseImageRemoved);
+    isResumeRemoved = parseBoolean(isResumeRemoved);
+
+    // Get uploaded files from Multer
+    const aboutFile = req.files?.aboutImage?.[0];
+    const poseFile = req.files?.poseImage?.[0];
+    const resumeFile = req.files?.resume?.[0];
+
+    // Resume must be a PDF
+    if (resumeFile && resumeFile.mimetype !== "application/pdf") {
+      return res.status(400).json({
+        success: false,
+        message: "Only PDF resume files are allowed.",
+      });
+    }
+
+    // ==========================================
+    // 1. UPLOAD ABOUT IMAGE
+    // ==========================================
+
     let uploadResult = null;
-    if (req.files?.aboutImage) {
-      // Assuming multer fields: { aboutImage: 'single', poseImage: 'single' }
-      uploadResult = await uploadToLocal(req.files.aboutImage[0], "about");
-      newFileKey = uploadResult?.key;
+
+    if (aboutFile) {
+      uploadResult = await uploadFile(aboutFile, "about");
+
+      uploadedPublicIds.push(uploadResult.key);
     }
 
-    // ✅ 2. Upload new Pose image if provided
+    // ==========================================
+    // 2. UPLOAD POSE IMAGE
+    // ==========================================
+
     let uploadPoseImageResult = null;
-    if (req.files?.poseImage) {
-      uploadPoseImageResult = await uploadToLocal(
-        req.files.poseImage[0],
-        "about",
-      );
-      newPoseFileKey = uploadPoseImageResult?.key;
+
+    if (poseFile) {
+      uploadPoseImageResult = await uploadFile(poseFile, "about");
+
+      uploadedPublicIds.push(uploadPoseImageResult.key);
     }
 
-    // ✅ 3. Determine final image objects
-    const finalImageOBJ = {
-      key:
-        uploadResult?.key ||
-        (isAboutImageRemoved ? null : aboutImageOBJ?.key) ||
-        null,
-      url:
-        uploadResult?.url ||
-        (isAboutImageRemoved ? null : aboutImageOBJ?.url) ||
-        null,
-    };
+    // ==========================================
+    // 3. UPLOAD RESUME PDF
+    // ==========================================
 
-    const finalPoseImageOBJ = {
-      key:
-        uploadPoseImageResult?.key ||
-        (isPoseImageRemoved ? null : poseImageOBJ?.key) ||
-        null,
-      url:
-        uploadPoseImageResult?.url ||
-        (isPoseImageRemoved ? null : poseImageOBJ?.url) ||
-        null,
-    };
+    let uploadResumeResult = null;
+
+    if (resumeFile) {
+      uploadResumeResult = await uploadFile(resumeFile, "about");
+
+      uploadedPublicIds.push(uploadResumeResult.key);
+    }
+
+    // ==========================================
+    // 4. FINAL IMAGE OBJECTS
+    // ==========================================
+
+    const finalImageOBJ = uploadResult
+      ? {
+          key: uploadResult.key,
+          url: uploadResult.url,
+        }
+      : isAboutImageRemoved
+        ? null
+        : aboutImageOBJ?.key
+          ? aboutImageOBJ
+          : null;
+
+    const finalPoseImageOBJ = uploadPoseImageResult
+      ? {
+          key: uploadPoseImageResult.key,
+          url: uploadPoseImageResult.url,
+        }
+      : isPoseImageRemoved
+        ? null
+        : poseImageOBJ?.key
+          ? poseImageOBJ
+          : null;
+
+    const finalResumeOBJ = uploadResumeResult
+      ? {
+          key: uploadResumeResult.key,
+          url: uploadResumeResult.url,
+        }
+      : isResumeRemoved
+        ? null
+        : resumeOBJ?.key
+          ? resumeOBJ
+          : null;
+
+    // ==========================================
+    // 5. UPDATE EXISTING ABOUT RECORD
+    // ==========================================
 
     if (isUpdate) {
-      // 🔹 Fetch existing record
       const [existing] = await pool.query(
-        "SELECT id, aboutImage, poseImage FROM about LIMIT 1",
+        `SELECT id, aboutImage, poseImage, resume
+         FROM about
+         LIMIT 1`,
       );
 
       if (!existing.length) {
-        // Rollback uploads if no record found
-        if (newFileKey) await deleteFromLocal(newFileKey).catch(console.error);
-        if (newPoseFileKey)
-          await deleteFromLocal(newPoseFileKey).catch(console.error);
-        return res
-          .status(404)
-          .json({ success: false, message: "No record found to update." });
+        await rollbackUploads(uploadedPublicIds);
+
+        return res.status(404).json({
+          success: false,
+          message: "No record found to update.",
+        });
       }
 
-      const aboutId = existing[0].id;
+      const existingRecord = existing[0];
 
-      // ✅ Safe JSON parsing with error handling
-      let oldImageOBJ = null;
-      let oldPoseImageOBJ = null;
+      const oldImageOBJ = parseStoredImage(existingRecord.aboutImage);
 
-      if (existing[0].aboutImage) {
-        try {
-          oldImageOBJ = safeParse(existing[0].aboutImage);
-        } catch (e) {
-          console.error("Parse aboutImage error:", e);
-        }
-      }
-      if (existing[0].poseImage) {
-        try {
-          oldPoseImageOBJ = safeParse(existing[0].poseImage);
-        } catch (e) {
-          console.error("Parse poseImage error:", e);
-        }
+      const oldPoseImageOBJ = parseStoredImage(existingRecord.poseImage);
+
+      const oldResumeOBJ = parseStoredImage(existingRecord.resume);
+
+      // Collect old public IDs for deletion after DB update
+      if (oldImageOBJ?.key && (uploadResult || isAboutImageRemoved)) {
+        oldPublicIds.push(oldImageOBJ.key);
       }
 
-      // 🔹 Delete old About image if needed
       if (
-        uploadResult &&
-        oldImageOBJ?.key &&
-        oldImageOBJ.key !== uploadResult.key
-      ) {
-        await deleteFromLocal(oldImageOBJ.key).catch(console.error);
-      } else if (isAboutImageRemoved && oldImageOBJ?.key) {
-        await deleteFromLocal(oldImageOBJ.key).catch(console.error);
-      }
-
-      // 🔹 Delete old Pose image if needed
-      if (
-        uploadPoseImageResult &&
         oldPoseImageOBJ?.key &&
-        oldPoseImageOBJ.key !== uploadPoseImageResult.key
+        (uploadPoseImageResult || isPoseImageRemoved)
       ) {
-        await deleteFromLocal(oldPoseImageOBJ.key).catch(console.error);
-      } else if (isPoseImageRemoved && oldPoseImageOBJ?.key) {
-        await deleteFromLocal(oldPoseImageOBJ.key).catch(console.error);
+        oldPublicIds.push(oldPoseImageOBJ.key);
       }
 
-      // 🔹 Update DB - ✅ FIXED: poseImage added to SET clause
+      if (oldResumeOBJ?.key && (uploadResumeResult || isResumeRemoved)) {
+        oldPublicIds.push(oldResumeOBJ.key);
+      }
+
       const [updateResult] = await pool.query(
-        `UPDATE about SET 
-          fullName=?, shortRole=?, successNote=?, experience=?, shortDesc=?, longDesc=?, 
-          aboutImage=?, poseImage=? 
-         WHERE id=?`,
+        `UPDATE about SET
+          fullName = ?,
+          shortRole = ?,
+          successNote = ?,
+          experience = ?,
+          shortDesc = ?,
+          longDesc = ?,
+          aboutImage = ?,
+          poseImage = ?,
+          resume = ?
+         WHERE id = ?`,
         [
           fullName,
           shortRole,
@@ -167,13 +210,41 @@ export const AddAbout = async (req, res) => {
           experience,
           shortDesc,
           longDesc,
-          finalImageOBJ.key ? JSON.stringify(finalImageOBJ) : null,
-          finalPoseImageOBJ.key ? JSON.stringify(finalPoseImageOBJ) : null, // ✅ finalPoseImageOBJ used
-          aboutId,
+          finalImageOBJ ? JSON.stringify(finalImageOBJ) : null,
+          finalPoseImageOBJ ? JSON.stringify(finalPoseImageOBJ) : null,
+          finalResumeOBJ ? JSON.stringify(finalResumeOBJ) : null,
+          existingRecord.id,
         ],
       );
 
-      if (updateResult.affectedRows > 0) {
+      if (updateResult.affectedRows === 0) {
+        // Same values can also produce zero affected rows.
+        // Verify the record still exists.
+        const [check] = await pool.query(
+          "SELECT id FROM about WHERE id = ? LIMIT 1",
+          [existingRecord.id],
+        );
+
+        if (!check.length) {
+          throw new Error("About record update failed.");
+        }
+      }
+
+      // Database successfully updated
+      dbCommitted = true;
+
+      // ==========================================
+      // 6. DELETE OLD FILES
+      // ==========================================
+
+      if (oldPublicIds.length) {
+        await rollbackUploads(
+          oldPublicIds.filter((id) => !uploadedPublicIds.includes(id)),
+        );
+      }
+
+      // Activity logging should not break a successful update
+      try {
         await logActivity({
           type: "ABOUT_UPDATE",
           title: "About info updated",
@@ -181,55 +252,82 @@ export const AddAbout = async (req, res) => {
           ip: req.ip,
           device: req.headers["user-agent"],
         });
-        return res.status(200).json({
-          success: true,
-          message: "About section updated successfully.",
-        });
+      } catch (logError) {
+        console.error("ABOUT_ACTIVITY_LOG_ERROR:", logError);
       }
-    } else {
-      // 🔹 Insert new record - ✅ FIXED: Correct syntax & all columns included
-      const [results] = await pool.query(
-        `INSERT INTO about 
-          (fullName, shortRole, successNote, experience, shortDesc, longDesc, aboutImage, poseImage) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
+
+      return res.status(200).json({
+        success: true,
+        message: "About section updated successfully.",
+      });
+    }
+
+    // ==========================================
+    // 7. CREATE NEW ABOUT RECORD
+    // ==========================================
+
+    const [results] = await pool.query(
+      `INSERT INTO about
+        (
           fullName,
           shortRole,
           successNote,
           experience,
           shortDesc,
           longDesc,
-          finalImageOBJ.key ? JSON.stringify(finalImageOBJ) : null,
-          finalPoseImageOBJ.key ? JSON.stringify(finalPoseImageOBJ) : null, // ✅ poseImage included
-        ],
-      );
+          aboutImage,
+          poseImage,
+          resume
+        )
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        fullName,
+        shortRole,
+        successNote,
+        experience,
+        shortDesc,
+        longDesc,
+        finalImageOBJ ? JSON.stringify(finalImageOBJ) : null,
+        finalPoseImageOBJ ? JSON.stringify(finalPoseImageOBJ) : null,
+        finalResumeOBJ ? JSON.stringify(finalResumeOBJ) : null,
+      ],
+    );
 
-      if (results.affectedRows > 0) {
-        await logActivity({
-          type: "ABOUT_ADD",
-          title: "About info added",
-          description: "Your About section is now live.",
-          ip: req.ip,
-          device: req.headers["user-agent"],
-        });
-        return res
-          .status(201)
-          .json({ success: true, message: "About successfully created." });
-      }
+    if (!results.affectedRows) {
+      throw new Error("About record creation failed.");
     }
 
-    return res
-      .status(400)
-      .json({ success: false, message: "No changes made." });
+    dbCommitted = true;
+
+    try {
+      await logActivity({
+        type: "ABOUT_ADD",
+        title: "About info added",
+        description: "Your About section is now live.",
+        ip: req.ip,
+        device: req.headers["user-agent"],
+      });
+    } catch (logError) {
+      console.error("ABOUT_ACTIVITY_LOG_ERROR:", logError);
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: "About successfully created.",
+    });
   } catch (error) {
     console.error("ADD_ABOUT_ERROR:", error);
-    // Rollback uploads on error
-    if (newFileKey) await deleteFromLocal(newFileKey).catch(console.error);
-    if (newPoseFileKey)
-      await deleteFromLocal(newPoseFileKey).catch(console.error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal Server Error!" });
+
+    // Rollback only if DB operation has not committed
+    if (!dbCommitted) {
+      await rollbackUploads(uploadedPublicIds);
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error!",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
 };
 

@@ -1,5 +1,5 @@
-import { useDeleteEntryContext } from '@/context/useDeleteEntryContext';
-import { motion, useReducedMotion } from 'framer-motion';
+import { useDeleteEntryContext } from "@/context/useDeleteEntryContext";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   Briefcase,
   Building2,
@@ -12,24 +12,35 @@ import {
   Pencil,
   Trash2,
   Wrench,
-} from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
-import useCreatedAtSorted from '../../../../hooks/useCreatedAtSorted';
-import { formatTimeAgo, getFileIcon, getFileNameFromUrl } from '../../../../Utils/Utils';
+} from "lucide-react";
+import { memo, useCallback, useEffect, useMemo } from "react";
+import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
+import useCreatedAtSorted from "../../../../hooks/useCreatedAtSorted";
+import { formatTimeAgo } from "../../../../Utils/Utils";
 
 // Table row component
 const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
-  const companyLogo = useMemo(() =>
-    typeof item?.companyLogo === 'string' ? JSON.parse(item?.companyLogo) : item?.companyLogo
-  );
+  const companyLogo = useMemo(() => {
+    try {
+      const parsed =
+        typeof item?.companyLogo === "string"
+          ? JSON.parse(item.companyLogo)
+          : item?.companyLogo;
+
+      if (!parsed || typeof parsed !== "object") return null;
+
+      return parsed?.url ? parsed : null;
+    } catch (error) {
+      console.error("Invalid company logo JSON:", error);
+      return null;
+    }
+  }, [item?.companyLogo]);
+
+  console.log(companyLogo);
 
   const createdAt = formatTimeAgo(item?.createdAt);
   const updatedAt = formatTimeAgo(item?.updatedAt);
-  const imageName = getFileNameFromUrl(companyLogo?.url);
-  const { Icon: FileIcon, color: FileIconColor } = getFileIcon(imageName);
 
   const rowVariants = useMemo(
     () => ({
@@ -40,23 +51,35 @@ const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
         transition: {
           duration: 0.4,
           ease: [0.25, 0.46, 0.45, 0.94],
-          delay: index * 0.05,
+          delay: Math.min(index * 0.03, 0.3),
         },
       },
     }),
-    [index]
+    [index],
   );
 
   const formatDate = (date) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    if (!date) return "N/A";
+
+    const dateString = String(date);
+
+    const normalizedDate = /^\d{4}-\d{2}-\d{2}$/.test(dateString)
+      ? `${dateString}T00:00:00`
+      : dateString;
+
+    const parsedDate = new Date(normalizedDate);
+
+    if (Number.isNaN(parsedDate.getTime())) return "N/A";
+
+    return parsedDate.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
-  const isCurrentlyWorking = item?.currentlyWorking === 1 || !item?.endDate;
+  const isCurrentlyWorking =
+    item?.currentlyWorking === true || Number(item?.currentlyWorking) === 1;
 
   return (
     <motion.div
@@ -74,7 +97,9 @@ const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
       <div className="py-4 px-3 w-48 flex-shrink-0">
         <div className="flex items-center gap-2">
           <Briefcase className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-          <span className="font-medium text-white truncate">{item?.position}</span>
+          <span className="font-medium text-white truncate">
+            {item?.position}
+          </span>
         </div>
       </div>
 
@@ -120,7 +145,9 @@ const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
       <div className="py-4 px-3 w-48 flex-shrink-0">
         <div className="flex items-center gap-2">
           <Wrench className="w-4 h-4 text-slate-500 flex-shrink-0" />
-          <span className="text-slate-400 text-xs truncate">{item?.technologies || 'N/A'}</span>
+          <span className="text-slate-400 text-xs truncate">
+            {item?.technologies || "N/A"}
+          </span>
         </div>
       </div>
 
@@ -129,7 +156,7 @@ const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
         <div className="flex items-start gap-2">
           <FileText className="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" />
           <p className="text-slate-400 text-xs line-clamp-2 break-words">
-            {item?.description || 'No description'}
+            {item?.description || "No description"}
           </p>
         </div>
       </div>
@@ -152,97 +179,42 @@ const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
 
       {/* Company Logo */}
       <div className="py-4 px-3 flex justify-center w-16 flex-shrink-0">
-        {companyLogo && companyLogo?.url ? (
+        {companyLogo?.url ? (
           <motion.a
-            href={`${backendUrl}${companyLogo.url}`}
+            href={companyLogo.url}
             target="_blank"
             rel="noopener noreferrer"
-            // ✅ Animation variants
-            variants={{
-              hidden: { opacity: 0.8 },
-              hover: {
-                scale: prefersReducedMotion ? 1 : 1.05,
-                borderColor: prefersReducedMotion ? FileIconColor : FileIconColor,
-                boxShadow: prefersReducedMotion
-                  ? 'none'
-                  : `0 0 20px ${FileIconColor}40, 0 0 40px ${FileIconColor}20`,
-                transition: {
-                  type: 'spring',
-                  stiffness: 400,
-                  damping: 15,
-                  mass: 0.8,
-                },
-              },
-              tap: {
-                scale: prefersReducedMotion ? 1 : 0.95,
-                transition: { duration: 0.1 },
-              },
-            }}
-            initial="hidden"
-            whileHover="hover"
-            whileTap="tap"
-            // ✅ Static styles
-            className="w-12 h-12 rounded-lg flex items-center justify-center border  flex-shrink-0 cursor-pointer overflow-hidden relative group"
-            style={{
-              backgroundColor: FileIconColor + '20',
-              borderColor: FileIconColor,
-            }}
+            aria-label={`View ${item?.company} logo`}
+            whileHover={
+              prefersReducedMotion
+                ? undefined
+                : {
+                    scale: 1.08,
+                    y: -2,
+                  }
+            }
+            whileTap={
+              prefersReducedMotion
+                ? undefined
+                : {
+                    scale: 0.95,
+                  }
+            }
+            className="w-12 h-12 rounded-lg flex items-center justify-center border border-white/10 bg-slate-800/60 flex-shrink-0 cursor-pointer overflow-hidden transition-colors hover:border-cyan-400/50"
           >
-            {/* ✅ Animated Icon with color shift */}
-            <motion.div
-              variants={{
-                hover: {
-                  rotate: prefersReducedMotion ? 0 : 15,
-                  scale: prefersReducedMotion ? 1 : 1.1,
-                },
-              }}
-              className="relative z-10"
-            >
-              <FileIcon
-                className="w-6 h-6 stroke-current transition-colors duration-300"
-                style={{
-                  color: FileIconColor,
-                  filter: prefersReducedMotion ? 'none' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
-                }}
-              />
-            </motion.div>
-
-            {/* ✅ Animated background glow effect */}
-            <motion.div
-              className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              style={{
-                background: `radial-gradient(circle at center, ${FileIconColor}30 0%, transparent 70%)`,
+            <img
+              src={companyLogo.url}
+              alt={`${item?.company || "Company"} logo`}
+              loading="lazy"
+              decoding="async"
+              className="w-full h-full object-cover object-center"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
               }}
             />
-
-            {/* ✅ Subtle border pulse animation */}
-            <motion.div
-              className="absolute inset-0 rounded-lg border-2 opacity-0 group-hover:opacity-100"
-              style={{ borderColor: FileIconColor }}
-              initial={{ scale: 0.8, opacity: 0 }}
-              whileHover={{
-                scale: 1.2,
-                opacity: [0, 1, 0],
-                transition: {
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                },
-              }}
-            />
-
-            {/* ✅ Tooltip hint (optional) */}
-            <motion.span
-              className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 rounded text-xs font-medium text-white whitespace-nowrap bg-slate-900/90 backdrop-blur-sm border border-white/10 opacity-0 pointer-events-none"
-              initial={{ opacity: 0, y: 5 }}
-              whileHover={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              View Certificate ↗
-            </motion.span>
           </motion.a>
         ) : (
-          <span className="text-slate-500 text-xs">No certificate</span>
+          <span className="text-slate-500 text-xs">No logo</span>
         )}
       </div>
 
@@ -250,6 +222,7 @@ const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
       <div className="py-4 px-3 flex justify-center gap-2 w-24 flex-shrink-0">
         <Link
           to={`/admin/experience/${item?.id}`}
+          aria-label={`Edit ${item?.position || "experience"}`}
           className="p-2 rounded-lg bg-slate-800/50 text-slate-400 hover:text-violet-400 hover:bg-violet-500/10 border border-white/5 hover:border-violet-500/30 transition-all duration-300 flex-shrink-0"
           title="Edit Experience"
         >
@@ -257,7 +230,9 @@ const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
         </Link>
 
         <button
+          type="button"
           onClick={() => onDelete(item.id)}
+          aria-label={`Delete ${item?.position || "experience"}`}
           className="p-2 rounded-lg bg-slate-800/50 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-white/5 hover:border-rose-500/30 transition-all duration-300 flex-shrink-0"
           title="Delete Experience"
         >
@@ -268,7 +243,7 @@ const ExpRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
   );
 });
 
-ExpRow.displayName = 'ExpRow';
+ExpRow.displayName = "ExpRow";
 
 const ExpTable = () => {
   const { experiences } = useSelector((state) => state.experience);
@@ -279,16 +254,16 @@ const ExpTable = () => {
   const { sortedData: sortedExp } = useCreatedAtSorted(experiences);
 
   useEffect(() => {
-    setQueryKey('experiences');
+    setQueryKey("experiences");
   }, [setQueryKey]);
 
   const handleDelete = useCallback(
     (id) => {
       setRoute(`/experience/delete/${id}`);
       setIsOpen(true);
-      setQueryKey('experiences');
+      setQueryKey("experiences");
     },
-    [setRoute, setIsOpen, setQueryKey]
+    [setRoute, setIsOpen, setQueryKey],
   );
 
   const containerVariants = useMemo(
@@ -305,7 +280,7 @@ const ExpTable = () => {
         },
       },
     }),
-    []
+    [],
   );
 
   return (
@@ -321,8 +296,12 @@ const ExpTable = () => {
           <Briefcase className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">All Experience</h3>
-          <p className="text-slate-500 text-xs sm:text-sm">{sortedExp?.length || 0} entries</p>
+          <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+            All Experience
+          </h3>
+          <p className="text-slate-500 text-xs sm:text-sm">
+            {sortedExp?.length || 0} entries
+          </p>
         </div>
       </div>
 
@@ -335,8 +314,12 @@ const ExpTable = () => {
             <div className="py-3 px-3 w-48 flex-shrink-0">Position</div>
             <div className="py-3 px-3 w-40 flex-shrink-0">Company</div>
             <div className="py-3 px-3 text-center w-28 flex-shrink-0">Type</div>
-            <div className="py-3 px-3 text-center w-28 flex-shrink-0">Started</div>
-            <div className="py-3 px-3 text-center w-28 flex-shrink-0">Ended</div>
+            <div className="py-3 px-3 text-center w-28 flex-shrink-0">
+              Started
+            </div>
+            <div className="py-3 px-3 text-center w-28 flex-shrink-0">
+              Ended
+            </div>
             <div className="py-3 px-3 w-48 flex-shrink-0">Technologies</div>
             <div className="py-3 px-3 flex-1 min-w-[200px]">Description</div>
             {/* Created At */}
@@ -344,7 +327,9 @@ const ExpTable = () => {
             {/* Updated At */}
             <div className="py-3 px-3 w-48 flex-shrink-0">Updated At</div>
             <div className="py-3 px-3 text-center w-16 flex-shrink-0">Logo</div>
-            <div className="py-3 px-3 text-center w-24 flex-shrink-0">Actions</div>
+            <div className="py-3 px-3 text-center w-24 flex-shrink-0">
+              Actions
+            </div>
           </div>
 
           {/* Table Body */}
@@ -364,8 +349,12 @@ const ExpTable = () => {
                 <div className="w-16 h-16 rounded-2xl bg-slate-800/50 flex items-center justify-center mx-auto mb-4">
                   <Briefcase className="w-8 h-8 text-slate-600" />
                 </div>
-                <p className="text-slate-500 text-sm">No experience entries found</p>
-                <p className="text-slate-600 text-xs mt-1">Add your first work experience</p>
+                <p className="text-slate-500 text-sm">
+                  No experience entries found
+                </p>
+                <p className="text-slate-600 text-xs mt-1">
+                  Add your first work experience
+                </p>
               </div>
             )}
           </div>

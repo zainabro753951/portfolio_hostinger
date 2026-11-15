@@ -1,5 +1,5 @@
-import { useDeleteEntryContext } from '@/context/useDeleteEntryContext';
-import { motion, useReducedMotion } from 'framer-motion';
+import { useDeleteEntryContext } from "@/context/useDeleteEntryContext";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   Briefcase,
   Calendar,
@@ -9,18 +9,37 @@ import {
   Layers,
   Pencil,
   Trash2,
-} from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
-import { formatTimeAgo, getFileIcon, getFileNameFromUrl } from '../../../../Utils/Utils';
+} from "lucide-react";
+import { memo, useCallback, useEffect, useMemo } from "react";
+import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
+import {
+  formatTimeAgo,
+  getFileIcon,
+  getFileNameFromUrl,
+} from "../../../../Utils/Utils";
 
 // Table row component
 const ServiceRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
-  const serviceImage = useMemo(() =>
-    typeof item?.serviceImage === 'string' ? JSON.parse(item?.serviceImage) : item?.serviceImage
-  );
+  const serviceImage = useMemo(() => {
+    try {
+      const parsed =
+        typeof item?.serviceImage === "string"
+          ? JSON.parse(item.serviceImage)
+          : item?.serviceImage;
+
+      if (!parsed?.url) return null;
+
+      return {
+        key: parsed.key || null,
+        url: parsed.url,
+        resource_type: parsed.resource_type || "image",
+      };
+    } catch (error) {
+      console.error("Invalid service image data:", error);
+      return null;
+    }
+  }, [item?.serviceImage]);
   const createdAt = formatTimeAgo(item?.createdAt);
   const updatedAt = formatTimeAgo(item?.updatedAt);
   const fileName = getFileNameFromUrl(serviceImage?.url);
@@ -39,19 +58,19 @@ const ServiceRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
         },
       },
     }),
-    [index]
+    [index],
   );
 
   const formatDate = (date) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    if (!date) return "N/A";
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
-  const isPublished = item?.status?.toLowerCase() === 'published';
+  const isPublished = item?.status?.toLowerCase() === "published";
 
   return (
     <motion.div
@@ -78,7 +97,7 @@ const ServiceRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
         <div className="flex items-start gap-2">
           <FileText className="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" />
           <p className="text-slate-400 text-xs line-clamp-2 break-words">
-            {item?.shortDescription || 'No description'}
+            {item?.shortDescription || "No description"}
           </p>
         </div>
       </div>
@@ -87,7 +106,9 @@ const ServiceRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
       <div className="py-4 px-3 w-40 flex-shrink-0">
         <div className="flex items-center gap-2">
           <Layers className="w-4 h-4 text-slate-500 flex-shrink-0" />
-          <span className="text-slate-300 text-xs truncate">{item?.category}</span>
+          <span className="text-slate-300 text-xs truncate">
+            {item?.category}
+          </span>
         </div>
       </div>
 
@@ -96,8 +117,8 @@ const ServiceRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
         <span
           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${
             isPublished
-              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-              : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+              : "bg-amber-500/10 text-amber-400 border-amber-500/30"
           }`}
         >
           {isPublished ? (
@@ -113,95 +134,31 @@ const ServiceRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
       <div className="py-4 px-3 flex justify-center w-20 flex-shrink-0">
         {serviceImage && serviceImage?.url ? (
           <motion.a
-            href={`${backendUrl}${serviceImage.url}`}
+            href={serviceImage.url}
             target="_blank"
             rel="noopener noreferrer"
-            // ✅ Animation variants
-            variants={{
-              hidden: { opacity: 0.8 },
-              hover: {
-                scale: prefersReducedMotion ? 1 : 1.05,
-                borderColor: prefersReducedMotion ? FileIconColor : FileIconColor,
-                boxShadow: prefersReducedMotion
-                  ? 'none'
-                  : `0 0 20px ${FileIconColor}40, 0 0 40px ${FileIconColor}20`,
-                transition: {
-                  type: 'spring',
-                  stiffness: 400,
-                  damping: 15,
-                  mass: 0.8,
-                },
-              },
-              tap: {
-                scale: prefersReducedMotion ? 1 : 0.95,
-                transition: { duration: 0.1 },
-              },
+            whileHover={{
+              scale: prefersReducedMotion ? 1 : 1.05,
             }}
-            initial="hidden"
-            whileHover="hover"
-            whileTap="tap"
-            // ✅ Static styles
-            className="w-12 h-12 rounded-lg flex items-center justify-center border  flex-shrink-0 cursor-pointer overflow-hidden relative group"
-            style={{
-              backgroundColor: FileIconColor + '20',
-              borderColor: FileIconColor,
+            whileTap={{
+              scale: prefersReducedMotion ? 1 : 0.95,
             }}
+            className="w-12 h-12 rounded-lg flex-shrink-0 overflow-hidden border border-white/10 block"
+            title="View Service Image"
           >
-            {/* ✅ Animated Icon with color shift */}
-            <motion.div
-              variants={{
-                hover: {
-                  rotate: prefersReducedMotion ? 0 : 15,
-                  scale: prefersReducedMotion ? 1 : 1.1,
-                },
-              }}
-              className="relative z-10"
-            >
-              <FileIcon
-                className="w-6 h-6 stroke-current transition-colors duration-300"
-                style={{
-                  color: FileIconColor,
-                  filter: prefersReducedMotion ? 'none' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
-                }}
-              />
-            </motion.div>
-
-            {/* ✅ Animated background glow effect */}
-            <motion.div
-              className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              style={{
-                background: `radial-gradient(circle at center, ${FileIconColor}30 0%, transparent 70%)`,
+            <img
+              src={serviceImage.url}
+              alt={`${item?.title || "Service"} cover`}
+              loading="lazy"
+              decoding="async"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
               }}
             />
-
-            {/* ✅ Subtle border pulse animation */}
-            <motion.div
-              className="absolute inset-0 rounded-lg border-2 opacity-0 group-hover:opacity-100"
-              style={{ borderColor: FileIconColor }}
-              initial={{ scale: 0.8, opacity: 0 }}
-              whileHover={{
-                scale: 1.2,
-                opacity: [0, 1, 0],
-                transition: {
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                },
-              }}
-            />
-
-            {/* ✅ Tooltip hint (optional) */}
-            <motion.span
-              className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 rounded text-xs font-medium text-white whitespace-nowrap bg-slate-900/90 backdrop-blur-sm border border-white/10 opacity-0 pointer-events-none"
-              initial={{ opacity: 0, y: 5 }}
-              whileHover={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              View Certificate ↗
-            </motion.span>
           </motion.a>
         ) : (
-          <span className="text-slate-500 text-xs">No certificate</span>
+          <span className="text-slate-500 text-xs">No image</span>
         )}
       </div>
 
@@ -243,7 +200,7 @@ const ServiceRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
   );
 });
 
-ServiceRow.displayName = 'ServiceRow';
+ServiceRow.displayName = "ServiceRow";
 
 const ServiceTable = () => {
   const { services, isLoading } = useSelector((state) => state.service);
@@ -251,24 +208,24 @@ const ServiceTable = () => {
   const prefersReducedMotion = useReducedMotion();
 
   const sortedServices = useMemo(() => {
-    if (!services.length) return [];
+    if (!services?.length) return [];
 
-    return [...services].sort((a, b) => {
-      return new Date(b.createdAt) - new Date(a.createdAt);
-    });
-  });
+    return [...services].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+    );
+  }, [services]);
 
   useEffect(() => {
-    setQueryKey('services');
+    setQueryKey("services");
   }, [setQueryKey]);
 
   const handleDelete = useCallback(
     (id) => {
       setRoute(`/service/delete/${id}`);
       setIsOpen(true);
-      setQueryKey('services');
+      setQueryKey("services");
     },
-    [setRoute, setIsOpen, setQueryKey]
+    [setRoute, setIsOpen, setQueryKey],
   );
 
   const containerVariants = useMemo(
@@ -285,7 +242,7 @@ const ServiceTable = () => {
         },
       },
     }),
-    []
+    [],
   );
 
   return (
@@ -301,8 +258,12 @@ const ServiceTable = () => {
           <Briefcase className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">All Services</h3>
-          <p className="text-slate-500 text-xs sm:text-sm">{services?.length || 0} entries</p>
+          <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+            All Services
+          </h3>
+          <p className="text-slate-500 text-xs sm:text-sm">
+            {services?.length || 0} entries
+          </p>
         </div>
       </div>
 
@@ -315,16 +276,30 @@ const ServiceTable = () => {
             <div className="py-3 px-3 w-48 flex-shrink-0">Title</div>
             <div className="py-3 px-3 w-64 flex-shrink-0">Description</div>
             <div className="py-3 px-3 w-40 flex-shrink-0">Category</div>
-            <div className="py-3 px-3 text-center w-28 flex-shrink-0">Status</div>
-            <div className="py-3 px-3 text-center w-20 flex-shrink-0">Image</div>
-            <div className="py-3 px-3 text-center w-28 flex-shrink-0">Created</div>
-            <div className="py-3 px-3 text-center w-28 flex-shrink-0">Updated</div>
-            <div className="py-3 px-3 text-center w-24 flex-shrink-0">Actions</div>
+            <div className="py-3 px-3 text-center w-28 flex-shrink-0">
+              Status
+            </div>
+            <div className="py-3 px-3 text-center w-20 flex-shrink-0">
+              Image
+            </div>
+            <div className="py-3 px-3 text-center w-28 flex-shrink-0">
+              Created
+            </div>
+            <div className="py-3 px-3 text-center w-28 flex-shrink-0">
+              Updated
+            </div>
+            <div className="py-3 px-3 text-center w-24 flex-shrink-0">
+              Actions
+            </div>
           </div>
 
           {/* Table Body */}
           <div className="max-h-[400px]  custom-scrollbar">
-            {sortedServices?.length > 0 ? (
+            {isLoading ? (
+              <div className="py-12 text-center min-w-[1000px]">
+                <p className="text-slate-400 text-sm">Loading services...</p>
+              </div>
+            ) : sortedServices?.length > 0 ? (
               sortedServices.map((item, index) => (
                 <ServiceRow
                   key={item.id}
@@ -340,7 +315,9 @@ const ServiceTable = () => {
                   <Briefcase className="w-8 h-8 text-slate-600" />
                 </div>
                 <p className="text-slate-500 text-sm">No services found</p>
-                <p className="text-slate-600 text-xs mt-1">Add your first service</p>
+                <p className="text-slate-600 text-xs mt-1">
+                  Add your first service
+                </p>
               </div>
             )}
           </div>

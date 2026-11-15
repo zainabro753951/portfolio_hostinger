@@ -48,6 +48,7 @@ const DAddEducation = () => {
     grade: "",
     startYear: "",
     endYear: "",
+    isCurrentlyStudying: "false",
     location: "",
     certificate: "",
     eduDesc: "",
@@ -65,6 +66,11 @@ const DAddEducation = () => {
     watch,
     formState: { errors },
   } = methods;
+
+  const isCurrentlyStudying = watch("isCurrentlyStudying");
+  const selectedCertificate = watch("certificate");
+
+  const [certificatePreview, setCertificatePreview] = useState(null);
 
   // Fetch education for edit
   useEffect(() => {
@@ -87,12 +93,59 @@ const DAddEducation = () => {
         grade: education?.grade || "",
         startYear: education?.startYear || "",
         endYear: education?.endYear || "",
+
+        isCurrentlyStudying:
+          education?.isCurrentlyStudying === true ||
+          Number(education?.isCurrentlyStudying) === 1
+            ? "true"
+            : "false",
+
         location: education?.location || "",
         eduDesc: education?.eduDesc || "",
+        certificate: "",
       });
+
       setIsUpdate(true);
     }
   }, [id, education, reset]);
+
+  // Certificate handling
+  useEffect(() => {
+    const file = selectedCertificate?.[0];
+
+    if (file instanceof File) {
+      const previewUrl = URL.createObjectURL(file);
+
+      setCertificatePreview({
+        url: previewUrl,
+        name: file.name,
+        type: file.type,
+        isNew: true,
+      });
+
+      return () => {
+        URL.revokeObjectURL(previewUrl);
+      };
+    }
+
+    // Existing Cloudinary certificate
+    if (certificate?.url) {
+      setCertificatePreview({
+        url: certificate.url,
+        name: certificate.key?.split("/").pop() || "Certificate",
+        type:
+          certificate.resource_type === "raw" ||
+          /\.pdf(?:$|\?)/i.test(certificate.url)
+            ? "application/pdf"
+            : "image",
+        isNew: false,
+      });
+
+      return;
+    }
+
+    setCertificatePreview(null);
+  }, [selectedCertificate, certificate?.url, certificate?.key]);
 
   // ✅ Sirf tab scroll kare jab id  ho
   useScrollToRef(updateEduRef, [id], { block: "nearest" }, !!id);
@@ -103,26 +156,33 @@ const DAddEducation = () => {
   const onSubmit = useCallback(
     (formData) => {
       const fd = new FormData();
-      fd.append("isUpdate", isUpdate);
-      fd.append("educationId", isUpdate ? id : "");
-      fd.append(
-        "certificateOBJ",
-        isUpdate && certificate ? JSON.stringify(certificate) : "",
-      );
 
-      if (formData.certificate instanceof File) {
-        fd.append("certificate", formData.certificate);
+      fd.append("isUpdate", String(isUpdate));
+      fd.append("educationId", isUpdate ? id : "");
+
+      // Certificate is a FileList in React Hook Form
+      const certificateFile = formData.certificate;
+
+      if (certificateFile instanceof File) {
+        fd.append("certificate", certificateFile);
       }
 
       Object.entries(formData).forEach(([key, value]) => {
-        if (key !== "certificate" && value !== undefined && value !== null) {
-          fd.append(key, value);
+        if (key === "certificate" || value === undefined || value === null) {
+          return;
         }
+
+        // Empty endYear should be omitted so backend stores NULL
+        if (key === "endYear" && value === "") {
+          return;
+        }
+
+        fd.append(key, String(value));
       });
 
       mutate(fd);
     },
-    [isUpdate, id, education, mutate],
+    [isUpdate, id, mutate],
   );
 
   // Toast feedback
@@ -138,7 +198,7 @@ const DAddEducation = () => {
     }
     if (isError) {
       console.log(error?.response);
-      
+
       glassToast.error(
         error?.response?.data?.message || "Failed to save education",
       );
@@ -242,7 +302,57 @@ const DAddEducation = () => {
             </div>
 
             {/* Years */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Education Status */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-slate-300">
+                Education Status
+              </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className="flex items-center gap-3 p-4 rounded-xl border border-white/10 bg-slate-800/40 cursor-pointer hover:border-cyan-500/40 transition-all">
+                  <input
+                    type="radio"
+                    value="true"
+                    {...register("isCurrentlyStudying")}
+                    className="w-4 h-4 accent-cyan-500"
+                  />
+
+                  <div>
+                    <p className="text-sm font-medium text-white">
+                      Currently Studying
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      My education is still in progress
+                    </p>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-3 p-4 rounded-xl border border-white/10 bg-slate-800/40 cursor-pointer hover:border-cyan-500/40 transition-all">
+                  <input
+                    type="radio"
+                    value="false"
+                    {...register("isCurrentlyStudying")}
+                    className="w-4 h-4 accent-cyan-500"
+                  />
+
+                  <div>
+                    <p className="text-sm font-medium text-white">Completed</p>
+                    <p className="text-xs text-slate-400">
+                      I have completed this education
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Years */}
+            <div
+              className={`grid grid-cols-1 ${
+                isCurrentlyStudying === "true"
+                  ? "sm:grid-cols-1"
+                  : "sm:grid-cols-2"
+              } gap-4`}
+            >
               <FormField
                 label="Start Year"
                 name="startYear"
@@ -252,15 +362,19 @@ const DAddEducation = () => {
                 placeholder="e.g., 2021"
                 icon={Calendar}
               />
-              <FormField
-                label="End Year"
-                name="endYear"
-                type="number"
-                register={register}
-                errors={errors}
-                placeholder="e.g., 2025"
-                icon={Calendar}
-              />
+
+              {isCurrentlyStudying !== "true" && (
+                <FormField
+                  label="End Year (optional)"
+                  name="endYear"
+                  type="number"
+                  register={register}
+                  errors={errors}
+                  required={false}
+                  placeholder="e.g., 2025"
+                  icon={Calendar}
+                />
+              )}
             </div>
 
             {/* Location & Certificate */}
@@ -277,11 +391,64 @@ const DAddEducation = () => {
             <FileInputField
               label="Upload Certificate (optional)"
               name="certificate"
-              error={errors["certificate"]}
+              error={errors.certificate}
               existingFileUrl={certificate?.url || ""}
               required={false}
-              accept="image/*,.pdf"
+              accept=".pdf,image/jpeg,image/png,image/webp,image/gif"
             />
+
+            {/* Certificate Preview */}
+            {certificatePreview && (
+              <div className="mt-3 p-4 rounded-xl border border-white/10 bg-slate-800/40">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <FileText className="w-5 h-5 text-cyan-400 shrink-0" />
+
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-white truncate">
+                        {certificatePreview.name}
+                      </p>
+
+                      <p className="text-xs text-slate-400">
+                        {certificatePreview.isNew
+                          ? "New certificate selected"
+                          : "Existing certificate"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <a
+                    href={certificatePreview.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-cyan-400 hover:text-cyan-300 whitespace-nowrap"
+                  >
+                    Open File
+                  </a>
+                </div>
+
+                {certificatePreview.type === "application/pdf" ? (
+                  <div className="flex items-center gap-3 p-4 rounded-lg bg-slate-900/70">
+                    <FileText className="w-10 h-10 text-rose-400" />
+
+                    <div>
+                      <p className="text-sm text-white font-medium">
+                        PDF Certificate
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        Open file to view certificate
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <img
+                    src={certificatePreview.url}
+                    alt="Education Certificate Preview"
+                    className="w-full max-h-64 object-contain rounded-lg bg-slate-900/70"
+                  />
+                )}
+              </div>
+            )}
 
             {/* Description */}
             <div className="space-y-2">

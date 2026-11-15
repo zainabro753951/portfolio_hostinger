@@ -39,7 +39,15 @@ const ExpForm = () => {
   const { experiences, experience } = useSelector((state) => state.experience);
   const [isUpdate, setIsUpdate] = useState(false);
   const updateExpRef = useRef(null);
-  const companyLogo = safeParse(experience?.companyLogo);
+
+  const companyLogo = useMemo(() => {
+    try {
+      return safeParse(experience?.companyLogo) || null;
+    } catch (error) {
+      console.error("Invalid company logo data:", error);
+      return null;
+    }
+  }, [experience?.companyLogo]);
 
   const defaultValues = useMemo(
     () => ({
@@ -78,14 +86,14 @@ const ExpForm = () => {
 
   // Fetch experience for edit
   useEffect(() => {
-    if (id && experiences?.length > 0) {
+    if (id) {
       dispatch(expFindById(Number(id)));
     } else {
       dispatch(clearExp());
       reset(defaultValues);
       setIsUpdate(false);
     }
-  }, [id, experiences, dispatch, reset]);
+  }, [id, dispatch, reset, defaultValues]);
 
   // Populate form
   useEffect(() => {
@@ -104,10 +112,13 @@ const ExpForm = () => {
         employmentType: experience?.employmentType || "",
         startedAt: formattedStartedAt,
         endDate: formattedEndDate,
+        currentlyWorking:
+          experience?.currentlyWorking === true ||
+          Number(experience?.currentlyWorking) === 1,
         description: experience?.description || "",
         technologies: experience?.technologies || "",
+        companyLogo: null,
       });
-      setValue("currentlyWorking", experience?.currentlyWorking === 1);
       setIsUpdate(true);
     }
   }, [id, experience, reset, setValue]);
@@ -118,32 +129,50 @@ const ExpForm = () => {
   const { mutate, isPending, isError, isSuccess, data, error } =
     useAddExperience();
 
-  const existingLogo = useMemo(() => companyLogo, [experience]);
-
   const onSubmit = useCallback(
     (formData) => {
       const fd = new FormData();
-      fd.append("isUpdate", isUpdate);
-      fd.append("expId", isUpdate ? id : "");
-      fd.append(
-        "companyLogoOBJ",
-        isUpdate && existingLogo ? JSON.stringify(existingLogo) : null,
-      );
 
+      // Operation details
+      fd.append("isUpdate", String(isUpdate));
+      fd.append("expId", isUpdate ? String(id) : "");
+
+      // Upload only if a new File is selected
       if (formData.companyLogo instanceof File) {
         fd.append("companyLogo", formData.companyLogo);
       }
 
+      // Append remaining form fields
       Object.entries(formData).forEach(([key, value]) => {
-        if (key !== "companyLogo" && value != null) {
-          // ✅ null/undefined dono handle
-          fd.append(key, value);
+        if (key === "companyLogo" || value === undefined || value === null) {
+          return;
         }
+
+        fd.append(
+          key,
+          typeof value === "boolean" ? String(value) : String(value),
+        );
       });
+
+      // Debug FormData
+      console.log("Experience FormData:");
+
+      for (const [key, value] of fd.entries()) {
+        console.log(
+          key,
+          value instanceof File
+            ? {
+                name: value.name,
+                type: value.type,
+                size: value.size,
+              }
+            : value,
+        );
+      }
 
       mutate(fd);
     },
-    [isUpdate, id, existingLogo, mutate],
+    [isUpdate, id, mutate],
   );
 
   // Toast feedback
@@ -328,10 +357,11 @@ const ExpForm = () => {
             <FileInputField
               label="Company Logo"
               name="companyLogo"
-              error={errors["companyLogo"]}
+              error={errors.companyLogo}
               existingFileUrl={companyLogo?.url || ""}
               required={false}
-              accept="image/*"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              maxSize={5}
             />
 
             {/* Description */}

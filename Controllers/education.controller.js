@@ -1,7 +1,9 @@
 import pool from "../db.config.js";
 import { body, validationResult } from "express-validator";
 import { deleteFromLocal, uploadToLocal } from "../Utils/uploadToLocal.js"; // Updated Helper
-import { safeParse } from "../Utils/SafeParser.js";
+import { parseBoolean, safeParse } from "../Utils/SafeParser.js";
+import { uploadFile } from "../Utils/uploadToCloudinary.js";
+import { deleteFromCloudinary } from "../Utils/deleteFromCloudinary.js";
 
 export const AddEducationValidation = [
   body("institutionName")
@@ -21,6 +23,7 @@ export const AddEducationValidation = [
 
 export const addEducation = async (req, res) => {
   const errors = validationResult(req);
+
   if (!errors.isEmpty()) {
     return res.status(400).json({
       success: false,
@@ -37,60 +40,153 @@ export const addEducation = async (req, res) => {
     endYear = null,
     location = null,
     eduDesc = null,
-    certificateOBJ,
+    isCurrentlyStudying,
     isUpdate,
     educationId,
   } = req.body;
 
-  isUpdate = isUpdate === "true" || isUpdate === true;
-  certificateOBJ =
-    typeof certificateOBJ === "string"
-      ? safeParse(certificateOBJ)
-      : certificateOBJ;
+  isUpdate = parseBoolean(isUpdate);
 
-  let newFileKey = ""; // Rollback ke liye track karenge
+  isCurrentlyStudying = parseBoolean(isCurrentlyStudying);
+
+  // Normalize values
+  startYear = Number(startYear);
+
+  if (isCurrentlyStudying) {
+    endYear = null;
+  } else if (endYear === "" || endYear === undefined) {
+    endYear = null;
+  } else {
+    endYear = Number(endYear);
+  }
+
+  let newFile = null;
+  let oldFile = null;
+  let databaseUpdated = false;
 
   try {
-    // 1. Upload new file if provided
-    let uploadResult = null;
-    if (req.file) {
-      uploadResult = await uploadToLocal(req.file, "education/certificates");
-      newFileKey = uploadResult?.key;
+    // 1. Basic year validation
+    const currentYear = new Date().getFullYear();
+
+    if (
+      !Number.isInteger(startYear) ||
+      startYear < 1900 ||
+      startYear > currentYear
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid start year.",
+      });
     }
 
-    // 2. Build final certificate object
-    const finalCertificate = {
-      key: uploadResult?.key || certificateOBJ?.key || null,
-      url: uploadResult?.url || certificateOBJ?.url || null,
-    };
+    if (
+      !isCurrentlyStudying &&
+      endYear !== null &&
+      (!Number.isInteger(endYear) ||
+        endYear < startYear ||
+        endYear > currentYear)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid end year.",
+      });
+    }
+
+    if (!isCurrentlyStudying && endYear === null) {
+      return res.status(400).json({
+        success: false,
+        message: "End year is required for completed education.",
+      });
+    }
+
+    // 2. Fetch existing record during update
+    let existingEducation = null;
 
     if (isUpdate) {
-      // Record check karein
-      const [rows] = await pool.query(
-        "SELECT certificate FROM education WHERE id = ?",
-        [educationId],
-      );
-      if (rows.length === 0) {
-        if (newFileKey) await deleteFromLocal(newFileKey);
-        return res
-          .status(404)
-          .json({ success: false, message: "Record not found!" });
+      if (!educationId) {
+        return res.status(400).json({
+          success: false,
+          message: "Education ID is required.",
+        });
       }
 
-      const existingCert =
-        typeof rows[0].certificate === "string"
-          ? safeParse(rows[0].certificate)
-          : rows[0].certificate;
+      const [rows] = await pool.query("SELECT * FROM education WHERE id = ?", [
+        educationId,
+      ]);
 
-      // Agar naya file aaya hai to purana delete karein
-      if (req.file && existingCert?.key) {
-        await deleteFromLocal(existingCert.key).catch((e) =>
-          console.error("Old file delete failed", e),
-        );
+      if (!rows.length) {
+        return res.status(404).json({
+          success: false,
+          message: "Education record not found.",
+        });
       }
 
+      existingEducation = rows[0];
+
+      oldFile =
+        typeof existingEducation.certificate === "string"
+          ? safeParse(existingEducation.certificate)
+          : existingEducation.certificate;
+    }
+
+    // 3. Duplicate check
+    const [duplicates] = await pool.query(
+      `SELECT id FROM education
+       WHERE degree = ?
+       AND fieldStudy = ?
+       AND institutionName = ?
+       AND (? = 0 OR id != ?)`,
+      [degree, fieldStudy, institutionName, isUpdate ? 1 : 0, educationId || 0],
+    );
+
+    if (duplicates.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "This education entry already exists!",
+      });
+    }
+
+    // 4. Upload optional certificate to Cloudinary
+    if (req.file) {
+      const result = await uploadFile(req.file, "education");
+
+      newFile = result;
+
+      if (!newFile?.key || !newFile?.url) {
+        throw new Error("Certificate upload failed.");
+      }
+    }
+
+    // 5. Build final certificate
+    const finalCertificate = newFile
+      ? {
+          key: newFile.key,
+          url: newFile.url,
+          resource_type: newFile.resource_type,
+        }
+      : oldFile?.key
+        ? oldFile
+        : null;
+
+    const certificateValue = finalCertificate
+      ? JSON.stringify(finalCertificate)
+      : null;
+
+    // 6. Update existing education
+    if (isUpdate) {
       await pool.query(
-        `UPDATE education SET institutionName=?, degree=?, fieldStudy=?, grade=?, startYear=?, endYear=?, location=?, eduDesc=?, certificate=? WHERE id=?`,
+        `UPDATE education SET
+          institutionName = ?,
+          degree = ?,
+          fieldStudy = ?,
+          grade = ?,
+          startYear = ?,
+          endYear = ?,
+          isCurrentlyStudying = ?,
+          location = ?,
+          eduDesc = ?,
+          certificate = ?
+        WHERE id = ?`,
         [
           institutionName,
           degree,
@@ -98,88 +194,144 @@ export const addEducation = async (req, res) => {
           grade,
           startYear,
           endYear,
+          isCurrentlyStudying ? 1 : 0,
           location,
           eduDesc,
-          JSON.stringify(finalCertificate.key ? finalCertificate : null),
+          certificateValue,
           educationId,
         ],
       );
 
-      return res
-        .status(200)
-        .json({ success: true, message: "Education updated successfully." });
-    } else {
-      // Insert Logic: Check duplication
-      const [duplicate] = await pool.query(
-        "SELECT id FROM education WHERE degree=? AND fieldStudy=? AND institutionName=?",
-        [degree, fieldStudy, institutionName],
-      );
+      databaseUpdated = true;
 
-      if (duplicate.length > 0) {
-        if (newFileKey) await deleteFromLocal(newFileKey);
-        return res.status(400).json({
-          success: false,
-          message: "This education entry already exists!",
-        });
+      // Delete old certificate only after DB update succeeds
+      if (newFile && oldFile?.key) {
+        try {
+          await deleteFromCloudinary({
+            key: oldFile.key,
+            resource_type: oldFile.resource_type || "image",
+          });
+        } catch (cleanupError) {
+          console.error("Old certificate cleanup failed:", cleanupError);
+        }
       }
 
-      await pool.query(
-        `INSERT INTO education (institutionName, degree, fieldStudy, grade, startYear, endYear, location, eduDesc, certificate) VALUES (?,?,?,?,?,?,?,?,?)`,
-        [
-          institutionName,
-          degree,
-          fieldStudy,
-          grade,
-          startYear,
-          endYear,
-          location,
-          eduDesc,
-          JSON.stringify(finalCertificate.key ? finalCertificate : null),
-        ],
-      );
-
-      return res
-        .status(201)
-        .json({ success: true, message: "Education registered successfully." });
+      return res.status(200).json({
+        success: true,
+        message: "Education updated successfully.",
+      });
     }
+
+    // 7. Insert new education
+    await pool.query(
+      `INSERT INTO education (
+        institutionName,
+        degree,
+        fieldStudy,
+        grade,
+        startYear,
+        endYear,
+        isCurrentlyStudying,
+        location,
+        eduDesc,
+        certificate
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        institutionName,
+        degree,
+        fieldStudy,
+        grade,
+        startYear,
+        endYear,
+        isCurrentlyStudying ? 1 : 0,
+        location,
+        eduDesc,
+        certificateValue,
+      ],
+    );
+
+    databaseUpdated = true;
+
+    return res.status(201).json({
+      success: true,
+      message: "Education registered successfully.",
+    });
   } catch (error) {
     console.error("Education Controller Error:", error);
-    if (newFileKey) await deleteFromLocal(newFileKey); // Rollback
-    res.status(500).json({ success: false, message: "Internal Server Error!" });
+
+    // Rollback only the newly uploaded file
+    if (newFile && !databaseUpdated) {
+      try {
+        await deleteFromCloudinary({
+          key: newFile.key,
+          resource_type: newFile.resource_type || "image",
+        });
+      } catch (cleanupError) {
+        console.error("New certificate rollback failed:", cleanupError);
+      }
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error!",
+    });
   }
 };
 
 export const deleteEducation = async (req, res) => {
   const { id } = req.params;
-  console.log(id);
 
   try {
+    // 1. Fetch education record
     const [rows] = await pool.query(
       "SELECT certificate FROM education WHERE id = ?",
       [id],
     );
-    if (rows.length === 0)
-      return res.status(404).json({ success: false, message: "Not found!" });
 
-    const cert =
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Education record not found!",
+      });
+    }
+
+    // 2. Parse certificate JSON
+    const certificate =
       typeof rows[0].certificate === "string"
         ? safeParse(rows[0].certificate)
         : rows[0].certificate;
 
-    // Delete file from local storage
-    if (cert?.key) {
-      await deleteFromLocal(cert.key).catch((e) =>
-        console.error("File delete failed", e),
-      );
+    // 3. Delete education record from database
+    await pool.query("DELETE FROM education WHERE id = ?", [id]);
+
+    // 4. Delete certificate from Cloudinary (if exists)
+    let cleanupSuccess = true;
+
+    if (certificate?.key) {
+      const result = await deleteFromCloudinary({
+        key: certificate.key,
+        resource_type: certificate.resource_type || "image",
+      });
+
+      if (!result.success) {
+        cleanupSuccess = false;
+
+        console.error("Education certificate deletion failed:", result.error);
+      }
     }
 
-    await pool.query("DELETE FROM education WHERE id = ?", [id]);
-    return res
-      .status(200)
-      .json({ success: true, message: "Education deleted successfully!" });
+    return res.status(200).json({
+      success: true,
+      message: "Education deleted successfully!",
+      certificateDeleted: cleanupSuccess,
+    });
   } catch (error) {
     console.error("Delete Education Error:", error);
-    res.status(500).json({ success: false, message: "Server Error" });
+
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
   }
 };
 

@@ -122,9 +122,19 @@ const ImageUploadSection = memo(
         <input
           id={inputId}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/gif"
           className="hidden"
-          {...register(registerName)}
+          {...register(registerName, {
+            validate: (files) => {
+              if (!files?.[0]) return true;
+
+              return (
+                ["image/jpeg", "image/png", "image/webp", "image/gif"].includes(
+                  files[0].type,
+                ) || "Only supported image formats are allowed"
+              );
+            },
+          })}
         />
       </div>
     );
@@ -145,6 +155,7 @@ const DAddProjectPage = () => {
   const [ogPreviewSrc, setOgPreviewSrc] = useState(null);
   const [isOgImageRemoved, setIsOgImageRemoved] = useState(false);
   const [isGalleryRemoved, setIsGalleryRemoved] = useState(false);
+  const [galleryPreview, setGalleryPreview] = useState([]);
   const [output, setOutput] = useState(null);
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
@@ -254,17 +265,10 @@ const DAddProjectPage = () => {
         ogProjectImage: null,
         gallery: [],
       });
-      setOutput(project?.content || null);
-      setHeroPreviewSrc(
-        project?.heroImage?.url
-          ? `${backendUrl}/${project.heroImage.url.replace(/^\/+/, "")}`
-          : null,
-      );
-      setOgPreviewSrc(
-        project?.ogProjectImage?.url
-          ? `${backendUrl}/${project.ogProjectImage.url.replace(/^\/+/, "")}`
-          : null,
-      );
+      setHeroPreviewSrc(project?.heroImage?.url || null);
+
+      setOgPreviewSrc(project?.ogProjectImage?.url || null);
+
       setIsHeroImageRemoved(false);
       setIsOgImageRemoved(false);
       setIsGalleryRemoved(false);
@@ -275,24 +279,22 @@ const DAddProjectPage = () => {
   useEffect(() => {
     let heroUrl, ogUrl;
 
+    // Hero
     if (heroImage?.length > 0) {
       heroUrl = URL.createObjectURL(heroImage[0]);
       setHeroPreviewSrc(heroUrl);
     } else if (!isHeroImageRemoved && project?.heroImage?.url) {
-      setHeroPreviewSrc(
-        `${backendUrl}/${project.heroImage.url.replace(/^\/+/, "")}`,
-      );
+      setHeroPreviewSrc(project.heroImage.url);
     } else {
       setHeroPreviewSrc(null);
     }
 
+    // OG Image
     if (ogProjectImage?.length > 0) {
       ogUrl = URL.createObjectURL(ogProjectImage[0]);
       setOgPreviewSrc(ogUrl);
     } else if (!isOgImageRemoved && project?.ogProjectImage?.url) {
-      setOgPreviewSrc(
-        `${backendUrl}/${project.ogProjectImage.url.replace(/^\/+/, "")}`,
-      );
+      setOgPreviewSrc(project.ogProjectImage.url);
     } else {
       setOgPreviewSrc(null);
     }
@@ -418,20 +420,32 @@ const DAddProjectPage = () => {
   );
 
   // Gallery preview
-  const galleryPreview = useMemo(() => {
-    if (isGalleryRemoved) return [];
+  useEffect(() => {
+    if (isGalleryRemoved) {
+      setGalleryPreview([]);
+      return;
+    }
+
+    // New gallery files selected
     if (gallery?.length > 0) {
-      return Array.from(gallery).map((file) =>
-        file instanceof File ? URL.createObjectURL(file) : file,
-      );
+      const files = Array.from(gallery).filter((file) => file instanceof File);
+
+      const previewUrls = files.map((file) => URL.createObjectURL(file));
+
+      setGalleryPreview(previewUrls);
+
+      return () => {
+        previewUrls.forEach((url) => URL.revokeObjectURL(url));
+      };
     }
-    if (project?.gallery?.length > 0) {
-      return project.gallery.map(
-        (g) => `${backendUrl}/${g.url.replace(/^\/+/, "")}`,
-      );
-    }
-    return [];
-  }, [gallery, isGalleryRemoved, project, backendUrl]);
+
+    // Existing Cloudinary gallery
+    const existingGallery = (project?.gallery || [])
+      .map((image) => image?.url)
+      .filter(Boolean);
+
+    setGalleryPreview(existingGallery);
+  }, [gallery, isGalleryRemoved, project]);
 
   // Mutation
   const { mutate, isSuccess, isPending, isError, data, error } =
@@ -462,17 +476,6 @@ const DAddProjectPage = () => {
       formData.append("isHeroImageRemoved", JSON.stringify(isHeroImageRemoved));
       formData.append("isOgImageRemoved", JSON.stringify(isOgImageRemoved));
       formData.append("isGalleryRemoved", JSON.stringify(isGalleryRemoved));
-
-      // Existing data
-      formData.append(
-        "heroImageOBJ",
-        JSON.stringify(project?.heroImage || null),
-      );
-      formData.append(
-        "ogProjectImageOBJ",
-        JSON.stringify(project?.ogProjectImage || null),
-      );
-      formData.append("galleryOBJS", JSON.stringify(project?.gallery || []));
 
       // Arrays
       formData.append("techStack", JSON.stringify(data.techStack));
@@ -718,10 +721,27 @@ const DAddProjectPage = () => {
               <input
                 id="gallery"
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/gif"
                 multiple
                 className="hidden"
-                {...register("gallery")}
+                {...register("gallery", {
+                  validate: (files) => {
+                    if (!files?.length) return true;
+
+                    const validTypes = [
+                      "image/jpeg",
+                      "image/png",
+                      "image/webp",
+                      "image/gif",
+                    ];
+
+                    return (
+                      Array.from(files).every((file) =>
+                        validTypes.includes(file.type),
+                      ) || "Only JPG, PNG, WEBP and GIF images are allowed"
+                    );
+                  },
+                })}
               />
             </div>
           </FormSection>

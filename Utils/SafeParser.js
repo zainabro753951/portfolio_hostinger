@@ -28,3 +28,24 @@ export const normalizeNumber = (val, defaultVal = 0) => {
   const num = parseInt(val, 10);
   return isNaN(num) ? defaultVal : num;
 };
+
+// Safely parse JSON values received from FormData or database
+export const parseObject = (value) => {
+  if (!value) return null;
+
+  if (typeof value === "object") return value;
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+};
+
+export const parseBoolean = (value) =>
+  value === true || value === "true" || value === 1 || value === "1";
+
+// Parse old database JSON safely
+export const parseStoredImage = (value) => {
+  return parseObject(value);
+};

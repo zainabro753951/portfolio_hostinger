@@ -7,6 +7,7 @@ import {
   Clock,
   FileText,
   ImageIcon,
+  Download,
   Loader2,
   Save,
   User,
@@ -27,6 +28,8 @@ const AboutForm = () => {
   const [isUpdate, setIsUpdate] = useState(false);
   const [isAboutImageRemoved, setIsAboutImageRemoved] = useState(false);
   const [isPoseImageRemoved, setIsPoseImageRemoved] = useState(false);
+  const [resumePreview, setResumePreview] = useState(null);
+  const [isResumeRemoved, setIsResumeRemoved] = useState(false);
 
   const {
     register,
@@ -45,11 +48,13 @@ const AboutForm = () => {
       longDesc: "",
       aboutImage: null,
       poseImage: null,
+      resume: null,
     },
   });
 
   const aboutImage = watch("aboutImage");
   const poseImage = watch("poseImage");
+  const resumeFile = watch("resume");
 
   // Prefill when data comes from Redux
   useEffect(() => {
@@ -61,18 +66,15 @@ const AboutForm = () => {
         experience: about?.experience || "",
         shortDesc: about?.shortDesc || "",
         longDesc: about?.longDesc || "",
+        resume: null,
       });
 
-      setAboutPreview(
-        about?.aboutImage
-          ? `${import.meta.env.VITE_BACKEND_URL_FOR_IMAGE}${about?.aboutImage?.url}`
-          : null,
-      );
-      setPoseImagePreview(
-        about?.poseImage
-          ? `${import.meta.env.VITE_BACKEND_URL_FOR_IMAGE}${about?.poseImage?.url}`
-          : null,
-      );
+      // Cloudinary URLs are already complete URLs
+      setAboutPreview(about?.aboutImage?.url || null);
+      setPoseImagePreview(about?.poseImage?.url || null);
+
+      setResumePreview(about?.resume?.url || null);
+      setIsResumeRemoved(false);
       setIsUpdate(true);
     }
   }, [about, reset]);
@@ -119,13 +121,36 @@ const AboutForm = () => {
     };
   }, [poseImage]);
 
+  useEffect(() => {
+    const file = resumeFile?.[0];
+
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
+      glassToast.error("Only PDF files are allowed!");
+      setValue("resume", null);
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+
+    setResumePreview(previewUrl);
+    setIsResumeRemoved(false);
+
+    return () => {
+      URL.revokeObjectURL(previewUrl);
+    };
+  }, [resumeFile, setValue]);
+
   const { mutate, isPending, isError, isSuccess, data, error } = useAddAbout();
 
   // Form Submit
+
   const onSubmit = useCallback(
     (formData) => {
       const fd = new FormData();
 
+      // Basic fields
       fd.append("isUpdate", isUpdate ? "true" : "false");
       fd.append("fullName", formData.fullName);
       fd.append("shortRole", formData.shortRole);
@@ -133,32 +158,46 @@ const AboutForm = () => {
       fd.append("experience", formData.experience);
       fd.append("shortDesc", formData.shortDesc);
       fd.append("longDesc", formData.longDesc);
+
+      // Removal flags
       fd.append("isAboutImageRemoved", JSON.stringify(isAboutImageRemoved));
+
       fd.append("isPoseImageRemoved", JSON.stringify(isPoseImageRemoved));
 
-      // Handle About image
-      if (formData.aboutImage && formData.aboutImage[0]) {
+      fd.append("isResumeRemoved", JSON.stringify(isResumeRemoved));
+
+      // About image
+      if (formData.aboutImage?.[0]) {
         fd.append("aboutImage", formData.aboutImage[0]);
       }
 
-      // Handle Pose image
-      if (formData.poseImage && formData.poseImage[0]) {
+      // Pose image
+      if (formData.poseImage?.[0]) {
         fd.append("poseImage", formData.poseImage[0]);
       }
 
-      fd.append(
-        "aboutImageOBJ",
-        about?.aboutImage ? JSON.stringify(about.aboutImage) : "null",
-      );
+      // Resume PDF
+      if (formData.resume?.[0]) {
+        fd.append("resume", formData.resume[0]);
+      }
 
-      fd.append(
-        "poseImageOBJ",
-        about?.poseImage ? JSON.stringify(about.poseImage) : "null",
-      );
+      // Existing Cloudinary objects
+      fd.append("aboutImageOBJ", JSON.stringify(about?.aboutImage || null));
+
+      fd.append("poseImageOBJ", JSON.stringify(about?.poseImage || null));
+
+      fd.append("resumeOBJ", JSON.stringify(about?.resume || null));
 
       mutate(fd);
     },
-    [isUpdate, isAboutImageRemoved, isPoseImageRemoved, about, mutate],
+    [
+      isUpdate,
+      isAboutImageRemoved,
+      isPoseImageRemoved,
+      isResumeRemoved,
+      about,
+      mutate,
+    ],
   );
 
   // Toast Feedback
@@ -185,6 +224,13 @@ const AboutForm = () => {
     setValue("poseImage", null);
     setPoseImagePreview(null);
     setIsPoseImageRemoved(true);
+  }, [setValue]);
+
+  // remove resume handler
+  const handleRemoveResume = useCallback(() => {
+    setValue("resume", null);
+    setResumePreview(null);
+    setIsResumeRemoved(true);
   }, [setValue]);
 
   // Animation variants
@@ -216,7 +262,7 @@ const AboutForm = () => {
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12"
+      className="w-full max-w-6xl mx-auto"
     >
       {/* Header */}
       <motion.div variants={itemVariants} className="mb-8">
@@ -464,6 +510,111 @@ const AboutForm = () => {
                 placeholder="Detailed description of your background, skills, and achievements..."
                 icon={FileText}
               />
+
+              {/* Resume Upload Section */}
+              <div className="space-y-4 pt-4 border-t border-white/10">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-cyan-400" />
+                  <h2 className="text-lg font-semibold text-white">
+                    Resume / CV
+                  </h2>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-5">
+                  {/* Resume Preview */}
+                  {resumePreview ? (
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0">
+                          <FileText className="w-6 h-6 text-rose-400" />
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="text-white font-medium truncate">
+                            {resumeFile?.[0]?.name ||
+                              about?.resume?.key?.split("/").pop() ||
+                              "Resume.pdf"}
+                          </p>
+
+                          <p className="text-slate-400 text-xs mt-1">
+                            PDF Document
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <a
+                          href={resumePreview}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 transition-all text-sm"
+                        >
+                          <Download className="w-4 h-4" />
+                          View
+                        </a>
+
+                        <button
+                          type="button"
+                          onClick={handleRemoveResume}
+                          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition-all text-sm"
+                        >
+                          <X className="w-4 h-4" />
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <div className="w-14 h-14 rounded-2xl bg-slate-800 border border-white/10 flex items-center justify-center mx-auto mb-3">
+                        <FileText className="w-7 h-7 text-slate-400" />
+                      </div>
+
+                      <p className="text-white font-medium">
+                        No Resume Uploaded
+                      </p>
+
+                      <p className="text-slate-400 text-sm mt-1">
+                        Upload your resume in PDF format
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Upload Button */}
+                  <div className="mt-5">
+                    <label
+                      htmlFor="resume"
+                      className="flex items-center justify-center gap-2 w-full px-5 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium cursor-pointer hover:shadow-lg hover:shadow-cyan-500/20 transition-all text-sm"
+                    >
+                      <FileText className="w-4 h-4" />
+
+                      {resumePreview ? "Replace Resume" : "Upload Resume"}
+                    </label>
+
+                    <input
+                      type="file"
+                      id="resume"
+                      accept=".pdf,application/pdf"
+                      hidden
+                      {...register("resume", {
+                        validate: (files) =>
+                          !files?.[0] ||
+                          files[0].type === "application/pdf" ||
+                          "Only PDF files are allowed",
+                      })}
+                    />
+                  </div>
+
+                  {errors.resume && (
+                    <p className="text-rose-400 text-sm mt-2">
+                      {errors.resume.message}
+                    </p>
+                  )}
+
+                  <p className="text-xs text-slate-500 mt-3 text-center">
+                    Accepted format: PDF only
+                  </p>
+                </div>
+              </div>
 
               {/* Submit Button */}
               <div className="pt-4">

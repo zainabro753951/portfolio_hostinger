@@ -3,6 +3,12 @@ import pool from "../db.config.js";
 import { logActivity } from "../Utils/activityLogger.js";
 import { deleteFromLocal, uploadToLocal } from "../Utils/uploadToLocal.js"; // Local Helper
 import { safeParseJSON } from "../Utils/safeParseJSON.js";
+import { parseBoolean } from "../Utils/SafeParser.js";
+import {
+  uploadFile,
+  uploadMultipleFiles,
+} from "../Utils/uploadToCloudinary.js";
+import { cleanupCloudinaryFiles } from "../Utils/deleteFromCloudinary.js";
 
 export const AddProjectValidation = [
   body("title").notEmpty().withMessage("Project title is required"),
@@ -38,108 +44,188 @@ export const UpdateProjectValidation = [
     .withMessage("Visibility cannot be empty"),
 ];
 
-export const addOrUpdateProject = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty())
-    return res.status(400).json({ success: false, errors: errors.array() });
+// Parse JSON safely
+const parseJSON = (value, fallback = null) => {
+  if (value === null || value === undefined || value === "") {
+    return fallback;
+  }
 
-  const uploadedKeys = [];
-  const isUpdate = Boolean(req.params?.id);
-  const projectId = req.params.id;
-
-  let {
-    title,
-    slug,
-    shortDesc,
-    content,
-    repoLink,
-    liveDemo,
-    heroImageOBJ,
-    ogProjectImageOBJ,
-    galleryOBJS,
-    techStack,
-    tag,
-    metaKeywords,
-    category,
-    status,
-    featured,
-    visibility,
-    estTime,
-    seoTitle,
-    metaDesc,
-    canonicalUrl,
-    isHeroImageRemoved,
-    isOgImageRemoved,
-    isGalleryRemoved,
-  } = req.body;
+  if (typeof value !== "string") {
+    return value;
+  }
 
   try {
-    const parseIfString = (data) => {
-      if (!data) return null;
-      if (typeof data === "string") {
-        try {
-          return safeParseJSON(data);
-        } catch {
-          return data;
-        }
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+};
+
+// Extract Cloudinary public IDs
+const getPublicIds = (assets) => {
+  if (!assets) return [];
+
+  const items = Array.isArray(assets) ? assets : [assets];
+
+  return items
+    .map((item) => item?.key)
+    .filter((key) => typeof key === "string" && key.trim());
+};
+
+export const addOrUpdateProject = async (req, res) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      success: false,
+      errors: errors.array(),
+    });
+  }
+
+  const isUpdate = Boolean(req.params?.id);
+  const projectId = req.params?.id;
+
+  // Track newly uploaded files for rollback
+  const uploadedKeys = [];
+
+  let databaseCommitted = false;
+
+  try {
+    let {
+      title,
+      slug,
+      shortDesc,
+      content,
+      repoLink,
+      liveDemo,
+      techStack,
+      tag,
+      metaKeywords,
+      category,
+      status,
+      featured,
+      visibility,
+      estTime,
+      seoTitle,
+      metaDesc,
+      canonicalUrl,
+      isHeroImageRemoved,
+      isOgImageRemoved,
+      isGalleryRemoved,
+    } = req.body;
+
+    // Parse incoming JSON fields
+    techStack = parseJSON(techStack, []);
+    tag = parseJSON(tag, []);
+    metaKeywords = parseJSON(metaKeywords, []);
+
+    const removeHero = parseBoolean(isHeroImageRemoved);
+    const removeOg = parseBoolean(isOgImageRemoved);
+    const removeGallery = parseBoolean(isGalleryRemoved);
+
+    // 1. Fetch existing project data during update
+    let existingProject = null;
+
+    if (isUpdate) {
+      const [rows] = await pool.query(
+        `SELECT id, heroImage, ogProjectImage, gallery
+         FROM projects
+         WHERE id = ?
+         LIMIT 1`,
+        [projectId],
+      );
+
+      if (!rows.length) {
+        return res.status(404).json({
+          success: false,
+          message: "Project not found!",
+        });
       }
-      return data;
-    };
 
-    const isTrue = (val) => val === "true" || val === true;
+      existingProject = rows[0];
+    }
 
-    // Parse incoming data
-    techStack = parseIfString(techStack) || [];
-    tag = parseIfString(tag) || [];
-    metaKeywords = parseIfString(metaKeywords) || [];
-    galleryOBJS = parseIfString(galleryOBJS) || [];
-    heroImageOBJ = parseIfString(heroImageOBJ);
-    ogProjectImageOBJ = parseIfString(ogProjectImageOBJ);
+    const oldHeroImage = parseJSON(existingProject?.heroImage, null);
 
-    // ✅ 1. Upload New Files
-    const [heroResult, ogResult, galleryResults] = await Promise.all([
-      req.files?.heroImage?.[0]
-        ? uploadToLocal(req.files.heroImage[0], "projects/hero")
-        : null,
-      req.files?.ogProjectImage?.[0]
-        ? uploadToLocal(req.files.ogProjectImage[0], "projects/og")
-        : null,
-      req.files?.gallery?.length
-        ? Promise.all(
-            req.files.gallery.map((img) =>
-              uploadToLocal(img, "projects/gallery"),
-            ),
-          )
-        : [],
+    const oldOgImage = parseJSON(existingProject?.ogProjectImage, null);
+
+    const oldGallery = parseJSON(existingProject?.gallery, []);
+
+    // 2. Upload new hero and OG images
+    const heroFile = req.files?.heroImage?.[0];
+    const ogFile = req.files?.ogProjectImage?.[0];
+    const galleryFiles = req.files?.gallery || [];
+
+    const uploadTasks = await Promise.allSettled([
+      heroFile ? uploadFile(heroFile, "projects/hero") : Promise.resolve(null),
+
+      ogFile ? uploadFile(ogFile, "projects/og") : Promise.resolve(null),
+
+      uploadMultipleFiles(galleryFiles, "projects/gallery"),
     ]);
 
-    // Track for rollback
-    if (heroResult) uploadedKeys.push(heroResult.key);
-    if (ogResult) uploadedKeys.push(ogResult.key);
-    galleryResults.forEach((item) => uploadedKeys.push(item.key));
+    // Collect every successful upload immediately
+    const [heroTask, ogTask, galleryTask] = uploadTasks;
 
-    // ✅ 2. Logic for Final Database State
+    if (heroTask.status === "fulfilled" && heroTask.value) {
+      uploadedKeys.push(heroTask.value.key);
+    }
+
+    if (ogTask.status === "fulfilled" && ogTask.value) {
+      uploadedKeys.push(ogTask.value.key);
+    }
+
+    let galleryResults = [];
+
+    if (galleryTask.status === "fulfilled") {
+      galleryResults = galleryTask.value.successfulUploads || [];
+
+      galleryResults.forEach((image) => {
+        uploadedKeys.push(image.key);
+      });
+    }
+
+    // Check for hero/OG upload errors
+    const uploadErrors = uploadTasks
+      .filter((task) => task.status === "rejected")
+      .map((task) => task.reason);
+
+    // Check for partial gallery upload errors
+    if (galleryTask.status === "fulfilled") {
+      uploadErrors.push(...(galleryTask.value.errors || []));
+    }
+
+    if (uploadErrors.length) {
+      throw new Error(
+        `One or more Cloudinary uploads failed: ${uploadErrors
+          .map((error) => error?.message || String(error))
+          .join(", ")}`,
+      );
+    }
+
+    const heroResult = heroTask.value;
+    const ogResult = ogTask.value;
+
+    // 3. Prepare final images
     const heroImageFinal = heroResult
-      ? { url: heroResult.url, key: heroResult.key }
-      : isTrue(isHeroImageRemoved)
+      ? heroResult
+      : removeHero
         ? null
-        : heroImageOBJ;
+        : oldHeroImage;
 
-    const ogImageFinal = ogResult
-      ? { url: ogResult.url, key: ogResult.key }
-      : isTrue(isOgImageRemoved)
-        ? null
-        : ogProjectImageOBJ;
+    const ogImageFinal = ogResult ? ogResult : removeOg ? null : oldOgImage;
 
-    // Gallery Logic: Agar naya upload hai to naye images, warna purani gallery (ya empty)
-    let finalGallery = galleryOBJS;
+    // New gallery replaces old gallery
+    // If no new files are uploaded, preserve old gallery unless removed
+    let finalGallery = oldGallery;
+
     if (galleryResults.length > 0) {
-      finalGallery = galleryResults.map((i) => ({ key: i.key, url: i.url }));
-    } else if (isTrue(isGalleryRemoved)) {
+      finalGallery = galleryResults;
+    } else if (removeGallery) {
       finalGallery = [];
     }
 
-    // ✅ 3. DB Operations
+    // 4. Prepare common database values
     const commonValues = [
       title,
       slug,
@@ -158,51 +244,92 @@ export const addOrUpdateProject = async (req, res) => {
       metaDesc || null,
       category,
       status,
-      isTrue(featured),
+      parseBoolean(featured),
       visibility,
       estTime || null,
     ];
 
+    // 5. Insert or update project
     if (isUpdate) {
       await pool.query(
-        `UPDATE projects SET title=?, slug=?, shortDesc=?, content=?, repoLink=?, liveDemo=?, canonicalUrl=?, heroImage=?, ogProjectImage=?, gallery=?, techStack=?, tag=?, metaKeywords=?, seoTitle=?, metaDesc=?, category=?, status=?, featured=?, visibility=?, estTime=? WHERE id=?`,
+        `UPDATE projects SET
+          title = ?,
+          slug = ?,
+          shortDesc = ?,
+          content = ?,
+          repoLink = ?,
+          liveDemo = ?,
+          canonicalUrl = ?,
+          heroImage = ?,
+          ogProjectImage = ?,
+          gallery = ?,
+          techStack = ?,
+          tag = ?,
+          metaKeywords = ?,
+          seoTitle = ?,
+          metaDesc = ?,
+          category = ?,
+          status = ?,
+          featured = ?,
+          visibility = ?,
+          estTime = ?
+        WHERE id = ?`,
         [...commonValues, projectId],
       );
     } else {
       await pool.query(
-        `INSERT INTO projects (title, slug, shortDesc, content, repoLink, liveDemo, canonicalUrl, heroImage, ogProjectImage, gallery, techStack, tag, metaKeywords, seoTitle, metaDesc, category, status, featured, visibility, estTime) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        `INSERT INTO projects (
+          title,
+          slug,
+          shortDesc,
+          content,
+          repoLink,
+          liveDemo,
+          canonicalUrl,
+          heroImage,
+          ogProjectImage,
+          gallery,
+          techStack,
+          tag,
+          metaKeywords,
+          seoTitle,
+          metaDesc,
+          category,
+          status,
+          featured,
+          visibility,
+          estTime
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         commonValues,
       );
     }
 
-    // ✅ 4. Cleanup Old Files (Sirf Update Case Mein)
+    // Database operation succeeded
+    databaseCommitted = true;
+
+    // 6. Delete old assets only after successful DB operation
     if (isUpdate) {
-      // CLEANUP HERO: Agar naya upload hua YA user ne remove kiya
-      if ((heroResult || isTrue(isHeroImageRemoved)) && heroImageOBJ?.key) {
-        await deleteFromLocal(heroImageOBJ.key).catch((e) =>
-          console.error("Cleanup Hero Fail:", e),
-        );
+      const oldAssetsToDelete = [];
+
+      // Old hero image
+      if ((heroResult || removeHero) && oldHeroImage?.key) {
+        oldAssetsToDelete.push(oldHeroImage.key);
       }
 
-      // CLEANUP OG: Agar naya upload hua YA user ne remove kiya
-      if ((ogResult || isTrue(isOgImageRemoved)) && ogProjectImageOBJ?.key) {
-        await deleteFromLocal(ogProjectImageOBJ.key).catch((e) =>
-          console.error("Cleanup OG Fail:", e),
-        );
+      // Old OG image
+      if ((ogResult || removeOg) && oldOgImage?.key) {
+        oldAssetsToDelete.push(oldOgImage.key);
       }
 
-      // CLEANUP GALLERY: Agar naye images aaye YA user ne पूरी gallery remove ki
-      if (
-        (galleryResults.length > 0 || isTrue(isGalleryRemoved)) &&
-        Array.isArray(galleryOBJS)
-      ) {
-        for (const img of galleryOBJS) {
-          if (img?.key)
-            await deleteFromLocal(img.key).catch((e) =>
-              console.error("Cleanup Gallery Fail:", e),
-            );
-        }
+      // Old gallery
+      if (galleryResults.length > 0 || removeGallery) {
+        oldAssetsToDelete.push(...getPublicIds(oldGallery));
       }
+
+      await cleanupCloudinaryFiles(
+        oldAssetsToDelete,
+        "Old project assets cleanup",
+      );
     }
 
     return res.status(isUpdate ? 200 : 201).json({
@@ -210,15 +337,18 @@ export const addOrUpdateProject = async (req, res) => {
       message: `Project ${isUpdate ? "updated" : "added"} successfully!`,
     });
   } catch (error) {
-    console.error("❌ Controller Error:", error);
-    for (const key of uploadedKeys) {
-      await deleteFromLocal(key).catch((e) =>
-        console.error("Rollback Error:", e),
-      );
+    console.error("❌ Project Controller Error:", error);
+
+    // Rollback only newly uploaded files if DB operation failed
+    if (!databaseCommitted && uploadedKeys.length > 0) {
+      await cleanupCloudinaryFiles(uploadedKeys, "New uploads rollback");
     }
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal Server Error!" });
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error!",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
 };
 
@@ -227,70 +357,108 @@ export const deleteProject = async (req, res) => {
   const { id } = req.params;
 
   try {
-    // 1️⃣ Get project images from DB
+    // 1. Fetch project assets from database
     const [rows] = await pool.query(
-      "SELECT heroImage, ogProjectImage, gallery FROM projects WHERE id = ?",
+      `SELECT heroImage, ogProjectImage, gallery
+       FROM projects
+       WHERE id = ?
+       LIMIT 1`,
       [id],
     );
 
     const project = rows[0];
-    if (!project)
-      return res
-        .status(404)
-        .json({ success: false, message: "Project not found" });
 
-    // 2️⃣ Parse JSON fields (if stored as string)
-    const parseJSON = (str) => {
-      if (!str) return null;
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found!",
+      });
+    }
+
+    // 2. Parse JSON safely
+    const parseJSON = (value, fallback = null) => {
+      if (!value) return fallback;
+
+      if (typeof value !== "string") {
+        return value;
+      }
+
       try {
-        return safeParseJSON(str);
-      } catch (e) {
-        console.error("JSON parse error:", e);
-        return null;
+        return JSON.parse(value);
+      } catch (error) {
+        console.error("JSON Parse Error:", error);
+        return fallback;
       }
     };
 
     const heroImage = parseJSON(project.heroImage);
     const ogImage = parseJSON(project.ogProjectImage);
-    const gallery = Array.isArray(project.gallery)
-      ? project.gallery
-      : parseJSON(project.gallery) || [];
+    const gallery = parseJSON(project.gallery, []);
 
-    // 3️⃣ Collect all keys for deletion
-    const filesToDelete = [];
+    // 3. Collect all Cloudinary public IDs
+    const filesToDelete = [
+      heroImage?.key,
+      ogImage?.key,
+      ...(Array.isArray(gallery) ? gallery.map((image) => image?.key) : []),
+    ].filter((key) => typeof key === "string" && key.trim());
 
-    if (heroImage?.key) filesToDelete.push(heroImage.key);
-    if (ogImage?.key) filesToDelete.push(ogImage.key);
-    if (gallery?.length) {
-      gallery.forEach((img) => {
-        if (img?.key) filesToDelete.push(img.key);
-      });
-    }
+    // Remove duplicate public IDs
+    const uniquePublicIds = [...new Set(filesToDelete)];
 
-    // 4️⃣ Delete all files in parallel (safe)
-    await Promise.all(filesToDelete.map((key) => deleteFromLocal(key)));
-
-    // 5️⃣ Delete project from DB
+    // 4. Delete project from database first
     await pool.query("DELETE FROM projects WHERE id = ?", [id]);
 
-    // 6️⃣ Optional: log activity
-    await logActivity({
-      type: "PROJECT_DELETE",
-      title: "Project Deleted",
-      description: `Project with ID ${id} was deleted.`,
-      ip: req.ip,
-      device: req.headers["user-agent"],
-    });
+    // 5. Delete all associated Cloudinary assets
+    let cloudinaryCleanup = {
+      success: true,
+      deletedCount: 0,
+    };
 
+    if (uniquePublicIds.length > 0) {
+      const deleteResult = await deleteFromCloudinary(uniquePublicIds);
+
+      if (deleteResult.success) {
+        cloudinaryCleanup.deletedCount = uniquePublicIds.length;
+      } else {
+        cloudinaryCleanup.success = false;
+
+        console.error("❌ Cloudinary Cleanup Failed:", deleteResult.error);
+      }
+    }
+
+    // 6. Log activity separately
+    try {
+      await logActivity({
+        type: "PROJECT_DELETE",
+        title: "Project Deleted",
+        description: `Project with ID ${id} was deleted.`,
+        ip: req.ip,
+        device: req.headers["user-agent"],
+      });
+    } catch (logError) {
+      console.error("Activity Log Error:", logError.message);
+    }
+
+    // 7. Send response
     return res.status(200).json({
       success: true,
-      message: "Project and all related images deleted!",
+      message: cloudinaryCleanup.success
+        ? "Project and all related images deleted successfully!"
+        : "Project deleted, but some Cloudinary images could not be deleted.",
+      cloudinary: {
+        success: cloudinaryCleanup.success,
+        totalFiles: uniquePublicIds.length,
+        deletedCount: cloudinaryCleanup.deletedCount,
+      },
     });
   } catch (error) {
-    console.error("❌ Delete project error:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Error deleting project" });
+    console.error("❌ Delete Project Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Error deleting project!",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
 };
 

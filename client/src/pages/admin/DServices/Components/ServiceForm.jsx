@@ -49,6 +49,9 @@ const ServiceForm = () => {
   const updateServiceRef = useRef(null);
   const serviceImage = safeParse(service?.serviceImage);
 
+  const existingServiceImage =
+    serviceImage?.key && serviceImage?.url ? serviceImage : null;
+
   const defaultValues = {
     title: "",
     slug: "",
@@ -63,6 +66,7 @@ const ServiceForm = () => {
     seoMetaTitle: "",
     seoMetaDescription: "",
     seoKeywords: [],
+    serviceImage: null,
   };
 
   const methods = useForm({
@@ -213,6 +217,7 @@ const ServiceForm = () => {
       seoMetaDescription: service.seoMetaDescription || "",
       seoKeywords:
         safeParse(service.seoKeywords)?.map((val) => ({ name: val })) || [],
+      serviceImage: null,
     });
 
     setIsUpdate(true);
@@ -262,37 +267,55 @@ const ServiceForm = () => {
     (formData) => {
       const fd = new FormData();
 
-      fd.append("isUpdate", isUpdate);
-      fd.append("serviceId", isUpdate ? id : "");
+      // ── Basic Information ─────────────────────────────
+      fd.append("isUpdate", String(isUpdate));
+      fd.append("serviceId", isUpdate ? String(id) : "");
+
+      // ── Existing Cloudinary Image ─────────────────────
       fd.append(
         "serviceImageOBJ",
-        isUpdate && serviceImage ? JSON.stringify(serviceImage) : "",
+        isUpdate && existingServiceImage
+          ? JSON.stringify(existingServiceImage)
+          : "",
       );
 
-      if (formData.serviceImage instanceof File) {
-        fd.append("serviceImage", formData.serviceImage);
+      // ── New Image Upload ──────────────────────────────
+      // FileInputField directly stores a File object.
+      const imageFile = formData.serviceImage;
+
+      if (imageFile instanceof File) {
+        fd.append("serviceImage", imageFile);
       }
 
+      // ── Other Form Fields ─────────────────────────────
       Object.entries(formData).forEach(([key, value]) => {
-        if (key === "serviceImage") return;
-        if (["techStack", "features", "seoKeywords"].includes(key)) return;
-
-        if (value !== undefined && value !== null) {
-          if (typeof value === "boolean")
-            fd.append(key, value ? "true" : "false");
-          else fd.append(key, String(value));
+        if (
+          key === "serviceImage" ||
+          ["techStack", "features", "seoKeywords"].includes(key) ||
+          value === undefined ||
+          value === null
+        ) {
+          return;
         }
+
+        fd.append(
+          key,
+          typeof value === "boolean" ? String(value) : String(value),
+        );
       });
 
-      const techStackValues = formData.techStack.map(
-        (item) => item.name || item.value,
-      );
-      const featuresValues = formData.features.map(
-        (item) => item.name || item.value,
-      );
-      const keywordsValues = formData.seoKeywords.map(
-        (item) => item.name || item.value,
-      );
+      // ── Convert Arrays to JSON ────────────────────────
+      const techStackValues = (formData.techStack || [])
+        .map((item) => item.name || item.value)
+        .filter(Boolean);
+
+      const featuresValues = (formData.features || [])
+        .map((item) => item.name || item.value)
+        .filter(Boolean);
+
+      const keywordsValues = (formData.seoKeywords || [])
+        .map((item) => item.name || item.value)
+        .filter(Boolean);
 
       fd.append("techStack", JSON.stringify(techStackValues));
       fd.append("features", JSON.stringify(featuresValues));
@@ -300,7 +323,7 @@ const ServiceForm = () => {
 
       mutate(fd);
     },
-    [isUpdate, id, serviceImage, mutate],
+    [isUpdate, id, existingServiceImage, mutate],
   );
 
   const containerVariants = {
@@ -492,9 +515,10 @@ const ServiceForm = () => {
               <FileInputField
                 label="Service Cover Image"
                 name="serviceImage"
-                error={errors["serviceImage"]}
-                existingFileUrl={serviceImage?.url || ""}
-                accept="image/*"
+                error={errors.serviceImage}
+                existingFileUrl={existingServiceImage?.url || ""}
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                maxSize={5}
               />
             </div>
 

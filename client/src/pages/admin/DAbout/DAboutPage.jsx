@@ -33,7 +33,7 @@ const DAboutPage = () => {
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 min-h-screen"
+      className="py-6 sm:py-8 lg:py-10 min-h-screen"
     >
       <motion.div variants={itemVariants}>
         <AboutForm />
