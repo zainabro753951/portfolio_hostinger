@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Award,
   ChevronLeft,
@@ -13,12 +13,21 @@ import {
   ThumbsUp,
   TrendingUp,
   ArrowRight,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { getClientSatisfactionRate, safeParse, TESTIMONIAL_GRADIENTS } from '@/Utils/Utils';
-import StatCard from '@/sections/StatCard';
-import LazyImage from '@/components/LazyImage';
-import { useMotionPrefs, fadeUp, staggerParent, VIEWPORT_ONCE } from '@/lib/motion';
+import {
+  getClientSatisfactionRate,
+  safeParse,
+  TESTIMONIAL_GRADIENTS,
+} from "@/Utils/Utils";
+import StatCard from "@/sections/StatCard";
+import LazyImage from "@/components/LazyImage";
+import {
+  useMotionPrefs,
+  fadeUp,
+  staggerParent,
+  VIEWPORT_ONCE,
+} from "@/lib/motion";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 🧩 TESTIMONIAL CARD COMPONENT
@@ -35,15 +44,15 @@ const TestimonialCard = ({ testimonial, index, onClick, isActive }) => {
       tabIndex={0}
       aria-label={`View testimonial by ${testimonial.name}`}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onClick(index);
         }
       }}
       className={`group relative h-full flex flex-col justify-between p-5 sm:p-6 rounded-2xl cursor-pointer transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan/60 ${
         isActive
-          ? 'bg-surface-card border-2 border-brand-cyan shadow-glow-cyan'
-          : 'bg-surface-card/80 backdrop-blur-sm border border-line-subtle hover:border-brand-cyan/40 hover:bg-surface-card'
+          ? "bg-surface-card border-2 border-brand-cyan shadow-glow-cyan"
+          : "bg-surface-card/80 backdrop-blur-sm border border-line-subtle hover:border-brand-cyan/40 hover:bg-surface-card"
       }`}
     >
       {/* Top accent glow on hover */}
@@ -99,7 +108,7 @@ const TestimonialCard = ({ testimonial, index, onClick, isActive }) => {
                 {testimonial.name}
               </h4>
               <p className="text-xs text-ink-muted truncate">
-                {testimonial.role || 'Client'}
+                {testimonial.role || "Client"}
               </p>
             </div>
           </div>
@@ -119,7 +128,6 @@ const TestimonialCard = ({ testimonial, index, onClick, isActive }) => {
 // 📝 REVIEWS PAGE MAIN
 // ═══════════════════════════════════════════════════════════════════════════
 const Reviews = () => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE || '';
   const { testimonials = [] } = useSelector((state) => state.testimonial);
   const { prefersReducedMotion } = useMotionPrefs();
 
@@ -132,41 +140,57 @@ const Reviews = () => {
   // ═══════════════════════════════════════════════════════════════════════════
   const processedTestimonials = useMemo(() => {
     if (!testimonials?.length) return [];
+
     return testimonials.map((t, i) => {
       const imgData = safeParse(t.clientImage);
-      const imageUrl = imgData?.url
-        ? `${backendUrl.replace(/\/+$/, '')}/${imgData.url.replace(/^\/+/, '')}`
-        : '/default-avatar.jpg';
+
+      // Direct Cloudinary URL
+      const imageUrl =
+        typeof imgData?.url === "string" &&
+        /^https?:\/\//i.test(imgData.url.trim())
+          ? imgData.url.trim()
+          : "/default-avatar.jpg";
+
       const gradients = TESTIMONIAL_GRADIENTS || [
-        'linear-gradient(135deg, #02d3fe, #4e90e1)',
-        'linear-gradient(135deg, #4e90e1, #9a5cb7)',
-        'linear-gradient(135deg, #9a5cb7, #ec4899)',
-        'linear-gradient(135deg, #10b981, #02d3fe)',
+        "linear-gradient(135deg, #02d3fe, #4e90e1)",
+        "linear-gradient(135deg, #4e90e1, #9a5cb7)",
+        "linear-gradient(135deg, #9a5cb7, #ec4899)",
+        "linear-gradient(135deg, #10b981, #02d3fe)",
       ];
+
+      const rating = Number(t.ratting);
 
       return {
         id: t.id || i,
-        name: t.clientName || 'Valued Client',
-        role: t.designationRole || '',
-        company: t.company || '',
+        name: t.clientName || "Valued Client",
+        role: t.designationRole || "",
+        company: t.company || "",
         image: imageUrl,
-        rating: Math.min(Number(t.ratting) || 5, 5),
-        text: t.message || '',
+        rating: Number.isFinite(rating) ? Math.min(Math.max(rating, 0), 5) : 5,
+        text: t.message || "",
         gradient: gradients[i % gradients.length],
       };
     });
-  }, [testimonials, backendUrl]);
+  }, [testimonials]);
 
   // Keep activeIndex within bounds
   useEffect(() => {
-    if (activeIndex >= processedTestimonials.length && processedTestimonials.length > 0) {
+    if (
+      activeIndex >= processedTestimonials.length &&
+      processedTestimonials.length > 0
+    ) {
       setActiveIndex(0);
     }
   }, [activeIndex, processedTestimonials.length]);
 
   // Auto-play carousel
   useEffect(() => {
-    if (!isAutoPlaying || processedTestimonials.length <= 1 || prefersReducedMotion) return;
+    if (
+      !isAutoPlaying ||
+      processedTestimonials.length <= 1 ||
+      prefersReducedMotion
+    )
+      return;
 
     const interval = setInterval(() => {
       setDirection(1);
@@ -187,7 +211,9 @@ const Reviews = () => {
     setDirection(-1);
     setIsAutoPlaying(false);
     setActiveIndex(
-      (prev) => (prev - 1 + processedTestimonials.length) % processedTestimonials.length
+      (prev) =>
+        (prev - 1 + processedTestimonials.length) %
+        processedTestimonials.length,
     );
   }, [processedTestimonials.length]);
 
@@ -197,49 +223,59 @@ const Reviews = () => {
       setIsAutoPlaying(false);
       setActiveIndex(index);
     },
-    [activeIndex]
+    [activeIndex],
   );
 
   // Active testimonial
   const currentTestimonial = useMemo(
     () => processedTestimonials[activeIndex] || processedTestimonials[0] || {},
-    [activeIndex, processedTestimonials]
+    [activeIndex, processedTestimonials],
   );
 
   // Stats calculation
   const statsData = useMemo(() => {
     if (!processedTestimonials.length) return [];
 
-    const uniqueClients = new Set(processedTestimonials.map((t) => t.name)).size;
-    const totalRating = processedTestimonials.reduce((sum, t) => sum + (t.rating || 5), 0);
+    const uniqueClients = new Set(processedTestimonials.map((t) => t.name))
+      .size;
+    const totalRating = processedTestimonials.reduce(
+      (sum, t) => sum + (t.rating || 5),
+      0,
+    );
     const avgRating = (totalRating / processedTestimonials.length).toFixed(1);
     const rawSatisfaction = getClientSatisfactionRate(processedTestimonials);
-    const satisfaction = Number.isFinite(Number(rawSatisfaction)) ? rawSatisfaction : 100;
+    const satisfaction = Number.isFinite(Number(rawSatisfaction))
+      ? rawSatisfaction
+      : 100;
 
     return [
       {
         value: `${processedTestimonials.length}`,
-        label: 'Total Reviews',
+        label: "Total Reviews",
         icon: MessageCircle,
-        gradient: 'linear-gradient(135deg, rgba(2, 211, 254, 0.2), rgba(78, 144, 225, 0.2))',
+        gradient:
+          "linear-gradient(135deg, rgba(2, 211, 254, 0.2), rgba(78, 144, 225, 0.2))",
       },
       {
         value: `${uniqueClients}`,
-        label: 'Happy Clients',
+        label: "Happy Clients",
         icon: ThumbsUp,
-        gradient: 'linear-gradient(135deg, rgba(78, 144, 225, 0.2), rgba(154, 92, 183, 0.2))',
+        gradient:
+          "linear-gradient(135deg, rgba(78, 144, 225, 0.2), rgba(154, 92, 183, 0.2))",
       },
       {
         value: avgRating,
-        label: 'Average Rating',
+        label: "Average Rating",
         icon: Star,
-        gradient: 'linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.2))',
+        gradient:
+          "linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.2))",
       },
       {
         value: `${satisfaction}%`,
-        label: 'Satisfaction Rate',
+        label: "Satisfaction Rate",
         icon: Award,
-        gradient: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(2, 211, 254, 0.2))',
+        gradient:
+          "linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(2, 211, 254, 0.2))",
       },
     ];
   }, [processedTestimonials]);
@@ -248,27 +284,27 @@ const Reviews = () => {
   const structuredData = useMemo(() => {
     if (!processedTestimonials.length) return null;
     return {
-      '@context': 'https://schema.org',
-      '@type': 'ItemList',
-      name: 'Client Testimonials',
-      description: 'Authentic reviews and testimonials from clients.',
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: "Client Testimonials",
+      description: "Authentic reviews and testimonials from clients.",
       itemListElement: processedTestimonials.slice(0, 10).map((t, i) => ({
-        '@type': 'Review',
+        "@type": "Review",
         position: i + 1,
         reviewBody: t.text,
         author: {
-          '@type': 'Person',
+          "@type": "Person",
           name: t.name,
           jobTitle: t.role,
         },
         reviewRating: {
-          '@type': 'Rating',
+          "@type": "Rating",
           ratingValue: t.rating,
           bestRating: 5,
         },
         itemReviewed: {
-          '@type': 'Service',
-          name: 'Full Stack Web Development',
+          "@type": "Service",
+          name: "Full Stack Web Development",
         },
       })),
     };
@@ -280,7 +316,7 @@ const Reviews = () => {
       center: { x: 0, opacity: 1 },
       exit: (dir) => ({ x: dir < 0 ? 40 : -40, opacity: 0 }),
     }),
-    []
+    [],
   );
 
   // Empty State
@@ -293,9 +329,12 @@ const Reviews = () => {
         <div className="w-16 h-16 rounded-2xl bg-surface-card border border-line-subtle flex items-center justify-center text-ink-muted mb-4">
           <MessageCircle size={28} />
         </div>
-        <h1 className="font-heading text-2xl font-bold text-ink mb-2">No Reviews Yet</h1>
+        <h1 className="font-heading text-2xl font-bold text-ink mb-2">
+          No Reviews Yet
+        </h1>
         <p className="text-ink-secondary text-sm max-w-md mb-6">
-          Testimonials will appear here once client collaborations and project reviews are published.
+          Testimonials will appear here once client collaborations and project
+          reviews are published.
         </p>
         <Link
           to="/"
@@ -308,7 +347,10 @@ const Reviews = () => {
   }
 
   return (
-    <div id="reviews-page" className="relative min-h-screen text-ink overflow-x-clip bg-surface-base">
+    <div
+      id="reviews-page"
+      className="relative min-h-screen text-ink overflow-x-clip bg-surface-base"
+    >
       {/* Schema.org Structured Data */}
       {structuredData && (
         <script
@@ -318,7 +360,10 @@ const Reviews = () => {
       )}
 
       {/* 🌌 AMBIENT BACKGROUND GLOWS (Pure CSS, 0 JS load) */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
+      <div
+        className="pointer-events-none fixed inset-0 overflow-hidden"
+        aria-hidden="true"
+      >
         <div className="absolute top-1/4 left-1/4 h-80 w-80 sm:h-96 sm:w-96 rounded-full bg-brand-cyan/10 blur-[130px]" />
         <div className="absolute top-2/3 right-1/4 h-80 w-80 sm:h-96 sm:w-96 rounded-full bg-brand-blue/10 blur-[140px]" />
         <div className="absolute bottom-1/4 left-1/3 h-72 w-72 rounded-full bg-brand-purple/10 blur-[150px]" />
@@ -336,20 +381,25 @@ const Reviews = () => {
               transition={{ duration: 0.6 }}
             >
               <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono font-medium text-brand-cyan bg-brand-cyan/10 border border-brand-cyan/20 mb-4 sm:mb-6 shadow-glow-cyan">
-                <Sparkles size={13} className="text-brand-cyan" aria-hidden="true" />
+                <Sparkles
+                  size={13}
+                  className="text-brand-cyan"
+                  aria-hidden="true"
+                />
                 Client Feedback
               </span>
 
               <h1 className="font-heading text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-ink mb-4 sm:mb-6 leading-tight">
-                Client{' '}
+                Client{" "}
                 <span className="bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple bg-clip-text text-transparent">
                   Reviews & Endorsements
                 </span>
               </h1>
 
               <p className="text-ink-secondary text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
-                Direct experiences from founders, product owners, and engineering leads who have
-                partnered with me to build scalable modern web applications.
+                Direct experiences from founders, product owners, and
+                engineering leads who have partnered with me to build scalable
+                modern web applications.
               </p>
             </motion.div>
           </div>
@@ -366,7 +416,9 @@ const Reviews = () => {
         >
           <div className="max-w-4xl mx-auto px-4 sm:px-6">
             <motion.div
-              initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.98 }}
+              initial={
+                prefersReducedMotion ? false : { opacity: 0, scale: 0.98 }
+              }
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={VIEWPORT_ONCE}
               transition={{ duration: 0.5 }}
@@ -385,21 +437,27 @@ const Reviews = () => {
               {/* Floating Quote Badge */}
               <div className="flex items-center justify-between mb-6 relative z-10">
                 <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-brand-cyan to-brand-blue flex items-center justify-center text-surface-base shadow-glow-cyan">
-                  <Quote size={20} className="text-surface-base" aria-hidden="true" />
+                  <Quote
+                    size={20}
+                    className="text-surface-base"
+                    aria-hidden="true"
+                  />
                 </div>
                 <div
                   className="flex items-center gap-1 bg-surface-base/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-line-subtle"
                   role="img"
                   aria-label={`${currentTestimonial.rating} out of 5 stars`}
                 >
-                  {[...Array(Math.min(currentTestimonial.rating, 5))].map((_, i) => (
-                    <Star
-                      key={i}
-                      size={14}
-                      className="fill-amber-400 text-amber-400"
-                      aria-hidden="true"
-                    />
-                  ))}
+                  {[...Array(Math.min(currentTestimonial.rating, 5))].map(
+                    (_, i) => (
+                      <Star
+                        key={i}
+                        size={14}
+                        className="fill-amber-400 text-amber-400"
+                        aria-hidden="true"
+                      />
+                    ),
+                  )}
                   <span className="text-xs font-mono font-semibold text-ink ml-1.5">
                     {currentTestimonial.rating}.0
                   </span>
@@ -413,9 +471,9 @@ const Reviews = () => {
                     key={currentTestimonial.id || activeIndex}
                     custom={direction}
                     variants={prefersReducedMotion ? undefined : slideVariants}
-                    initial={prefersReducedMotion ? 'center' : 'enter'}
+                    initial={prefersReducedMotion ? "center" : "enter"}
                     animate="center"
-                    exit={prefersReducedMotion ? undefined : 'exit'}
+                    exit={prefersReducedMotion ? undefined : "exit"}
                     transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                     className="flex flex-col justify-between h-full"
                   >
@@ -439,7 +497,7 @@ const Reviews = () => {
                             {currentTestimonial.name}
                           </h3>
                           <p className="text-xs sm:text-sm text-ink-secondary">
-                            {currentTestimonial.role || 'Client'}
+                            {currentTestimonial.role || "Client"}
                           </p>
                         </div>
                       </div>
@@ -468,11 +526,11 @@ const Reviews = () => {
                       onClick={() => goToTestimonial(index)}
                       className={`h-2 rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan ${
                         index === activeIndex
-                          ? 'w-7 bg-brand-cyan shadow-glow-cyan'
-                          : 'w-2 bg-ink-muted/30 hover:bg-ink-muted/60'
+                          ? "w-7 bg-brand-cyan shadow-glow-cyan"
+                          : "w-2 bg-ink-muted/30 hover:bg-ink-muted/60"
                       }`}
                       aria-label={`Go to testimonial ${index + 1}`}
-                      aria-current={index === activeIndex ? 'true' : undefined}
+                      aria-current={index === activeIndex ? "true" : undefined}
                     />
                   ))}
                 </nav>
@@ -504,14 +562,17 @@ const Reviews = () => {
         {/* ═══════════════════════════════════════════════════════════════════
             ALL REVIEWS GRID
            ═══════════════════════════════════════════════════════════════════ */}
-        <section className="py-12 sm:py-20" aria-label="All client testimonials">
+        <section
+          className="py-12 sm:py-20"
+          aria-label="All client testimonials"
+        >
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="text-center mb-10 sm:mb-14">
               <span className="inline-block px-3 py-1 rounded-full text-xs font-mono font-medium text-brand-blue bg-brand-blue/10 border border-brand-blue/20 mb-3">
                 Wall of Trust
               </span>
               <h2 className="font-heading text-2xl sm:text-4xl md:text-5xl font-bold text-ink">
-                More{' '}
+                More{" "}
                 <span className="bg-gradient-to-r from-brand-cyan to-brand-blue bg-clip-text text-transparent">
                   Client Experiences
                 </span>
@@ -520,7 +581,7 @@ const Reviews = () => {
 
             <motion.div
               variants={staggerParent}
-              initial={prefersReducedMotion ? false : 'hidden'}
+              initial={prefersReducedMotion ? false : "hidden"}
               whileInView="visible"
               viewport={VIEWPORT_ONCE}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6"
@@ -542,15 +603,22 @@ const Reviews = () => {
             CLIENT SATISFACTION (BY THE NUMBERS)
            ═══════════════════════════════════════════════════════════════════ */}
         {statsData.length > 0 && (
-          <section className="py-12 sm:py-20" aria-label="Key performance stats">
+          <section
+            className="py-12 sm:py-20"
+            aria-label="Key performance stats"
+          >
             <div className="max-w-7xl mx-auto px-4 sm:px-6">
               <div className="text-center mb-10 sm:mb-14">
                 <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-medium text-brand-purple bg-brand-purple/10 border border-brand-purple/20 mb-3">
-                  <TrendingUp size={13} className="text-brand-purple" aria-hidden="true" />
+                  <TrendingUp
+                    size={13}
+                    className="text-brand-purple"
+                    aria-hidden="true"
+                  />
                   Performance Metrics
                 </span>
                 <h2 className="font-heading text-2xl sm:text-4xl md:text-5xl font-bold text-ink">
-                  Client{' '}
+                  Client{" "}
                   <span className="bg-gradient-to-r from-brand-purple via-brand-cyan to-brand-blue bg-clip-text text-transparent">
                     Satisfaction
                   </span>
@@ -559,7 +627,11 @@ const Reviews = () => {
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {statsData.map((stat, index) => (
-                  <StatCard key={stat.label || index} stat={stat} index={index} />
+                  <StatCard
+                    key={stat.label || index}
+                    stat={stat}
+                    index={index}
+                  />
                 ))}
               </div>
             </div>
@@ -569,11 +641,14 @@ const Reviews = () => {
         {/* ═══════════════════════════════════════════════════════════════════
             CTA SECTION
            ═══════════════════════════════════════════════════════════════════ */}
-        <section className="py-16 sm:py-24" aria-label="Start your project call to action">
+        <section
+          className="py-16 sm:py-24"
+          aria-label="Start your project call to action"
+        >
           <div className="max-w-4xl mx-auto px-4 sm:px-6">
             <motion.div
               variants={fadeUp}
-              initial={prefersReducedMotion ? false : 'hidden'}
+              initial={prefersReducedMotion ? false : "hidden"}
               whileInView="visible"
               viewport={VIEWPORT_ONCE}
               className="relative rounded-3xl bg-gradient-to-br from-brand-cyan/10 via-surface-card to-brand-purple/10 border border-brand-cyan/25 p-8 sm:p-12 md:p-16 text-center shadow-2xl overflow-hidden"
@@ -586,15 +661,16 @@ const Reviews = () => {
               </div>
 
               <h2 className="font-heading text-2xl sm:text-4xl md:text-5xl font-bold text-ink mb-4 sm:mb-6">
-                Ready to Join My{' '}
+                Ready to Join My{" "}
                 <span className="bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple bg-clip-text text-transparent">
                   Happy Clients?
                 </span>
               </h2>
 
               <p className="text-ink-secondary text-sm sm:text-base md:text-lg mb-8 max-w-xl mx-auto leading-relaxed">
-                Whether you have an upcoming SaaS product, web application, or need high-performance
-                frontend architecture, let's create something remarkable together.
+                Whether you have an upcoming SaaS product, web application, or
+                need high-performance frontend architecture, let's create
+                something remarkable together.
               </p>
 
               <Link

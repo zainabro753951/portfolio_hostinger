@@ -1,14 +1,19 @@
-import DynamicMetaUpdater from '@/components/DynamicMetaUpdater';
-import LazyImage from '@/components/LazyImage';
+import DynamicMetaUpdater from "@/components/DynamicMetaUpdater";
+import LazyImage from "@/components/LazyImage";
 import {
   MetricBar,
   OutlineButton,
   PrimaryButton,
   TechBadge,
-} from '@/components/UI';
-import { projectFindBySlug } from '@/features/projectSlice';
-import { fadeUp, staggerParent, useMotionPrefs, VIEWPORT_ONCE } from '@/lib/motion';
-import { formatDuration, techIcons } from '@/Utils/Utils';
+} from "@/components/UI";
+import { projectFindBySlug } from "@/features/projectSlice";
+import {
+  fadeUp,
+  staggerParent,
+  useMotionPrefs,
+  VIEWPORT_ONCE,
+} from "@/lib/motion";
+import { formatDuration, techIcons } from "@/Utils/Utils";
 import {
   ArrowDown,
   ArrowLeft,
@@ -22,41 +27,47 @@ import {
   Sparkles,
   Target,
   Zap,
-} from 'lucide-react';
-import { motion, useMotionValue, useSpring } from 'motion/react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import '../richText.css';
+} from "lucide-react";
+import { motion, useMotionValue, useSpring } from "motion/react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import "../richText.css";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 📦 RICH CONTENT PARSER
 // Parses backend richText and splits it into cards based on <h2> tags
 // ═══════════════════════════════════════════════════════════════════════════
 const parseRichContent = (html) => {
-  if (!html || typeof window === 'undefined') return [];
+  if (!html || typeof window === "undefined") return [];
 
   try {
     const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const h2s = doc.querySelectorAll('h2');
+    const doc = parser.parseFromString(html, "text/html");
+    const h2s = doc.querySelectorAll("h2");
 
     if (h2s.length === 0) {
-      return [{ title: 'Project Details', content: html, icon: Code2 }];
+      return [{ title: "Project Details", content: html, icon: Code2 }];
     }
 
     const sections = [];
     const nodes = Array.from(doc.body.childNodes);
     const h2Indices = nodes
       .map((node, index) => ({ node, index }))
-      .filter(({ node }) => node.nodeType === 1 && node.tagName.toLowerCase() === 'h2')
+      .filter(
+        ({ node }) =>
+          node.nodeType === 1 && node.tagName.toLowerCase() === "h2",
+      )
       .map(({ index }) => index);
 
     h2Indices.forEach((h2Index, i) => {
       const title = nodes[h2Index].textContent.trim();
-      const contentNodes = nodes.slice(h2Index + 1, h2Indices[i + 1] || nodes.length);
+      const contentNodes = nodes.slice(
+        h2Index + 1,
+        h2Indices[i + 1] || nodes.length,
+      );
 
-      const div = document.createElement('div');
+      const div = document.createElement("div");
       contentNodes.forEach((n) => div.appendChild(n));
 
       sections.push({ title, content: div.innerHTML });
@@ -64,7 +75,7 @@ const parseRichContent = (html) => {
 
     return sections;
   } catch (error) {
-    console.error('Failed to parse rich content:', error);
+    console.error("Failed to parse rich content:", error);
     return [];
   }
 };
@@ -77,7 +88,10 @@ const RichContentCard = memo(({ section, index }) => {
   const Icon = icons[index % icons.length];
   const { reduced, isMobile } = useMotionPrefs();
   const prefs = useMemo(() => ({ reduced, isMobile }), [reduced, isMobile]);
-  const cardVariants = useMemo(() => fadeUp(prefs, index * 0.05), [prefs, index]);
+  const cardVariants = useMemo(
+    () => fadeUp(prefs, index * 0.05),
+    [prefs, index],
+  );
 
   return (
     <motion.div
@@ -103,7 +117,7 @@ const RichContentCard = memo(({ section, index }) => {
     </motion.div>
   );
 });
-RichContentCard.displayName = 'RichContentCard';
+RichContentCard.displayName = "RichContentCard";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 🏗️ MAIN PAGE COMPONENT
@@ -117,10 +131,15 @@ const ProjectDetailsPage = memo(() => {
   const prefs = useMemo(() => ({ reduced, isMobile }), [reduced, isMobile]);
 
   const [project, setProject] = useState({});
-  const [projectData, setProjectData] = useState({ name: '', suffix: '', title: '' });
+  const [projectData, setProjectData] = useState({
+    name: "",
+    suffix: "",
+    title: "",
+  });
 
-  const { project: projectDB, isLoading } = useSelector((state) => state.projects);
-  const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE || '';
+  const { project: projectDB, isLoading } = useSelector(
+    (state) => state.projects,
+  );
 
   // Spring tilt on preview image for desktop
   const canTilt = !reduced && !isMobile;
@@ -129,14 +148,14 @@ const ProjectDetailsPage = memo(() => {
 
   const handlePointerMove = useCallback(
     (e) => {
-      if (!canTilt || e.pointerType !== 'mouse') return;
+      if (!canTilt || e.pointerType !== "mouse") return;
       const rect = e.currentTarget.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width - 0.5;
       const y = (e.clientY - rect.top) / rect.height - 0.5;
       rotateY.set(x * 12);
       rotateX.set(-y * 12);
     },
-    [canTilt, rotateX, rotateY]
+    [canTilt, rotateX, rotateY],
   );
 
   const handlePointerLeave = useCallback(() => {
@@ -157,7 +176,9 @@ const ProjectDetailsPage = memo(() => {
       ...projectDB,
       techStack: (projectDB?.techStack || []).map((tech) => {
         const matchedTech = techIcons.find(
-          (item) => item.type.toLowerCase() === (tech.name || '').toLowerCase().replace(/\s+/g, '-')
+          (item) =>
+            item.type.toLowerCase() ===
+            (tech.name || "").toLowerCase().replace(/\s+/g, "-"),
         );
         return { ...tech, icon: matchedTech?.icon || Code2 };
       }),
@@ -166,47 +187,65 @@ const ProjectDetailsPage = memo(() => {
     setProject(updatedProject);
 
     // Parse title for Hero
-    const titleParts = projectDB?.title?.split('–') || [];
+    const titleParts = projectDB?.title?.split("–") || [];
     setProjectData({
-      name: (titleParts[0]?.split('.')[0] || '').trim(),
-      suffix: titleParts[0]?.split('.')[1] || '',
-      title: (titleParts[1] || '').trim(),
+      name: (titleParts[0]?.split(".")[0] || "").trim(),
+      suffix: titleParts[0]?.split(".")[1] || "",
+      title: (titleParts[1] || "").trim(),
     });
   }, [projectDB]);
 
   const scrollToDetails = useCallback(() => {
-    document
-      .getElementById('details')
-      ?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+    document.getElementById("details")?.scrollIntoView({
+      behavior: reduced ? "auto" : "smooth",
+      block: "start",
+    });
   }, [reduced]);
 
   // Parse content into sections
-  const contentSections = useMemo(() => parseRichContent(project?.content), [project?.content]);
+  const contentSections = useMemo(
+    () => parseRichContent(project?.content),
+    [project?.content],
+  );
 
   // Structured Data for SEO
   const structuredData = useMemo(() => {
-    if (!project?.title || typeof window === 'undefined') return null;
+    if (!project?.title || typeof window === "undefined") return null;
     return {
-      '@context': 'https://schema.org',
-      '@type': 'CreativeWork',
+      "@context": "https://schema.org",
+      "@type": "CreativeWork",
       name: project.title,
       description: project.shortDesc || project.content,
       url: window.location.href,
-      image: project.heroImage?.url ? `${backendUrl}${project.heroImage.url}` : undefined,
+      image:
+        typeof project.heroImage?.url === "string" &&
+        /^https?:\/\//i.test(project.heroImage.url.trim())
+          ? project.heroImage.url.trim()
+          : undefined,
       creator: {
-        '@type': 'Person',
-        name: project.author || project.role || 'Zain Abro',
+        "@type": "Person",
+        name: project.author || project.role || "Zain Abro",
       },
       datePublished: project.createdAt,
-      keywords: (project?.metaKeywords || []).map((t) => t.name).join(', '),
+      keywords: (project?.metaKeywords || []).map((t) => t.name).join(", "),
     };
-  }, [project, backendUrl]);
+  }, [project]);
 
-  const techStack = useMemo(() => project?.techStack || [], [project?.techStack]);
+  const techStack = useMemo(
+    () => project?.techStack || [],
+    [project?.techStack],
+  );
+
+  // Cloudinary Hero Image URL
   const heroImageUrl = useMemo(() => {
-    if (!project?.heroImage?.url) return '';
-    return `${backendUrl.replace(/\/+$/, '')}/${project.heroImage.url.replace(/^\/+/, '')}`;
-  }, [project?.heroImage?.url, backendUrl]);
+    const url = project?.heroImage?.url;
+
+    if (typeof url !== "string" || !url.trim()) {
+      return "";
+    }
+
+    return /^https?:\/\//i.test(url.trim()) ? url.trim() : "";
+  }, [project?.heroImage?.url]);
 
   const heroVariants = useMemo(() => fadeUp(prefs, 0), [prefs]);
 
@@ -214,7 +253,7 @@ const ProjectDetailsPage = memo(() => {
     <div
       className="relative isolate overflow-x-clip bg-surface-base text-ink"
       id="project-details-page"
-      aria-label={`Project Details: ${projectData.name || project?.title || 'Project'}`}
+      aria-label={`Project Details: ${projectData.name || project?.title || "Project"}`}
     >
       {structuredData && (
         <script
@@ -225,21 +264,24 @@ const ProjectDetailsPage = memo(() => {
 
       {/* Dynamic Meta Updater */}
       <DynamicMetaUpdater
-        title={project.seoTitle || project.title || 'Project Details'}
-        description={project.metaDesc || project.shortDesc || ''}
+        title={project.seoTitle || project.title || "Project Details"}
+        description={project.metaDesc || project.shortDesc || ""}
         schemaId="project-jsonld"
         schema={structuredData}
       />
 
       {/* Subtle ambient lighting */}
-      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden" aria-hidden="true">
+      <div
+        className="fixed inset-0 pointer-events-none -z-10 overflow-hidden"
+        aria-hidden="true"
+      >
         <div
           className="absolute top-1/4 left-1/4 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-[120px] opacity-60"
-          style={{ background: 'rgba(2, 211, 254, 0.08)' }}
+          style={{ background: "rgba(2, 211, 254, 0.08)" }}
         />
         <div
           className="absolute bottom-1/3 right-1/4 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-[120px] opacity-60"
-          style={{ background: 'rgba(154, 92, 183, 0.08)' }}
+          style={{ background: "rgba(154, 92, 183, 0.08)" }}
         />
       </div>
 
@@ -251,11 +293,15 @@ const ProjectDetailsPage = memo(() => {
           {/* Back Button */}
           <button
             type="button"
-            onClick={() => navigate('/projects')}
+            onClick={() => navigate("/projects")}
             className="inline-flex items-center gap-2 mb-6 sm:mb-8 text-xs sm:text-sm font-medium text-ink-secondary hover:text-brand-cyan transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan rounded-lg p-1.5 -ml-1.5"
             aria-label="Back to projects"
           >
-            <ArrowLeft size={16} className="transition-transform duration-200 group-hover:-translate-x-1" aria-hidden="true" />
+            <ArrowLeft
+              size={16}
+              className="transition-transform duration-200 group-hover:-translate-x-1"
+              aria-hidden="true"
+            />
             <span>Back to Projects</span>
           </button>
 
@@ -264,7 +310,10 @@ const ProjectDetailsPage = memo(() => {
             <article className="order-2 md:order-1">
               {!!project?.featured && (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-4 text-xs font-semibold uppercase tracking-wider text-brand-cyan border border-brand-cyan/20 bg-brand-cyan/10">
-                  <span className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" aria-hidden="true" />
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse"
+                    aria-hidden="true"
+                  />
                   Featured Project
                 </div>
               )}
@@ -273,7 +322,10 @@ const ProjectDetailsPage = memo(() => {
                 <span>{projectData.name || project?.title}</span>
                 {projectData.suffix && (
                   <>
-                    .<span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan to-brand-blue">{projectData.suffix}</span>
+                    .
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan to-brand-blue">
+                      {projectData.suffix}
+                    </span>
                   </>
                 )}
               </h1>
@@ -337,14 +389,25 @@ const ProjectDetailsPage = memo(() => {
                 />
 
                 <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl border border-line-strong bg-surface-card shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)]">
-                  <LazyImage
-                    src={heroImageUrl}
-                    alt={`${projectData.name || project?.title} preview`}
-                    className="h-full w-full object-cover"
-                    objectFit="cover"
-                    objectPosition="center"
-                    eager={true}
-                  />
+                  {heroImageUrl ? (
+                    <LazyImage
+                      src={heroImageUrl}
+                      alt={`${projectData.name || project?.title || "Project"} preview`}
+                      className="h-full w-full object-cover"
+                      objectFit="cover"
+                      objectPosition="center"
+                      eager={true}
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-cyan/10 via-surface-card to-brand-purple/10">
+                      <Layers
+                        size={48}
+                        className="text-brand-cyan/50"
+                        aria-hidden="true"
+                      />
+                    </div>
+                  )}
+
                   <div
                     aria-hidden="true"
                     className="pointer-events-none absolute inset-0 bg-gradient-to-t from-surface-base/40 via-transparent to-transparent"
@@ -359,14 +422,22 @@ const ProjectDetailsPage = memo(() => {
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* 📋 DETAILS SECTION: CONTENT & SIDEBAR                               */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <section id="details" className="relative py-12 sm:py-16 lg:py-24" aria-label="Project Detailed Information">
+      <section
+        id="details"
+        className="relative py-12 sm:py-16 lg:py-24"
+        aria-label="Project Detailed Information"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-3 gap-8 lg:gap-12 items-start">
             {/* Main Content (2 Columns) */}
             <div className="lg:col-span-2 space-y-6">
               {contentSections.length > 0 ? (
                 contentSections.map((section, index) => (
-                  <RichContentCard key={index} section={section} index={index} />
+                  <RichContentCard
+                    key={index}
+                    section={section}
+                    index={index}
+                  />
                 ))
               ) : (
                 <div className="rounded-2xl border border-line-subtle bg-surface-card/60 p-8 text-center text-ink-secondary text-sm">
@@ -384,20 +455,32 @@ const ProjectDetailsPage = memo(() => {
                 </h4>
                 <div className="space-y-3">
                   {[
-                    { label: 'Client / Product', value: projectData?.name || project?.title },
-                    { label: 'Category', value: project?.category || 'Full Stack' },
-                    { label: 'Duration', value: formatDuration(project?.estTime) || '2-4 weeks' },
                     {
-                      label: 'Status',
+                      label: "Client / Product",
+                      value: projectData?.name || project?.title,
+                    },
+                    {
+                      label: "Category",
+                      value: project?.category || "Full Stack",
+                    },
+                    {
+                      label: "Duration",
+                      value: formatDuration(project?.estTime) || "2-4 weeks",
+                    },
+                    {
+                      label: "Status",
                       value: (
                         <span className="inline-flex items-center gap-1.5 text-brand-cyan font-medium">
-                          <span className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" aria-hidden="true" />
-                          {project.status || 'Active'}
+                          <span
+                            className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse"
+                            aria-hidden="true"
+                          />
+                          {project.status || "Active"}
                         </span>
                       ),
                     },
                     {
-                      label: 'Live URL',
+                      label: "Live URL",
                       value: project.liveDemo ? (
                         <a
                           href={project.liveDemo}
@@ -408,7 +491,7 @@ const ProjectDetailsPage = memo(() => {
                           Visit Live App
                         </a>
                       ) : (
-                        'Private Deployment'
+                        "Private Deployment"
                       ),
                     },
                   ].map((info, idx) => (
@@ -447,7 +530,12 @@ const ProjectDetailsPage = memo(() => {
                   </h4>
                   <div className="space-y-3 sm:space-y-4">
                     {project.performance.map((m, idx) => (
-                      <MetricBar key={idx} label={m.label} value={m.value} width={m.width} />
+                      <MetricBar
+                        key={idx}
+                        label={m.label}
+                        value={m.value}
+                        width={m.width}
+                      />
                     ))}
                   </div>
                 </div>
@@ -459,7 +547,8 @@ const ProjectDetailsPage = memo(() => {
                   Interested in Similar Architecture?
                 </h4>
                 <p className="text-xs sm:text-sm text-ink-secondary mb-5 leading-relaxed">
-                  Let's discuss how we can build a scalable, high-performance solution tailored to your goals.
+                  Let's discuss how we can build a scalable, high-performance
+                  solution tailored to your goals.
                 </p>
                 <Link
                   to="/contact"
@@ -478,5 +567,5 @@ const ProjectDetailsPage = memo(() => {
   );
 });
 
-ProjectDetailsPage.displayName = 'ProjectDetailsPage';
+ProjectDetailsPage.displayName = "ProjectDetailsPage";
 export default ProjectDetailsPage;

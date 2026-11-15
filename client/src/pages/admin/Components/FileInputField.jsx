@@ -27,7 +27,6 @@ const FileInputField = ({
 }) => {
   const { setValue, watch, register } = useFormContext(); // 👈 Get from context
   const [isDragging, setIsDragging] = useState(false);
-  const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
 
   // 👈 Watch the actual value from RHF
   const currentValue = watch(name);

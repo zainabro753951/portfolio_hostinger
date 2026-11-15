@@ -1,19 +1,35 @@
-import aboutImage from '@/assets/images/about-portrait.jpg';
-import LazyImage from '@/components/LazyImage';
-import { fadeUp, staggerParent, useMotionPrefs, VIEWPORT_ONCE } from '@/lib/motion';
-import { ArrowDown, Award, Briefcase, Code, Coffee, Heart, Lightbulb, Sparkles } from 'lucide-react';
-import { motion } from 'motion/react';
-import { memo, useCallback, useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import MarkUpTextRender from '../sections/MarkUpTextRender';
+import aboutImage from "@/assets/images/about-portrait.jpg";
+import LazyImage from "@/components/LazyImage";
+import {
+  fadeUp,
+  staggerParent,
+  useMotionPrefs,
+  VIEWPORT_ONCE,
+} from "@/lib/motion";
+import {
+  ArrowDown,
+  Award,
+  Briefcase,
+  Code,
+  Coffee,
+  Heart,
+  Lightbulb,
+  Sparkles,
+} from "lucide-react";
+import { motion } from "motion/react";
+import { memo, useCallback, useMemo } from "react";
+import { useSelector } from "react-redux";
+import MarkUpTextRender from "../sections/MarkUpTextRender";
 
 const sortByEndDate = (exps) => {
   if (!Array.isArray(exps)) return [];
-  return [...exps].sort((a, b) => (b.currentlyWorking || 0) - (a.currentlyWorking || 0));
+  return [...exps].sort(
+    (a, b) => (b.currentlyWorking || 0) - (a.currentlyWorking || 0),
+  );
 };
 
 const getYear = (dateStr) => {
-  if (!dateStr) return '';
+  if (!dateStr) return "";
   const date = new Date(dateStr);
   const year = date.getFullYear();
   return isNaN(year) ? dateStr : year;
@@ -22,31 +38,35 @@ const getYear = (dateStr) => {
 const VALUES = [
   {
     icon: Lightbulb,
-    title: 'Innovation',
-    description: 'Always exploring modern technologies, clean architectures, and creative solutions.',
+    title: "Innovation",
+    description:
+      "Always exploring modern technologies, clean architectures, and creative solutions.",
   },
   {
     icon: Heart,
-    title: 'Craftsmanship',
-    description: 'Deep attention to detail, micro-interactions, and refined user experience design.',
+    title: "Craftsmanship",
+    description:
+      "Deep attention to detail, micro-interactions, and refined user experience design.",
   },
   {
     icon: Award,
-    title: 'Quality First',
-    description: 'Production-ready code built for performance, accessibility, and high scalability.',
+    title: "Quality First",
+    description:
+      "Production-ready code built for performance, accessibility, and high scalability.",
   },
   {
     icon: Coffee,
-    title: 'Dedication',
-    description: 'Reliable execution with clear communication, transparency, and timely delivery.',
+    title: "Dedication",
+    description:
+      "Reliable execution with clear communication, transparency, and timely delivery.",
   },
 ];
 
 const BRAND_SKILL_GRADIENTS = [
-  'from-brand-cyan to-brand-blue',
-  'from-brand-blue to-brand-purple',
-  'from-brand-cyan via-brand-blue to-brand-purple',
-  'from-brand-purple to-brand-cyan',
+  "from-brand-cyan to-brand-blue",
+  "from-brand-blue to-brand-purple",
+  "from-brand-cyan via-brand-blue to-brand-purple",
+  "from-brand-purple to-brand-cyan",
 ];
 
 const About = memo(() => {
@@ -55,7 +75,6 @@ const About = memo(() => {
   const { projectCounts } = useSelector((state) => state.projects);
   const { skills: skillsDB } = useSelector((state) => state.skills);
   const { experiences: exp } = useSelector((state) => state.experience);
-  const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
 
   const { reduced, isMobile } = useMotionPrefs();
   const prefs = useMemo(() => ({ reduced, isMobile }), [reduced, isMobile]);
@@ -73,42 +92,46 @@ const About = memo(() => {
     }));
   }, [skillsDB]);
 
+  // Cloudinary Portrait Image URL
   const imageUrl = useMemo(() => {
-    if (!about?.poseImage?.url) return null;
-    const url = about.poseImage.url.trim();
-    if (/^https?:\/\//i.test(url)) return url;
-    if (backendUrl) {
-      return `${backendUrl.replace(/\/+$/, '')}/${url.replace(/^\/+/, '')}`;
+    const url = about?.poseImage?.url;
+
+    if (typeof url !== "string" || !url.trim()) {
+      return "";
     }
-    return url;
-  }, [about?.poseImage?.url, backendUrl]);
+
+    return /^https?:\/\//i.test(url.trim()) ? url.trim() : "";
+  }, [about?.poseImage?.url]);
 
   const scrollToDetails = useCallback(() => {
     document
-      .getElementById('about-details')
-      ?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
+      .getElementById("about-details")
+      ?.scrollIntoView({ behavior: reduced ? "auto" : "smooth" });
   }, [reduced]);
 
   // SEO Structured Data
   const structuredData = useMemo(() => {
     if (!about) return null;
     return {
-      '@context': 'https://schema.org',
-      '@type': 'Person',
-      name: about.fullName || about.name || 'Developer',
-      description: about.shortDesc || about.longDesc || 'About Me',
-      jobTitle: about.shortRole || 'Full Stack Developer',
+      "@context": "https://schema.org",
+      "@type": "Person",
+      name: about.fullName || about.name || "Developer",
+      description: about.shortDesc || about.longDesc || "About Me",
+      jobTitle: about.shortRole || "Full Stack Developer",
       knowsAbout: skills.map((s) => s.skillName),
       image: imageUrl || undefined,
       worksFor: {
-        '@type': 'Organization',
-        name: 'Self Employed',
+        "@type": "Organization",
+        name: "Self Employed",
       },
     };
   }, [about, skills, imageUrl]);
 
   return (
-    <div className="relative isolate overflow-x-clip bg-surface-base text-ink" id="about-page">
+    <div
+      className="relative isolate overflow-x-clip bg-surface-base text-ink"
+      id="about-page"
+    >
       {structuredData && (
         <script
           type="application/ld+json"
@@ -117,14 +140,17 @@ const About = memo(() => {
       )}
 
       {/* Subtle ambient lighting */}
-      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden" aria-hidden="true">
+      <div
+        className="fixed inset-0 pointer-events-none -z-10 overflow-hidden"
+        aria-hidden="true"
+      >
         <div
           className="absolute top-1/4 left-1/4 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-[120px] opacity-60"
-          style={{ background: 'rgba(2, 211, 254, 0.08)' }}
+          style={{ background: "rgba(2, 211, 254, 0.08)" }}
         />
         <div
           className="absolute bottom-1/3 right-1/4 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-[120px] opacity-60"
-          style={{ background: 'rgba(154, 92, 183, 0.08)' }}
+          style={{ background: "rgba(154, 92, 183, 0.08)" }}
         />
       </div>
 
@@ -143,7 +169,11 @@ const About = memo(() => {
             className="mb-4 inline-block"
           >
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-brand-cyan border border-brand-cyan/20 bg-brand-cyan/10">
-              <Sparkles size={12} className="text-brand-cyan" aria-hidden="true" />
+              <Sparkles
+                size={12}
+                className="text-brand-cyan"
+                aria-hidden="true"
+              />
               About Me
             </span>
           </motion.div>
@@ -154,7 +184,7 @@ const About = memo(() => {
             animate="visible"
             className="text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-ink mb-4 sm:mb-6 leading-tight"
           >
-            Get To Know{' '}
+            Get To Know{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple">
               My Story
             </span>
@@ -167,7 +197,7 @@ const About = memo(() => {
             className="text-sm sm:text-base md:text-lg leading-relaxed text-ink-secondary max-w-2xl mx-auto mb-8 sm:mb-10"
           >
             {about?.shortDesc ||
-              'A passionate software engineer and digital designer dedicated to creating scalable applications and exceptional user experiences.'}
+              "A passionate software engineer and digital designer dedicated to creating scalable applications and exceptional user experiences."}
           </motion.p>
 
           <motion.button
@@ -179,7 +209,11 @@ const About = memo(() => {
             aria-label="Scroll to detailed biography"
           >
             <span>Scroll Down</span>
-            <ArrowDown size={14} className="animate-bounce motion-reduce:animate-none" aria-hidden="true" />
+            <ArrowDown
+              size={14}
+              className="animate-bounce motion-reduce:animate-none"
+              aria-hidden="true"
+            />
           </motion.button>
         </div>
       </section>
@@ -203,7 +237,7 @@ const About = memo(() => {
               </div>
 
               <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold tracking-tight text-ink mb-6 leading-tight">
-                Crafting High-Performance{' '}
+                Crafting High-Performance{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple">
                   Digital Products
                 </span>
@@ -212,18 +246,27 @@ const About = memo(() => {
               <div className="text-sm sm:text-base leading-relaxed text-ink-secondary mb-8 sm:mb-10">
                 <MarkUpTextRender markedDesc={about?.longDesc}>
                   <p className="mb-4">
-                    Hello! I'm <strong className="text-ink font-semibold">{about?.fullName || 'Zain Ul Abbas'}</strong>
-                    , a full-stack engineer and UI/UX specialist with over{' '}
-                    <span className="text-brand-cyan font-medium">{about?.experience || '2'}+ years</span> of experience
-                    architecting modern web applications, scalable APIs, and pixel-perfect design systems.
+                    Hello! I'm{" "}
+                    <strong className="text-ink font-semibold">
+                      {about?.fullName || "Zain Ul Abbas"}
+                    </strong>
+                    , a full-stack engineer and UI/UX specialist with over{" "}
+                    <span className="text-brand-cyan font-medium">
+                      {about?.experience || "2"}+ years
+                    </span>{" "}
+                    of experience architecting modern web applications, scalable
+                    APIs, and pixel-perfect design systems.
                   </p>
                   <p className="mb-4">
-                    My approach balances clean, maintainable code with thoughtful user empathy. I believe
-                    in engineering solutions that are as robust under the hood as they are delightful on screen.
+                    My approach balances clean, maintainable code with
+                    thoughtful user empathy. I believe in engineering solutions
+                    that are as robust under the hood as they are delightful on
+                    screen.
                   </p>
                   <p>
-                    Every collaboration is an opportunity to solve intricate engineering challenges, streamline
-                    workflows, and build lasting technological value.
+                    Every collaboration is an opportunity to solve intricate
+                    engineering challenges, streamline workflows, and build
+                    lasting technological value.
                   </p>
                 </MarkUpTextRender>
               </div>
@@ -232,16 +275,20 @@ const About = memo(() => {
               <div className="grid grid-cols-3 gap-3 sm:gap-4 pt-4 border-t border-line-subtle">
                 {[
                   {
-                    value: projectCounts?.publishedProjects ? `${projectCounts.publishedProjects}+` : '10+',
-                    label: 'Projects',
+                    value: projectCounts?.publishedProjects
+                      ? `${projectCounts.publishedProjects}+`
+                      : "10+",
+                    label: "Projects",
                   },
                   {
-                    value: testimonials?.length ? `${testimonials.length}+` : '100%',
-                    label: testimonials?.length ? 'Clients' : 'Satisfaction',
+                    value: testimonials?.length
+                      ? `${testimonials.length}+`
+                      : "100%",
+                    label: testimonials?.length ? "Clients" : "Satisfaction",
                   },
                   {
-                    value: about?.experience ? `${about.experience}+` : '2+',
-                    label: 'Years Exp',
+                    value: about?.experience ? `${about.experience}+` : "2+",
+                    label: "Years Exp",
                   },
                 ].map((stat, index) => (
                   <div
@@ -251,7 +298,9 @@ const About = memo(() => {
                     <div className="text-xl sm:text-2xl font-extrabold text-brand-cyan mb-0.5">
                       {stat.value}
                     </div>
-                    <div className="text-xs text-ink-muted font-medium">{stat.label}</div>
+                    <div className="text-xs text-ink-muted font-medium">
+                      {stat.label}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -270,12 +319,13 @@ const About = memo(() => {
                 <div className="relative overflow-hidden rounded-2xl border border-line-strong bg-surface-card shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)]">
                   <LazyImage
                     src={imageUrl}
-                    alt={`${about?.fullName || 'Developer'} Portrait`}
+                    alt={`${about?.fullName || "Developer"} Portrait`}
                     fallback={aboutImage}
                     className="aspect-[4/5] w-full object-cover"
                     objectFit="cover"
                     objectPosition="center"
                   />
+
                   <div
                     aria-hidden="true"
                     className="pointer-events-none absolute inset-0 bg-gradient-to-t from-surface-base/60 via-transparent to-transparent"
@@ -290,9 +340,11 @@ const About = memo(() => {
                     </div>
                     <div>
                       <div className="text-sm sm:text-base font-bold text-ink">
-                        {about?.experience || '2'}+ Years
+                        {about?.experience || "2"}+ Years
                       </div>
-                      <div className="text-xs text-ink-secondary">Professional Experience</div>
+                      <div className="text-xs text-ink-secondary">
+                        Professional Experience
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -337,7 +389,7 @@ const About = memo(() => {
                 viewport={VIEWPORT_ONCE}
                 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink mb-4"
               >
-                Skills &amp;{' '}
+                Skills &amp;{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple">
                   Technologies
                 </span>
@@ -350,7 +402,8 @@ const About = memo(() => {
                 viewport={VIEWPORT_ONCE}
                 className="text-sm sm:text-base leading-relaxed text-ink-secondary"
               >
-                Core competencies developed across front-end engineering, back-end infrastructure, and database systems.
+                Core competencies developed across front-end engineering,
+                back-end infrastructure, and database systems.
               </motion.p>
             </div>
 
@@ -363,7 +416,10 @@ const About = memo(() => {
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8">
                 {skills.map((skill, index) => {
-                  const proficiency = Math.min(100, Math.max(0, Number(skill.proficiency) || 0));
+                  const proficiency = Math.min(
+                    100,
+                    Math.max(0, Number(skill.proficiency) || 0),
+                  );
 
                   return (
                     <div key={skill.id || `skill-${index}`} className="group">
@@ -431,7 +487,7 @@ const About = memo(() => {
                 viewport={VIEWPORT_ONCE}
                 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink mb-4"
               >
-                Work{' '}
+                Work{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple">
                   Experience
                 </span>
@@ -447,9 +503,13 @@ const About = memo(() => {
 
               <div className="space-y-8 sm:space-y-12">
                 {sortedByExpEndDate.map((expItem, index) => {
-                  const startYear = getYear(expItem?.startedAt) || 'N/A';
-                  const isCurrent = expItem?.currentlyWorking === 1 || expItem?.currentlyWorking === true;
-                  const endYear = isCurrent ? 'Present' : getYear(expItem?.endDate) || 'N/A';
+                  const startYear = getYear(expItem?.startedAt) || "N/A";
+                  const isCurrent =
+                    expItem?.currentlyWorking === 1 ||
+                    expItem?.currentlyWorking === true;
+                  const endYear = isCurrent
+                    ? "Present"
+                    : getYear(expItem?.endDate) || "N/A";
                   const isEven = index % 2 === 0;
 
                   return (
@@ -472,7 +532,9 @@ const About = memo(() => {
                       {/* Card Content */}
                       <div
                         className={`w-full md:w-[calc(50%-2rem)] ${
-                          isEven ? 'md:mr-auto md:text-right' : 'md:ml-auto md:text-left'
+                          isEven
+                            ? "md:mr-auto md:text-right"
+                            : "md:ml-auto md:text-left"
                         }`}
                       >
                         <div className="rounded-2xl border border-line-subtle bg-surface-card/70 p-5 sm:p-6 backdrop-blur-sm transition-[border-color,box-shadow] duration-300 hover:border-line-strong hover:shadow-glow-cyan text-left">
@@ -536,7 +598,7 @@ const About = memo(() => {
               viewport={VIEWPORT_ONCE}
               className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink mb-4"
             >
-              Core{' '}
+              Core{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple">
                 Values
               </span>
@@ -549,7 +611,8 @@ const About = memo(() => {
               viewport={VIEWPORT_ONCE}
               className="text-sm sm:text-base leading-relaxed text-ink-secondary"
             >
-              The foundational pillars that direct my architectural choices, design thinking, and code execution.
+              The foundational pillars that direct my architectural choices,
+              design thinking, and code execution.
             </motion.p>
           </div>
 
@@ -592,5 +655,5 @@ const About = memo(() => {
   );
 });
 
-About.displayName = 'About';
+About.displayName = "About";
 export default About;

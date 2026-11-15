@@ -28,7 +28,6 @@ const EduRow = memo(({ item, index, onDelete, prefersReducedMotion }) => {
 
   const isCertificate = Boolean(certificate?.url);
 
-  const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
   const fileName = getFileNameFromUrl(certificate?.url);
   const { Icon: FileIcon, color: FileIconColor } = getFileIcon(fileName);
 

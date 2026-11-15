@@ -362,11 +362,11 @@ export const ServiceCard = memo(({ service, index = 0 }) => {
   // Backend data logic preserved
   const serviceImage = safeParse(service?.serviceImage);
 
-  const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE || "";
-
-  const imageUrl = serviceImage?.url
-    ? `${backendUrl.replace(/\/+$/, "")}/${serviceImage.url.replace(/^\/+/, "")}`
-    : "";
+  const imageUrl =
+    typeof serviceImage?.url === "string" &&
+    /^https?:\/\//i.test(serviceImage.url.trim())
+      ? serviceImage.url.trim()
+      : "";
 
   const gradient = SERVICE_GRADIENTS[index % SERVICE_GRADIENTS.length];
 
@@ -392,10 +392,13 @@ export const ServiceCard = memo(({ service, index = 0 }) => {
             aria-hidden="true"
             loading="lazy"
             decoding="async"
-            width="600"
-            height="360"
+            width={600}
+            height={360}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
           />
         ) : (
           <div

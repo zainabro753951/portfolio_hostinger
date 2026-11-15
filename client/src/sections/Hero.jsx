@@ -10,7 +10,7 @@ import {
   THEME,
 } from "@/components/UI";
 import { fadeUp, useMotionPrefs } from "@/lib/motion";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, Download } from "lucide-react";
 import { motion, useMotionValue, useSpring } from "motion/react";
 import { memo, useCallback, useMemo } from "react";
 import { shallowEqual, useSelector } from "react-redux";
@@ -141,10 +141,7 @@ HeroImageSection.displayName = "HeroImageSection";
 /* 🦸 HERO                                                             */
 /* ═══════════════════════════════════════════════════════════════════ */
 const Hero = memo(({ about }) => {
-  console.log(about);
-
   const { reduced, isMobile } = useMotionPrefs();
-  const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
   const { testimonials } = useSelector(
     (state) => state.testimonial,
     shallowEqual,
@@ -157,20 +154,16 @@ const Hero = memo(({ about }) => {
     return Number.isFinite(rate) ? rate : null;
   }, [testimonials]);
 
+  // Cloudinary Hero Image URL
   const imageUrl = useMemo(() => {
-    if (!about?.aboutImage?.url) return null;
+    const url = about?.aboutImage?.url;
 
-    const url = about.aboutImage.url.trim();
-
-    if (/^https?:\/\//i.test(url)) return url;
-
-    if (backendUrl) {
-      return `${backendUrl.replace(/\/+$/, "")}/${url.replace(/^\/+/, "")}`;
+    if (typeof url !== "string" || !url.trim()) {
+      return "";
     }
-    return url;
-  }, [about?.aboutImage?.url, backendUrl]);
 
-  console.log(imageUrl);
+    return /^https?:\/\//i.test(url.trim()) ? url.trim() : "";
+  }, [about?.aboutImage?.url]);
 
   const structuredData = useMemo(() => {
     if (!about) return null;
@@ -274,9 +267,22 @@ const Hero = memo(({ about }) => {
             >
               Explore My Work
             </PrimaryButton>
-            <OutlineButton to="/contact" className="w-full sm:w-auto">
-              Contact Me
-            </OutlineButton>
+
+            {about?.resume?.url && (
+              <a
+                href={about.resume.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="View my resume"
+                className="group inline-flex w-full items-center justify-center gap-2 rounded-xl border border-brand-cyan/40 bg-brand-cyan/5 px-6 py-3 font-semibold text-ink transition-all duration-300 hover:border-brand-cyan hover:bg-brand-cyan/10 hover:shadow-[0_0_25px_rgb(var(--brand-cyan)/0.12)] sm:w-auto"
+              >
+                <Download
+                  size={18}
+                  className="transition-transform duration-300 group-hover:translate-y-0.5"
+                />
+                <span>Download Resume</span>
+              </a>
+            )}
           </motion.div>
 
           {stats.length > 0 && (

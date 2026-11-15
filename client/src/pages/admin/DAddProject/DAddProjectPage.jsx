@@ -158,7 +158,6 @@ const DAddProjectPage = () => {
   const [galleryPreview, setGalleryPreview] = useState([]);
   const [output, setOutput] = useState(null);
 
-  const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE;
   const isSlugEdited = useRef(false);
 
   // Constants
@@ -273,7 +272,7 @@ const DAddProjectPage = () => {
       setIsOgImageRemoved(false);
       setIsGalleryRemoved(false);
     }
-  }, [id, project, reset, defaultValues, backendUrl]);
+  }, [id, project, reset, defaultValues]);
 
   // Image preview effect
   useEffect(() => {
@@ -309,7 +308,6 @@ const DAddProjectPage = () => {
     isHeroImageRemoved,
     isOgImageRemoved,
     project,
-    backendUrl,
   ]);
 
   // Auto-generate slug

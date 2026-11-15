@@ -1,8 +1,13 @@
-import DynamicMetaUpdater from '@/components/DynamicMetaUpdater';
-import LazyImage from '@/components/LazyImage';
-import { OutlineButton, PrimaryButton, TechBadge } from '@/components/UI';
-import { fadeUp, staggerParent, useMotionPrefs, VIEWPORT_ONCE } from '@/lib/motion';
-import { safeParse } from '@/Utils/Utils';
+import DynamicMetaUpdater from "@/components/DynamicMetaUpdater";
+import LazyImage from "@/components/LazyImage";
+import { OutlineButton, PrimaryButton, TechBadge } from "@/components/UI";
+import {
+  fadeUp,
+  staggerParent,
+  useMotionPrefs,
+  VIEWPORT_ONCE,
+} from "@/lib/motion";
+import { safeParse } from "@/Utils/Utils";
 import {
   ArrowLeft,
   BadgeCheck,
@@ -16,12 +21,12 @@ import {
   Sparkles,
   Star,
   Zap,
-} from 'lucide-react';
-import { motion } from 'motion/react';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
-import MarkUpTextRender from '../sections/MarkUpTextRender';
+} from "lucide-react";
+import { motion } from "motion/react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
+import MarkUpTextRender from "../sections/MarkUpTextRender";
 
 // ── Section Heading Component ────────────────────────────────────────
 const SectionHeading = memo(({ icon: Icon, title, subtitle }) => (
@@ -35,13 +40,11 @@ const SectionHeading = memo(({ icon: Icon, title, subtitle }) => (
       </h2>
     </div>
     {subtitle && (
-      <p className="text-xs sm:text-sm text-ink-secondary ml-13">
-        {subtitle}
-      </p>
+      <p className="text-xs sm:text-sm text-ink-secondary ml-13">{subtitle}</p>
     )}
   </header>
 ));
-SectionHeading.displayName = 'SectionHeading';
+SectionHeading.displayName = "SectionHeading";
 
 // ── Feature Card ─────────────────────────────────────────────────────
 const FeatureCard = memo(({ feature, index }) => (
@@ -54,7 +57,7 @@ const FeatureCard = memo(({ feature, index }) => (
     </span>
   </div>
 ));
-FeatureCard.displayName = 'FeatureCard';
+FeatureCard.displayName = "FeatureCard";
 
 // ── Process Step ─────────────────────────────────────────────────────
 const ProcessStep = memo(({ number, title, description, isLast }) => (
@@ -73,7 +76,7 @@ const ProcessStep = memo(({ number, title, description, isLast }) => (
     </div>
 
     {/* Content */}
-    <div className={`${isLast ? 'pb-0' : 'pb-8 sm:pb-10'} w-full`}>
+    <div className={`${isLast ? "pb-0" : "pb-8 sm:pb-10"} w-full`}>
       <h3 className="text-base sm:text-lg font-bold text-ink mb-1.5">
         {title}
       </h3>
@@ -83,19 +86,23 @@ const ProcessStep = memo(({ number, title, description, isLast }) => (
     </div>
   </div>
 ));
-ProcessStep.displayName = 'ProcessStep';
+ProcessStep.displayName = "ProcessStep";
 
 // ── Stat Badge ───────────────────────────────────────────────────────
 const StatBadge = ({ icon: Icon, label, value, highlight = false }) => (
   <div
     className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold backdrop-blur-sm ${
       highlight
-        ? 'border-brand-cyan/30 bg-brand-cyan/10 text-brand-cyan'
-        : 'border-line-subtle bg-surface-soft text-ink-secondary'
+        ? "border-brand-cyan/30 bg-brand-cyan/10 text-brand-cyan"
+        : "border-line-subtle bg-surface-soft text-ink-secondary"
     }`}
     role="status"
   >
-    <Icon size={13} className={highlight ? 'text-brand-cyan' : 'text-ink-muted'} aria-hidden="true" />
+    <Icon
+      size={13}
+      className={highlight ? "text-brand-cyan" : "text-ink-muted"}
+      aria-hidden="true"
+    />
     {label && <span className="text-ink-muted font-normal">{label}</span>}
     <span className="capitalize">{value}</span>
   </div>
@@ -115,7 +122,6 @@ const ServiceDetailsPage = memo(() => {
   const [loading, setLoading] = useState(true);
 
   const { services } = useSelector((state) => state.service);
-  const backendUrl = import.meta.env.VITE_BACKEND_URL_FOR_IMAGE || '';
 
   // Data hydration
   useEffect(() => {
@@ -135,7 +141,7 @@ const ServiceDetailsPage = memo(() => {
         const data = await res.json();
         if (data.success && isMounted) setService(data.data);
       } catch (err) {
-        console.error('Failed to fetch service details:', err);
+        console.error("Failed to fetch service details:", err);
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -146,64 +152,74 @@ const ServiceDetailsPage = memo(() => {
     };
   }, [slug, services]);
 
-  const techStack = useMemo(() => safeParse(service?.techStack) || [], [service?.techStack]);
-  const features = useMemo(() => safeParse(service?.features) || [], [service?.features]);
+  const techStack = useMemo(
+    () => safeParse(service?.techStack) || [],
+    [service?.techStack],
+  );
+  const features = useMemo(
+    () => safeParse(service?.features) || [],
+    [service?.features],
+  );
   const serviceImage = useMemo(
     () => safeParse(service?.serviceImage) || {},
-    [service?.serviceImage]
+    [service?.serviceImage],
   );
 
+  // Cloudinary Image URL
   const imageUrl = useMemo(() => {
-    if (!serviceImage?.url) return '';
-    const cleanUrl = backendUrl.replace(/\/+$/, '');
-    const path = serviceImage.url.replace(/^\/+/, '');
-    return `${cleanUrl}/${path}`;
-  }, [serviceImage?.url, backendUrl]);
+    const url = serviceImage?.url;
+
+    if (typeof url !== "string" || !url.trim()) {
+      return "";
+    }
+
+    return /^https?:\/\//i.test(url.trim()) ? url.trim() : "";
+  }, [serviceImage?.url]);
 
   const PROCESS_STEPS = useMemo(
     () => [
       {
-        title: 'Discovery & System Requirements',
-        desc: 'Analyze business scope, user personas, technical constraints, and deliverable targets.',
+        title: "Discovery & System Requirements",
+        desc: "Analyze business scope, user personas, technical constraints, and deliverable targets.",
       },
       {
-        title: 'Architectural Blueprint & UI/UX',
-        desc: 'Interactive component layouts, data flows, and design system alignment crafted for approval.',
+        title: "Architectural Blueprint & UI/UX",
+        desc: "Interactive component layouts, data flows, and design system alignment crafted for approval.",
       },
       {
-        title: 'Sprint Development & Testing',
-        desc: 'Incremental agile sprints with clean, modular code, unit tests, and continuous CI verification.',
+        title: "Sprint Development & Testing",
+        desc: "Incremental agile sprints with clean, modular code, unit tests, and continuous CI verification.",
       },
       {
-        title: 'Performance & Security Audit',
-        desc: 'Core Web Vitals benchmarking, accessibility checks, vulnerability scans, and staging review.',
+        title: "Performance & Security Audit",
+        desc: "Core Web Vitals benchmarking, accessibility checks, vulnerability scans, and staging review.",
       },
       {
-        title: 'Deployment & Ongoing Support',
-        desc: 'Seamless production rollout, automated monitoring, and post-launch technical assistance.',
+        title: "Deployment & Ongoing Support",
+        desc: "Seamless production rollout, automated monitoring, and post-launch technical assistance.",
       },
     ],
-    []
+    [],
   );
 
   // SEO Structured Data
   const structuredData = useMemo(() => {
-    if (!service || typeof window === 'undefined') return null;
+    if (!service || typeof window === "undefined") return null;
     return {
-      '@context': 'https://schema.org',
-      '@type': 'Service',
+      "@context": "https://schema.org",
+      "@type": "Service",
       name: service.title,
       description: service.shortDescription || service.fullDescription,
       url: `${window.location.origin}/services/${slug}`,
-      provider: { '@type': 'Organization', name: 'Portfolio' },
+      provider: { "@type": "Organization", name: "Portfolio" },
       offers: {
-        '@type': 'Offer',
+        "@type": "Offer",
         url: `${window.location.origin}/contact`,
-        priceCurrency: 'USD',
+        priceCurrency: "USD",
         availability:
-          service.status === 'active'
-            ? 'https://schema.org/InStock'
-            : 'https://schema.org/OutOfStock',
+          service.status === "active"
+            ? "https://schema.org/InStock"
+            : "https://schema.org/OutOfStock",
       },
     };
   }, [service, slug]);
@@ -211,8 +227,8 @@ const ServiceDetailsPage = memo(() => {
   const handleGetStarted = useCallback(() => {
     const params = new URLSearchParams({
       service: slug,
-      subject: `Inquiry: ${service?.title || 'Service'}`,
-      message: `Hi, I'm interested in starting a project for your "${service?.title || 'Service'}" offering.\n\nCategory: ${service?.category || 'General'}\nPreferred Timeline: ${service?.deliveryTime || 'Standard'}\n\nPlease let me know your current availability and estimated milestones.\n\nBest regards,`,
+      subject: `Inquiry: ${service?.title || "Service"}`,
+      message: `Hi, I'm interested in starting a project for your "${service?.title || "Service"}" offering.\n\nCategory: ${service?.category || "General"}\nPreferred Timeline: ${service?.deliveryTime || "Standard"}\n\nPlease let me know your current availability and estimated milestones.\n\nBest regards,`,
     });
     navigate(`/contact?${params.toString()}`);
   }, [navigate, service, slug]);
@@ -225,7 +241,9 @@ const ServiceDetailsPage = memo(() => {
       >
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-full border-2 border-brand-cyan border-t-transparent animate-spin" />
-          <span className="text-xs uppercase tracking-widest text-ink-muted">Loading Service</span>
+          <span className="text-xs uppercase tracking-widest text-ink-muted">
+            Loading Service
+          </span>
         </div>
       </div>
     );
@@ -242,7 +260,10 @@ const ServiceDetailsPage = memo(() => {
           <p className="text-sm text-ink-secondary">
             The service requested could not be found or has been relocated.
           </p>
-          <PrimaryButton onClick={() => navigate('/services')} className="justify-center mx-auto">
+          <PrimaryButton
+            onClick={() => navigate("/services")}
+            className="justify-center mx-auto"
+          >
             Back to All Services
           </PrimaryButton>
         </div>
@@ -258,21 +279,26 @@ const ServiceDetailsPage = memo(() => {
     >
       {/* Reusable Dynamic Meta Updater */}
       <DynamicMetaUpdater
-        title={service.seoMetaTitle || service.title || 'Service Details'}
-        description={service.seoMetaDescription || service.shortDescription || ''}
+        title={service.seoMetaTitle || service.title || "Service Details"}
+        description={
+          service.seoMetaDescription || service.shortDescription || ""
+        }
         schemaId="service-jsonld"
         schema={structuredData}
       />
 
       {/* Subtle ambient lighting */}
-      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden" aria-hidden="true">
+      <div
+        className="fixed inset-0 pointer-events-none -z-10 overflow-hidden"
+        aria-hidden="true"
+      >
         <div
           className="absolute top-1/4 left-1/4 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-[120px] opacity-60"
-          style={{ background: 'rgba(2, 211, 254, 0.08)' }}
+          style={{ background: "rgba(2, 211, 254, 0.08)" }}
         />
         <div
           className="absolute bottom-1/3 right-1/4 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-[120px] opacity-60"
-          style={{ background: 'rgba(154, 92, 183, 0.08)' }}
+          style={{ background: "rgba(154, 92, 183, 0.08)" }}
         />
       </div>
 
@@ -284,7 +310,7 @@ const ServiceDetailsPage = memo(() => {
           {/* Back Button */}
           <button
             type="button"
-            onClick={() => navigate('/services')}
+            onClick={() => navigate("/services")}
             className="inline-flex items-center gap-2 mb-6 sm:mb-8 text-xs sm:text-sm font-medium text-ink-secondary hover:text-brand-cyan transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan rounded-lg p-1.5 -ml-1.5"
             aria-label="Back to services list"
           >
@@ -297,7 +323,11 @@ const ServiceDetailsPage = memo(() => {
             <article className="order-2 md:order-1">
               {service?.category && (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-4 text-xs font-semibold uppercase tracking-wider text-brand-cyan border border-brand-cyan/20 bg-brand-cyan/10">
-                  <Layers size={12} className="text-brand-cyan" aria-hidden="true" />
+                  <Layers
+                    size={12}
+                    className="text-brand-cyan"
+                    aria-hidden="true"
+                  />
                   <span>{service.category}</span>
                 </div>
               )}
@@ -311,17 +341,30 @@ const ServiceDetailsPage = memo(() => {
               </p>
 
               {/* Status & Delivery Badges */}
-              <div className="flex flex-wrap gap-2.5 mb-8" aria-label="Service metadata">
+              <div
+                className="flex flex-wrap gap-2.5 mb-8"
+                aria-label="Service metadata"
+              >
                 {service.deliveryTime && (
-                  <StatBadge icon={Clock} label="Delivery:" value={service.deliveryTime} highlight={true} />
+                  <StatBadge
+                    icon={Clock}
+                    label="Delivery:"
+                    value={service.deliveryTime}
+                    highlight={true}
+                  />
                 )}
                 <StatBadge
                   icon={BadgeCheck}
                   label="Status:"
-                  value={service.status || 'Active'}
+                  value={service.status || "Active"}
                 />
                 {service.isFeatured && (
-                  <StatBadge icon={Star} label="" value="Featured" highlight={true} />
+                  <StatBadge
+                    icon={Star}
+                    label=""
+                    value="Featured"
+                    highlight={true}
+                  />
                 )}
               </div>
 
@@ -353,14 +396,25 @@ const ServiceDetailsPage = memo(() => {
                 />
 
                 <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl border border-line-strong bg-surface-card shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)]">
-                  <LazyImage
-                    src={imageUrl}
-                    alt={`${service.title} illustration`}
-                    className="h-full w-full object-cover"
-                    objectFit="cover"
-                    objectPosition="center"
-                    eager={true}
-                  />
+                  {imageUrl ? (
+                    <LazyImage
+                      src={imageUrl}
+                      alt={`${service.title} illustration`}
+                      className="h-full w-full object-cover"
+                      objectFit="cover"
+                      objectPosition="center"
+                      eager={true}
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-cyan/10 via-surface-card to-brand-purple/10">
+                      <Layers
+                        size={48}
+                        className="text-brand-cyan/50"
+                        aria-hidden="true"
+                      />
+                    </div>
+                  )}
+
                   <div
                     aria-hidden="true"
                     className="pointer-events-none absolute inset-0 bg-gradient-to-t from-surface-base/50 via-transparent to-transparent"
@@ -375,7 +429,10 @@ const ServiceDetailsPage = memo(() => {
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* 📋 DETAILS & BREAKDOWNS                                            */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <section className="relative py-12 sm:py-16 lg:py-24" aria-label="Detailed Service Information">
+      <section
+        className="relative py-12 sm:py-16 lg:py-24"
+        aria-label="Detailed Service Information"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 sm:space-y-20 lg:space-y-24">
           {/* Overview Breakdown */}
           {service?.fullDescription && (
@@ -435,7 +492,11 @@ const ServiceDetailsPage = memo(() => {
               subtitle="5 structured phases from kickoff to production delivery"
             />
             <div className="rounded-2xl border border-line-subtle bg-surface-card/60 p-6 sm:p-8 lg:p-10 backdrop-blur-sm">
-              <div role="list" aria-label="Development steps" className="max-w-3xl">
+              <div
+                role="list"
+                aria-label="Development steps"
+                className="max-w-3xl"
+              >
                 {PROCESS_STEPS.map((step, i) => (
                   <ProcessStep
                     key={i}
@@ -459,18 +520,23 @@ const ServiceDetailsPage = memo(() => {
 
               <div className="relative z-10">
                 <div className="inline-flex items-center justify-center h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-brand-cyan/10 border border-brand-cyan/20 text-brand-cyan mb-5 sm:mb-6 mx-auto">
-                  <Sparkles size={22} className="sm:w-6 sm:h-6" aria-hidden="true" />
+                  <Sparkles
+                    size={22}
+                    className="sm:w-6 sm:h-6"
+                    aria-hidden="true"
+                  />
                 </div>
 
                 <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-ink mb-4 sm:mb-5 leading-tight">
-                  Ready to Start Your{' '}
+                  Ready to Start Your{" "}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple">
                     {service.title}?
                   </span>
                 </h2>
 
                 <p className="text-sm sm:text-base md:text-lg leading-relaxed text-ink-secondary mb-8 sm:mb-10 max-w-xl mx-auto">
-                  Let's align on technical scope, deliverables, and turnaround time. Request an estimate today.
+                  Let's align on technical scope, deliverables, and turnaround
+                  time. Request an estimate today.
                 </p>
 
                 <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 w-full">
@@ -498,5 +564,5 @@ const ServiceDetailsPage = memo(() => {
   );
 });
 
-ServiceDetailsPage.displayName = 'ServiceDetailsPage';
+ServiceDetailsPage.displayName = "ServiceDetailsPage";
 export default ServiceDetailsPage;
