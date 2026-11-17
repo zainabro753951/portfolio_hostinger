@@ -40814,3 +40814,4 @@
 {"level":"info","message":"::1 - - [15/Nov/2026:12:11:38 +0000] \"GET /api/service/get HTTP/1.1\" 304 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-15 17:11:38"}
 {"level":"info","message":"::1 - - [15/Nov/2026:12:11:38 +0000] \"GET /api/get/activities HTTP/1.1\" 304 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-15 17:11:38"}
 {"level":"info","message":"::1 - - [15/Nov/2026:12:11:38 +0000] \"GET /api/message/get HTTP/1.1\" 304 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-15 17:11:38"}
+{"level":"info","message":"🚀 Server running smoothly on port 3000","timestamp":"2026-11-15 17:25:17"}

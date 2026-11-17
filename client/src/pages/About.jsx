@@ -15,6 +15,10 @@ import {
   Heart,
   Lightbulb,
   Sparkles,
+  GraduationCap,
+  MapPin,
+  CalendarDays,
+  BookOpen,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { memo, useCallback, useMemo } from "react";
@@ -75,6 +79,7 @@ const About = memo(() => {
   const { projectCounts } = useSelector((state) => state.projects);
   const { skills: skillsDB } = useSelector((state) => state.skills);
   const { experiences: exp } = useSelector((state) => state.experience);
+  const { educations } = useSelector((state) => state.education);
 
   const { reduced, isMobile } = useMotionPrefs();
   const prefs = useMemo(() => ({ reduced, isMobile }), [reduced, isMobile]);
@@ -83,6 +88,15 @@ const About = memo(() => {
   const itemVariants = useMemo(() => fadeUp(prefs, 0), [prefs]);
 
   const sortedByExpEndDate = useMemo(() => sortByEndDate(exp || []), [exp]);
+
+  // sorted Education
+  const sortedEducations = useMemo(() => {
+    if (!Array.isArray(educations)) return [];
+
+    return [...educations].sort(
+      (a, b) => Number(b.startYear || 0) - Number(a.startYear || 0),
+    );
+  }, [educations]);
 
   const skills = useMemo(() => {
     if (!skillsDB?.length) return [];
@@ -566,6 +580,256 @@ const About = memo(() => {
                 })}
               </div>
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* 🎓 EDUCATION & ACADEMIC BACKGROUND */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+
+      {sortedEducations.length > 0 && (
+        <section
+          className="relative isolate overflow-hidden py-16 sm:py-20 lg:py-24"
+          aria-label="Education and Academic Background"
+        >
+          {/* Ambient background lighting */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+          >
+            <div className="absolute top-1/4 left-0 h-64 w-64 rounded-full bg-brand-cyan/[0.05] blur-[100px] sm:h-80 sm:w-80" />
+            <div className="absolute bottom-1/4 right-0 h-64 w-64 rounded-full bg-brand-purple/[0.06] blur-[100px] sm:h-80 sm:w-80" />
+          </div>
+
+          <div className="mx-auto max-w-5xl px-3 xs:px-4 sm:px-6 lg:px-8">
+            {/* Section Header */}
+            <div className="mx-auto mb-10 max-w-3xl text-center sm:mb-14 lg:mb-16">
+              <motion.div
+                variants={itemVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={VIEWPORT_ONCE}
+                className="mb-4 inline-block"
+              >
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-blue/20 bg-brand-blue/10 px-3 py-1 text-[10px] xs:text-xs font-semibold uppercase tracking-wider text-brand-blue">
+                  <GraduationCap size={14} aria-hidden="true" />
+                  Academic Journey
+                </span>
+              </motion.div>
+
+              <motion.h2
+                variants={itemVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={VIEWPORT_ONCE}
+                className="mb-3 text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink"
+              >
+                My{" "}
+                <span className="bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple bg-clip-text text-transparent">
+                  Education
+                </span>
+              </motion.h2>
+
+              <motion.p
+                variants={itemVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={VIEWPORT_ONCE}
+                className="mx-auto max-w-xl text-xs xs:text-sm sm:text-base leading-relaxed text-ink-secondary"
+              >
+                My academic journey, continuous learning, and the knowledge
+                shaping my growth as a software engineer.
+              </motion.p>
+            </div>
+
+            {/* Education Cards */}
+            <motion.div
+              variants={parentVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={VIEWPORT_ONCE}
+              className="mx-auto grid max-w-4xl grid-cols-1 gap-5 sm:gap-7"
+            >
+              {sortedEducations.map((education, index) => {
+                const isCurrent =
+                  education.isCurrentlyStudying === 1 ||
+                  education.isCurrentlyStudying === true;
+
+                const startYear = education.startYear || "N/A";
+
+                const endYear = isCurrent
+                  ? "Present"
+                  : education.endYear || "N/A";
+
+                return (
+                  <motion.article
+                    key={education.id || `education-${index}`}
+                    variants={itemVariants}
+                    whileHover={
+                      reduced || isMobile
+                        ? undefined
+                        : {
+                            y: -5,
+                            transition: { duration: 0.25 },
+                          }
+                    }
+                    whileTap={reduced ? undefined : { scale: 0.99 }}
+                    className="group relative min-w-0"
+                  >
+                    {/* Main Card */}
+                    <div className="relative overflow-hidden rounded-2xl border border-line-subtle bg-surface-card/70 p-4 xs:p-5 sm:p-7 lg:p-8 backdrop-blur-md transition-[border-color,box-shadow,background-color] duration-300 hover:border-brand-cyan/30 hover:bg-surface-card/90 hover:shadow-glow-cyan">
+                      {/* Top Gradient Accent */}
+                      <div
+                        aria-hidden="true"
+                        className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-cyan/60 to-transparent"
+                      />
+
+                      {/* Decorative Glow */}
+                      <div
+                        aria-hidden="true"
+                        className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-brand-cyan/[0.06] blur-3xl transition-opacity duration-300 group-hover:bg-brand-cyan/[0.10]"
+                      />
+
+                      <div className="relative">
+                        {/* Top Row */}
+                        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                          {/* Degree Icon */}
+                          <div className="flex h-11 w-11 xs:h-12 xs:w-12 shrink-0 items-center justify-center rounded-xl border border-brand-cyan/20 bg-brand-cyan/10 text-brand-cyan transition-transform duration-300 group-hover:scale-105">
+                            <GraduationCap
+                              size={23}
+                              strokeWidth={1.8}
+                              aria-hidden="true"
+                            />
+                          </div>
+
+                          {/* Study Status */}
+                          {isCurrent ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 text-[10px] xs:text-xs font-semibold text-emerald-400">
+                              <span className="relative flex h-2 w-2">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60 motion-reduce:animate-none" />
+                                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                              </span>
+                              Currently Studying
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-blue/20 bg-brand-blue/10 px-2.5 py-1 text-[10px] xs:text-xs font-semibold text-brand-blue">
+                              <Award size={12} aria-hidden="true" />
+                              Completed
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Degree Title */}
+                        <div className="mb-5">
+                          <h3 className="break-words text-lg xs:text-xl sm:text-2xl font-bold leading-snug text-ink transition-colors duration-200 group-hover:text-brand-cyan">
+                            {education.degree}
+                          </h3>
+
+                          {education.fieldStudy && (
+                            <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs xs:text-sm font-medium text-brand-purple">
+                              <BookOpen
+                                size={14}
+                                className="shrink-0"
+                                aria-hidden="true"
+                              />
+                              {education.fieldStudy}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Institution */}
+                        <div className="mb-5 flex items-start gap-3">
+                          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-soft text-brand-cyan">
+                            <GraduationCap size={17} aria-hidden="true" />
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="mb-1 text-[10px] xs:text-xs font-semibold uppercase tracking-wider text-ink-muted">
+                              Institution
+                            </p>
+
+                            <p className="break-words text-sm xs:text-base font-semibold text-ink">
+                              {education.institutionName}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Description */}
+                        {education.eduDesc && (
+                          <p className="mb-5 text-xs xs:text-sm leading-relaxed text-ink-secondary">
+                            {education.eduDesc}
+                          </p>
+                        )}
+
+                        {/* Bottom Information */}
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-line-subtle pt-4">
+                          {/* Duration */}
+                          <div className="flex items-center gap-2 text-xs xs:text-sm text-ink-secondary">
+                            <CalendarDays
+                              size={15}
+                              className="shrink-0 text-brand-cyan"
+                              aria-hidden="true"
+                            />
+
+                            <span className="font-medium tabular-nums">
+                              {startYear} – {endYear}
+                            </span>
+                          </div>
+
+                          {/* Location */}
+                          {education.location && (
+                            <div className="flex min-w-0 items-center gap-2 text-xs xs:text-sm text-ink-secondary">
+                              <MapPin
+                                size={15}
+                                className="shrink-0 text-brand-purple"
+                                aria-hidden="true"
+                              />
+
+                              <span className="break-words">
+                                {education.location}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Grade */}
+                          {education.grade && (
+                            <div className="flex items-center gap-2 text-xs xs:text-sm text-ink-secondary">
+                              <Award
+                                size={15}
+                                className="shrink-0 text-brand-blue"
+                                aria-hidden="true"
+                              />
+
+                              <span>Grade: {education.grade}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.article>
+                );
+              })}
+            </motion.div>
+
+            {/* Bottom Learning Message */}
+            <motion.div
+              variants={itemVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={VIEWPORT_ONCE}
+              className="mx-auto mt-7 flex max-w-2xl items-center justify-center gap-2 text-center"
+            >
+              <BookOpen
+                size={15}
+                className="shrink-0 text-brand-cyan"
+                aria-hidden="true"
+              />
+
+              <p className="text-[11px] xs:text-xs sm:text-sm text-ink-muted">
+                Learning is a continuous journey, not just a destination.
+              </p>
+            </motion.div>
           </div>
         </section>
       )}

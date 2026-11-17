@@ -1,9 +1,8 @@
-import { configDotenv } from 'dotenv'
-import mysql from 'mysql2/promise'
-configDotenv()
+import { configDotenv } from "dotenv";
+import mysql from "mysql2/promise";
+configDotenv();
 
-const { DB_HOST, DB_USER, DB_PASSWORD, DB_DATABASE } = process.env
-console.log(DB_HOST)
+const { DB_HOST, DB_USER, DB_PASSWORD, DB_DATABASE } = process.env;
 
 const pool = mysql.createPool({
   host: DB_HOST,
@@ -15,7 +14,7 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
   connectTimeout: 10000, // 10 sec
-  timezone: 'Z', // Explicitly UTC (optional, default bhi UTC hota hai)
-})
+  timezone: "Z", // Explicitly UTC (optional, default bhi UTC hota hai)
+});
 
-export default pool
+export default pool;
