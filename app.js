@@ -167,12 +167,17 @@ app.use(
 );
 
 /* =========================
-   WWW Redirect (Production)
+   Canonical WWW Redirect
 ========================= */
 app.use((req, res, next) => {
-  if (isProduction && req.hostname === "zaincode.io") {
-    return res.redirect(301, `https://www.zaincode.io${req.url}`);
+  if (!isProduction) return next();
+
+  const hostname = req.hostname.toLowerCase();
+
+  if (hostname === "zaincode.io") {
+    return res.redirect(301, `https://www.zaincode.io${req.originalUrl}`);
   }
+
   next();
 });
 
