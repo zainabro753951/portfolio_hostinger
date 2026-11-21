@@ -124,7 +124,7 @@ export const addSiteSettings = async (req, res) => {
       ]);
 
       const placeholders = values
-        .map(() => "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        .map(() => "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
         .join(", ");
 
       await connection.query(
