@@ -296,7 +296,6 @@ export const getMessage = async (req, res) => {
 export const deleteContactMessages = async (req, res) => {
   try {
     const { ids } = req.body;
-    console.log(ids);
 
     // ✅ 1. Validate input
     if (!Array.isArray(ids) || ids.length === 0) {

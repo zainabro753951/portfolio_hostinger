@@ -20,7 +20,7 @@ const getActivities = async (req, res) => {
       activities,
     });
   } catch (error) {
-    console.log(error);
+    console.error(`Error in get activities: ${error}`);
 
     res.status(500).json({
       success: false,

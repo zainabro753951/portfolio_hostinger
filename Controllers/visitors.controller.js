@@ -114,7 +114,6 @@ export const getVisitorsCount = async (req, res) => {
     );
 
     const totalCount = rows[0].total_count;
-    console.log(totalCount);
 
     res.status(200).json({
       success: true,

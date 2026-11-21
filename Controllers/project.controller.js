@@ -475,8 +475,6 @@ export const getProjects = async (req, res) => {
       metaKeywords: safeParseJSON(item.metaKeywords, []),
     }));
 
-    console.log(formattedData);
-
     return res.status(200).json({
       success: true,
       successCode: "GET_PROJECTS",

@@ -110,7 +110,6 @@ export const superAdminLogin = async (req, res) => {
   try {
     const { email, password, rememberMe } = req.body;
 
-    console.log(rememberMe);
 
     // 2️⃣ Email Check (await required here)
     const [rows] = await pool.query("SELECT * FROM admins WHERE email = ?", [

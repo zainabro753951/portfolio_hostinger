@@ -7,7 +7,6 @@ export const faqsValidation = [
 ]
 
 export const addFAQs = async (req, res) => {
-  console.log(req.body)
 
   // 🧩 Step 1: Validate required fields
   const errors = validationResult(req)

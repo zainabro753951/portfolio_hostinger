@@ -41,11 +41,13 @@ export const renderSeoHtml = async (req, res, next, clientBuildPath) => {
 
     const siteUrl = process.env.FRONTEND_URL;
 
-    console.log(siteUrl);
-
     const canonicalURL =
       pageSeo.canonicalURL?.trim() ||
       `${siteUrl}${req.path === "/" ? "" : req.path}`;
+
+    console.log(canonicalURL);
+
+    console.log(pageSeo);
 
     const metadata = {
       title: escapeHtml(pageSeo.metaTitle || "Zain Abro"),
