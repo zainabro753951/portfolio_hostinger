@@ -87,6 +87,7 @@ export const renderSeoHtml = async (req, res, next, clientBuildPath) => {
       __SEO_CANONICAL__: metadata.canonical,
       __SEO_OG_TITLE__: metadata.ogTitle,
       __SEO_OG_DESCRIPTION__: metadata.ogDescription,
+      __SEO_OG_IMAGE__: metadata.ogImage,
       __SEO_TWITTER_CARD__: metadata.twitterCard,
       __SEO_ROBOTS__: metadata.robots,
     };

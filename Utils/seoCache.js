@@ -35,36 +35,39 @@ const safeParseJSON = (value, fallback = []) => {
 };
 
 // Normalize all keyword formats into one comma-separated string
+
 const normalizeKeywords = (value) => {
   if (!value) return "";
 
-  // Site settings: comma-separated string
-  if (typeof value === "string") {
-    return value
+  let parsed = value;
+
+  if (typeof value === "string" && value.trim().startsWith("[")) {
+    try {
+      parsed = JSON.parse(value);
+    } catch {
+      parsed = value;
+    }
+  }
+
+  if (typeof parsed === "string") {
+    return parsed
       .split(",")
-      .map((keyword) => keyword.trim())
+      .map((item) => item.trim())
       .filter(Boolean)
       .join(", ");
   }
 
-  // Project and service arrays
-  const parsed = safeParseJSON(value, []);
-
-  if (!Array.isArray(parsed)) {
-    return "";
-  }
+  if (!Array.isArray(parsed)) return "";
 
   return parsed
     .map((item) => {
-      // Project format: [{ name: "keyword" }]
-      if (typeof item === "object" && item !== null) {
+      if (typeof item === "string") return item;
+      if (item && typeof item === "object") {
         return item.name || "";
       }
-
-      // Service format: ["keyword"]
-      return typeof item === "string" ? item : "";
+      return "";
     })
-    .map((keyword) => keyword.trim())
+    .map((item) => item.trim())
     .filter(Boolean)
     .join(", ");
 };
@@ -226,6 +229,8 @@ export const loadSeoCache = async () => {
 // Resolve SEO by URL
 export const getSeoByPath = (url) => {
   const path = normalizeSeoPath(url);
+
+  console.log(path);
 
   return (
     seoCache.get(path) ||
