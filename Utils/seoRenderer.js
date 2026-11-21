@@ -39,27 +39,42 @@ export const renderSeoHtml = async (req, res, next, clientBuildPath) => {
       return res.status(503).send("SEO settings are not available.");
     }
 
-    const siteUrl = process.env.FRONTEND_URL;
+    const siteUrl = (
+      process.env.FRONTEND_URL || "https://www.zaincode.io"
+    ).replace(/\/+$/, "");
 
     const canonicalURL =
-      pageSeo.canonicalURL?.trim() ||
+      pageSeo.canonical?.trim() ||
       `${siteUrl}${req.path === "/" ? "" : req.path}`;
 
-    console.log(canonicalURL);
+    const ogImage =
+      typeof pageSeo.ogImage === "string"
+        ? pageSeo.ogImage
+        : pageSeo.ogImage?.url || "";
 
+    console.log(canonicalURL);
     console.log(pageSeo);
 
     const metadata = {
-      title: escapeHtml(pageSeo.metaTitle || "Zain Abro"),
-      description: escapeHtml(pageSeo.metaDescription || ""),
-      keywords: escapeHtml(pageSeo.metaKeyword || ""),
+      title: escapeHtml(pageSeo.title || "Zain Abro"),
+
+      description: escapeHtml(pageSeo.description || ""),
+
+      keywords: escapeHtml(pageSeo.keywords || ""),
+
       canonical: escapeHtml(canonicalURL),
-      ogTitle: escapeHtml(pageSeo.OGTitle || pageSeo.metaTitle || ""),
+
+      ogTitle: escapeHtml(pageSeo.ogTitle || pageSeo.title || ""),
+
       ogDescription: escapeHtml(
-        pageSeo.OGDescription || pageSeo.metaDescription || "",
+        pageSeo.ogDescription || pageSeo.description || "",
       ),
+
+      ogImage: escapeHtml(ogImage),
+
       twitterCard: escapeHtml(pageSeo.twitterCardType || "summary_large_image"),
-      robots: escapeHtml(pageSeo.metaRobots || "index, follow"),
+
+      robots: escapeHtml(pageSeo.robots || "index, follow"),
     };
 
     // Inject SEO metadata into HTML
