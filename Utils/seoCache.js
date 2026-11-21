@@ -215,6 +215,8 @@ export const loadSeoCache = async () => {
       serviceSeoCache.set(key, value);
     }
 
+    console.log("FINAL SEO CACHE KEYS:", [...seoCache.keys()]);
+
     logger.info(
       `SEO CACHE LOADED: Static ${seoCache.size}, Projects ${projectSeoCache.size}, Services ${serviceSeoCache.size}`,
     );
@@ -230,7 +232,13 @@ export const loadSeoCache = async () => {
 export const getSeoByPath = (url) => {
   const path = normalizeSeoPath(url);
 
-  console.log(path);
+  console.log("SEO LOOKUP DEBUG:", {
+    requestedUrl: url,
+    normalizedPath: path,
+    cacheHasPath: seoCache.has(path),
+    cachedValue: seoCache.get(path),
+    allCacheKeys: [...seoCache.keys()],
+  });
 
   return (
     seoCache.get(path) ||

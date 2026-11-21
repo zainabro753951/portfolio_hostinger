@@ -41357,3 +41357,53 @@
 {"level":"info","message":"::1 - - [21/Nov/2026:10:37:32 +0000] \"GET /api/get/activities HTTP/1.1\" 304 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:37:32"}
 {"level":"info","message":"::1 - - [21/Nov/2026:10:37:52 +0000] \"POST /api/site-settings/add HTTP/1.1\" 401 86 \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:37:52"}
 {"level":"info","message":"SIGINT received. Shutting down...","timestamp":"2026-11-21 15:38:07"}
+{"level":"info","message":"MySQL connected successfully","timestamp":"2026-11-21 15:38:12"}
+{"level":"info","message":"SEO CACHE LOADED: Static 1, Projects 3, Services 10","timestamp":"2026-11-21 15:38:13"}
+{"level":"info","message":"🚀 Server running smoothly on port 3000","timestamp":"2026-11-21 15:38:13"}
+{"level":"info","message":"::1 - - [21/Nov/2026:10:38:19 +0000] \"POST /api/site-settings/add HTTP/1.1\" 200 79 \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:38:19"}
+{"level":"info","message":"::1 - - [21/Nov/2026:10:38:20 +0000] \"GET /api/site-settings/get HTTP/1.1\" 200 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:38:20"}
+{"level":"info","message":"::1 - - [21/Nov/2026:10:38:25 +0000] \"POST /api/site-settings/add HTTP/1.1\" 200 79 \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:38:25"}
+{"level":"info","message":"::1 - - [21/Nov/2026:10:38:26 +0000] \"GET /api/site-settings/get HTTP/1.1\" 200 879 \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:38:26"}
+{"level":"info","message":"::1 - - [21/Nov/2026:10:38:30 +0000] \"GET /api/project/get HTTP/1.1\" 304 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:38:30"}
+{"level":"info","message":"::1 - - [21/Nov/2026:10:38:30 +0000] \"GET /api/testimonial/get HTTP/1.1\" 304 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:38:30"}
+{"level":"info","message":"::1 - - [21/Nov/2026:10:38:30 +0000] \"GET /api/plan/get HTTP/1.1\" 304 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:38:30"}
+{"level":"info","message":"::1 - - [21/Nov/2026:10:38:31 +0000] \"GET /api/experience/get HTTP/1.1\" 200 747 \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:38:31"}
+{"level":"info","message":"::1 - - [21/Nov/2026:10:38:31 +0000] \"GET /api/site-settings/get HTTP/1.1\" 304 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:38:31"}
+{"level":"info","message":"::1 - - [21/Nov/2026:10:38:31 +0000] \"GET /api/about/get HTTP/1.1\" 304 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:38:31"}
+{"level":"info","message":"::1 - - [21/Nov/2026:10:38:31 +0000] \"GET /api/skill/get HTTP/1.1\" 304 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:38:31"}
+{"level":"info","message":"::1 - - [21/Nov/2026:10:38:31 +0000] \"GET /api/education/get HTTP/1.1\" 304 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:38:31"}
+{"level":"info","message":"::1 - - [21/Nov/2026:10:38:31 +0000] \"GET /api/service/get HTTP/1.1\" 304 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:38:31"}
+{"level":"info","message":"::1 - - [21/Nov/2026:10:38:31 +0000] \"GET /api/faq/get HTTP/1.1\" 304 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:38:31"}
+{"level":"info","message":"::1 - - [21/Nov/2026:10:38:31 +0000] \"POST /api/super-admin/auth HTTP/1.1\" 200 155 \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:38:31"}
+{"level":"info","message":"::1 - - [21/Nov/2026:10:38:31 +0000] \"GET /api/visitors/count HTTP/1.1\" 304 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:38:31"}
+{"level":"info","message":"::1 - - [21/Nov/2026:10:38:32 +0000] \"GET /api/get/activities HTTP/1.1\" 304 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:38:32"}
+{"level":"info","message":"::1 - - [21/Nov/2026:10:38:32 +0000] \"GET /api/message/get HTTP/1.1\" 304 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:38:32"}
+{"level":"info","message":"::1 - - [21/Nov/2026:10:40:15 +0000] \"POST /api/site-settings/add HTTP/1.1\" 200 79 \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:40:15"}
+{"level":"info","message":"::1 - - [21/Nov/2026:10:40:15 +0000] \"GET /api/site-settings/get HTTP/1.1\" 200 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36\"","timestamp":"2026-11-21 15:40:15"}
+{"level":"info","message":"MySQL connected successfully","timestamp":"2026-11-21 16:01:35"}
+{"level":"info","message":"SEO CACHE LOADED: Static 6, Projects 3, Services 10","timestamp":"2026-11-21 16:01:36"}
+{"level":"info","message":"🚀 Server running smoothly on port 3000","timestamp":"2026-11-21 16:01:36"}
+{"level":"info","message":"MySQL connected successfully","timestamp":"2026-11-21 16:02:34"}
+{"level":"info","message":"SEO CACHE LOADED: Static 6, Projects 3, Services 10","timestamp":"2026-11-21 16:02:35"}
+{"level":"info","message":"🚀 Server running smoothly on port 3000","timestamp":"2026-11-21 16:02:35"}
+{"level":"info","message":"MySQL connected successfully","timestamp":"2026-11-21 16:10:22"}
+{"level":"info","message":"SEO CACHE LOADED: Static 6, Projects 3, Services 10","timestamp":"2026-11-21 16:10:22"}
+{"level":"info","message":"🚀 Server running smoothly on port 3000","timestamp":"2026-11-21 16:10:22"}
+{"level":"info","message":"MySQL connected successfully","timestamp":"2026-11-21 16:16:54"}
+{"level":"info","message":"SEO CACHE LOADED: Static 6, Projects 3, Services 10","timestamp":"2026-11-21 16:16:55"}
+{"level":"info","message":"🚀 Server running smoothly on port 3000","timestamp":"2026-11-21 16:16:55"}
+{"level":"info","message":"MySQL connected successfully","timestamp":"2026-11-21 16:17:14"}
+{"level":"info","message":"SEO CACHE LOADED: Static 6, Projects 3, Services 10","timestamp":"2026-11-21 16:17:15"}
+{"level":"info","message":"🚀 Server running smoothly on port 3000","timestamp":"2026-11-21 16:17:15"}
+{"level":"info","message":"MySQL connected successfully","timestamp":"2026-11-21 16:17:20"}
+{"level":"info","message":"SEO CACHE LOADED: Static 6, Projects 3, Services 10","timestamp":"2026-11-21 16:17:21"}
+{"level":"info","message":"🚀 Server running smoothly on port 3000","timestamp":"2026-11-21 16:17:21"}
+{"level":"info","message":"MySQL connected successfully","timestamp":"2026-11-21 16:19:45"}
+{"level":"info","message":"SEO CACHE LOADED: Static 6, Projects 3, Services 10","timestamp":"2026-11-21 16:19:46"}
+{"level":"info","message":"🚀 Server running smoothly on port 3000","timestamp":"2026-11-21 16:19:46"}
+{"level":"info","message":"MySQL connected successfully","timestamp":"2026-11-21 16:20:03"}
+{"level":"info","message":"SEO CACHE LOADED: Static 6, Projects 3, Services 10","timestamp":"2026-11-21 16:20:04"}
+{"level":"info","message":"🚀 Server running smoothly on port 3000","timestamp":"2026-11-21 16:20:04"}
+{"level":"info","message":"MySQL connected successfully","timestamp":"2026-11-21 16:20:41"}
+{"level":"info","message":"SEO CACHE LOADED: Static 6, Projects 3, Services 10","timestamp":"2026-11-21 16:20:41"}
+{"level":"info","message":"🚀 Server running smoothly on port 3000","timestamp":"2026-11-21 16:20:41"}
