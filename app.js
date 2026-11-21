@@ -11,6 +11,7 @@ import morgan from "morgan";
 import path from "path";
 import fs from "node:fs/promises";
 import { fileURLToPath } from "url";
+import { renderSeoHtml } from "./Utils/seoRenderer.js";
 
 import logger from "./Utils/logger.js";
 import errorHandler from "./middlewares/errorHandler.js";
@@ -212,7 +213,7 @@ app.get("/health", (req, res) => {
 });
 
 /* =========================
-   Frontend Serve (PROD Optimized)
+   Frontend Serve + Dynamic SEO
 ========================= */
 if (isProduction) {
   const clientBuildPath = path.join(__dirname, "client", "dist");
@@ -231,6 +232,7 @@ if (isProduction) {
       const markdown = await fs.readFile(markdownPath, "utf-8");
 
       res.setHeader("Content-Type", "text/markdown; charset=utf-8");
+
       res.setHeader("Vary", "Accept");
 
       return res.status(200).send(markdown);
@@ -240,11 +242,13 @@ if (isProduction) {
     }
   });
 
-  // Static frontend files
+  // Static files (Do not automatically serve index.html)
   app.use(
     express.static(clientBuildPath, {
+      index: false,
       maxAge: "1y",
       immutable: true,
+
       setHeaders: (res, filePath) => {
         const ext = path.extname(filePath);
 
@@ -255,13 +259,17 @@ if (isProduction) {
     }),
   );
 
-  // SPA fallback
+  // Dynamic SEO HTML fallback
   app.get(/^(.*)$/, (req, res, next) => {
-    if (req.path.startsWith("/api") || req.path.startsWith("/socket.io")) {
+    if (
+      req.path.startsWith("/api") ||
+      req.path.startsWith("/socket.io") ||
+      path.extname(req.path)
+    ) {
       return next();
     }
 
-    res.sendFile(path.join(clientBuildPath, "index.html"));
+    return renderSeoHtml(req, res, next, clientBuildPath);
   });
 }
 
