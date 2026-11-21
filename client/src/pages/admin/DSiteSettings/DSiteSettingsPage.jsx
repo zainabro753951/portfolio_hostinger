@@ -1,216 +1,321 @@
-import React, { useEffect, useState, useCallback, memo, useRef } from "react";
+import React, { memo, useCallback, useEffect, useRef, useState } from "react";
+
 import { motion, AnimatePresence } from "motion/react";
+
 import {
-  Settings,
   Globe,
   Search,
   Share2,
   Plus,
   Trash2,
-  X,
   Loader2,
   Save,
   RotateCcw,
   AlertTriangle,
   ChevronDown,
   CheckCircle2,
+  X,
 } from "lucide-react";
-import { FormProvider, useForm } from "react-hook-form";
+
+import {
+  FormProvider,
+  useForm,
+  useFieldArray,
+  useWatch,
+} from "react-hook-form";
+
 import { useSelector } from "react-redux";
+
 import DSiteSettingsHeader from "./components/DSiteSettingsHeader";
 import FormField from "../Components/FormField";
 import TextareaField from "../Components/TextAreaField";
 import SelectField from "../Components/OptionField";
 import FileInputField from "../Components/FileInputField";
+
 import { appendFormData } from "../../../Utils/Utils";
 import { useAddSiteSettings } from "../../../Queries/AddSiteSettings";
 import { glassToast } from "../Components/ToastMessage";
 
 // ============================================
-// SEO PAGE ITEM - ISOLATED COMPONENT (No re-renders from parent)
+// HELPERS
 // ============================================
+
+const EMPTY_SEO_PAGE = {
+  id: null,
+  pageSlug: "",
+  metaTitle: "",
+  metaDescription: "",
+  metaKeyword: "",
+  canonicalURL: "",
+  OGTitle: "",
+  OGDescription: "",
+  twitterCardType: "summary_large_image",
+  metaRobots: "index, follow",
+};
+
+const cloneData = (data) => JSON.parse(JSON.stringify(data));
+
+const getNestedValue = (object, path) => {
+  return path.split(".").reduce((value, key) => value?.[key], object);
+};
+
+// FormField components may access errors using errors[name].
+// This helper preserves compatibility with nested React Hook Form fields.
+const getFieldErrors = (errors, name) => ({
+  [name]: getNestedValue(errors, name),
+});
+
+const normalizeSeoPage = (page = {}) => ({
+  id: page.id || null,
+  pageSlug: page.pageSlug || "",
+  metaTitle: page.metaTitle || "",
+  metaDescription: page.metaDescription || "",
+  metaKeyword: page.metaKeyword || "",
+  canonicalURL: page.canonicalURL || "",
+  OGTitle: page.OGTitle || "",
+  OGDescription: page.OGDescription || "",
+  twitterCardType: page.twitterCardType || "summary_large_image",
+  metaRobots: page.metaRobots || "index, follow",
+});
+
+// ============================================
+// SECTION CARD
+// ============================================
+
+const SectionCard = memo(
+  ({ children, title, description, icon: Icon, badge }) => (
+    <motion.div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/60 p-6 shadow-2xl shadow-black/20 backdrop-blur-2xl sm:p-8">
+      <div className="pointer-events-none absolute right-0 top-0 h-96 w-96 rounded-full bg-gradient-to-br from-violet-500/5 to-transparent blur-3xl" />
+
+      <div className="relative z-10 mb-6 flex items-center gap-3 border-b border-white/[0.06] pb-4">
+        {Icon && (
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-violet-500/20 bg-gradient-to-br from-violet-500/20 to-blue-500/20 text-violet-400">
+            <Icon className="h-5 w-5" />
+          </div>
+        )}
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-lg font-bold text-white sm:text-xl">{title}</h2>
+
+            {badge && (
+              <span className="rounded-full border border-violet-500/20 bg-violet-500/10 px-2.5 py-0.5 text-xs font-medium text-violet-400">
+                {badge}
+              </span>
+            )}
+          </div>
+
+          {description && (
+            <p className="mt-0.5 text-sm text-slate-400">{description}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="relative z-10">{children}</div>
+    </motion.div>
+  ),
+);
+
+SectionCard.displayName = "SectionCard";
+
+// ============================================
+// SEO PAGE ITEM
+// ============================================
+
 const SEOPageItem = memo(
   ({
-    idx,
-    page,
+    index,
+    fieldKey,
     register,
+    control,
     errors,
+    onDelete,
     isExpanded,
     onToggle,
-    onDelete,
-    watchPageSlug,
-    watchMetaTitle,
   }) => {
-    // Local state for this item only - doesn't affect parent
-    const [localExpanded, setLocalExpanded] = useState(isExpanded);
+    const pageSlug = useWatch({
+      control,
+      name: `seoPages.${index}.pageSlug`,
+    });
 
-    useEffect(() => {
-      setLocalExpanded(isExpanded);
-    }, [isExpanded]);
+    const metaTitle = useWatch({
+      control,
+      name: `seoPages.${index}.metaTitle`,
+    });
 
-    const handleToggle = useCallback(() => {
-      setLocalExpanded((prev) => !prev);
-      onToggle(idx);
-    }, [idx, onToggle]);
+    const fieldName = (field) => `seoPages.${index}.${field}`;
+
+    const getErrors = (field) => getFieldErrors(errors, fieldName(field));
 
     return (
       <motion.div
         layout
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{
-          opacity: 0,
-          scale: 0.95,
-          y: -20,
-          transition: { duration: 0.2 },
-        }}
-        transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="relative rounded-xl bg-[#0f0f1a]/60 border border-white/[0.06] overflow-hidden"
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -15 }}
+        transition={{ duration: 0.2 }}
+        className="overflow-hidden rounded-xl border border-white/[0.06] bg-[#0f0f1a]/60"
       >
-        {/* SEO Page Header - Collapsible */}
         <div
-          className="flex items-center justify-between p-4 sm:p-5 cursor-pointer hover:bg-white/[0.02] transition-colors select-none"
-          onClick={handleToggle}
+          role="button"
+          tabIndex={0}
+          onClick={onToggle}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              onToggle();
+            }
+          }}
+          className="flex cursor-pointer select-none items-center justify-between gap-3 p-4 transition-colors hover:bg-white/[0.02] sm:p-5"
         >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500/20 to-blue-500/20 flex items-center justify-center text-violet-400 text-xs font-bold border border-violet-500/20 flex-shrink-0">
-              {idx + 1}
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-violet-500/20 bg-gradient-to-br from-violet-500/20 to-blue-500/20 text-xs font-bold text-violet-400">
+              {index + 1}
             </div>
+
             <div className="min-w-0">
-              <h3 className="text-white font-semibold text-sm truncate">
-                {watchPageSlug || `SEO Page ${idx + 1}`}
+              <h3 className="truncate text-sm font-semibold text-white">
+                {pageSlug || `SEO Page ${index + 1}`}
               </h3>
-              <p className="text-slate-500 text-xs mt-0.5 truncate">
-                {watchMetaTitle || "No title set"}
+
+              <p className="mt-0.5 truncate text-xs text-slate-500">
+                {metaTitle || "No title set"}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+
+          <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(idx);
+              onClick={(event) => {
+                event.stopPropagation();
+                onDelete();
               }}
-              className="p-2 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 hover:text-rose-300 transition-all border border-rose-500/10"
+              className="rounded-lg border border-rose-500/10 bg-rose-500/10 p-2 text-rose-400 transition-all hover:bg-rose-500/20 hover:text-rose-300"
               title="Delete this SEO page"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="h-4 w-4" />
             </button>
+
             <motion.div
-              animate={{ rotate: localExpanded ? 180 : 0 }}
-              transition={{ duration: 0.3 }}
+              animate={{ rotate: isExpanded ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
               className="text-slate-400"
             >
-              <ChevronDown className="w-5 h-5" />
+              <ChevronDown className="h-5 w-5" />
             </motion.div>
           </div>
         </div>
 
-        {/* Expandable Content */}
-        <AnimatePresence>
-          {localExpanded && (
+        <AnimatePresence initial={false}>
+          {isExpanded && (
             <motion.div
+              key={fieldKey}
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+              transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="p-4 sm:p-5 pt-0 border-t border-white/[0.04]">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+              <div className="border-t border-white/[0.04] p-4 pt-0 sm:p-5">
+                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <FormField
                     label="Page Slug"
-                    name={`pageSlug_${idx}`}
+                    name={fieldName("pageSlug")}
                     register={register}
-                    errors={errors}
-                    placeholder="/about, /projects, /contact"
+                    errors={getErrors("pageSlug")}
+                    placeholder="/about"
                   />
+
                   <FormField
                     label="Meta Title"
-                    name={`metaTitle_${idx}`}
+                    name={fieldName("metaTitle")}
                     register={register}
-                    errors={errors}
-                    placeholder="About Me | My Portfolio"
+                    errors={getErrors("metaTitle")}
+                    placeholder="About Zain Abro | Full-Stack Developer"
                   />
                 </div>
 
                 <div className="mt-4">
                   <TextareaField
                     label="Meta Description"
-                    name={`metaDescription_${idx}`}
+                    name={fieldName("metaDescription")}
                     register={register}
-                    errors={errors}
-                    placeholder="Brief description for search engines (150-160 characters)"
+                    errors={getErrors("metaDescription")}
+                    placeholder="Write a unique page description..."
                     rows={3}
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <FormField
                     label="Meta Keywords"
-                    name={`metaKeyword_${idx}`}
+                    name={fieldName("metaKeyword")}
                     register={register}
-                    errors={errors}
-                    placeholder="portfolio, developer, react, nodejs"
+                    errors={getErrors("metaKeyword")}
+                    placeholder="full stack developer, react developer"
                   />
+
                   <FormField
                     label="Canonical URL"
-                    name={`canonicalURL_${idx}`}
+                    name={fieldName("canonicalURL")}
                     register={register}
-                    errors={errors}
-                    placeholder="https://yourdomain.com/page"
+                    errors={getErrors("canonicalURL")}
+                    placeholder="https://www.zaincode.io/about"
                   />
                 </div>
 
                 <div className="mt-4">
                   <FormField
-                    label="OG Title (Open Graph)"
-                    name={`OGTitle_${idx}`}
+                    label="OG Title"
+                    name={fieldName("OGTitle")}
                     register={register}
-                    errors={errors}
-                    placeholder="Title for social media sharing"
+                    errors={getErrors("OGTitle")}
+                    placeholder="Title for social sharing"
                   />
                 </div>
 
                 <div className="mt-4">
                   <TextareaField
                     label="OG Description"
-                    name={`OGDescription_${idx}`}
+                    name={fieldName("OGDescription")}
                     register={register}
-                    errors={errors}
-                    placeholder="Description for social media sharing"
+                    errors={getErrors("OGDescription")}
+                    placeholder="Description for social sharing"
                     rows={3}
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <SelectField
                     label="Twitter Card Type"
-                    name={`twitterCardType_${idx}`}
+                    name={fieldName("twitterCardType")}
                     register={register}
-                    errors={errors}
-                    placeholder="-- Select Type --"
+                    errors={getErrors("twitterCardType")}
                     options={[
                       { value: "summary", label: "Summary" },
                       {
                         value: "summary_large_image",
                         label: "Summary Large Image",
                       },
-                      { value: "app", label: "App" },
-                      { value: "player", label: "Player" },
                     ]}
                   />
+
                   <SelectField
                     label="Meta Robots"
-                    name={`metaRobots_${idx}`}
+                    name={fieldName("metaRobots")}
                     register={register}
-                    errors={errors}
-                    placeholder="-- Select Directive --"
+                    errors={getErrors("metaRobots")}
                     options={[
                       { value: "index, follow", label: "Index, Follow" },
-                      { value: "noindex, follow", label: "Noindex, Follow" },
-                      { value: "index, nofollow", label: "Index, Nofollow" },
+                      {
+                        value: "noindex, follow",
+                        label: "Noindex, Follow",
+                      },
+                      {
+                        value: "index, nofollow",
+                        label: "Index, Nofollow",
+                      },
                       {
                         value: "noindex, nofollow",
                         label: "Noindex, Nofollow",
@@ -232,20 +337,23 @@ SEOPageItem.displayName = "SEOPageItem";
 // ============================================
 // MAIN COMPONENT
 // ============================================
+
 const DSiteSettingsPage = () => {
   const { site_info, seo_pages, contact_info } = useSelector(
     (state) => state.siteSettings,
   );
 
-  // Use refs to prevent unnecessary re-renders
-  const [SEOPagesContent, setSEOPagesContent] = useState([]);
-  const [deletedSEOPagesIds, setDeletedSEOPagesIds] = useState([]);
+  const [deletedSeoPageIds, setDeletedSeoPageIds] = useState([]);
   const [expandedSEO, setExpandedSEO] = useState({});
-  const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | saved | error
+  const [saveStatus, setSaveStatus] = useState("idle");
+
   const initialDataRef = useRef(null);
+  const expandNextRef = useRef(false);
+  const hydratedRef = useRef(false);
   const formRef = useRef(null);
 
   const methods = useForm({
+    mode: "onBlur",
     defaultValues: {
       websiteName: "",
       tagline: "",
@@ -257,8 +365,8 @@ const DSiteSettingsPage = () => {
       instagramUrl: "",
       email: "",
       contactPhone: "",
+      seoPages: [],
     },
-    mode: "onBlur", // Changed from onChange to onBlur to reduce re-renders
   });
 
   const {
@@ -266,132 +374,201 @@ const DSiteSettingsPage = () => {
     handleSubmit,
     reset,
     getValues,
-    watch,
+    control,
     formState: { errors, isDirty },
   } = methods;
 
-  // Watch ONLY the values needed for SEO headers (not all values)
-  // This prevents re-renders on every keystroke
-  const watchedSEOValues = useRef({});
+  const {
+    fields: seoFields,
+    append,
+    remove,
+    replace,
+  } = useFieldArray({
+    control,
+    name: "seoPages",
+    keyName: "fieldKey",
+  });
 
-  // Update watched values only when needed
   useEffect(() => {
-    const subscription = watch((value, { name, type }) => {
-      if (name && name.includes("_")) {
-        const [field, idx] = name.split("_");
-        if (!watchedSEOValues.current[idx]) {
-          watchedSEOValues.current[idx] = {};
-        }
-        watchedSEOValues.current[idx][field] = value[name];
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [watch]);
+    if (!seoFields.length) return;
 
-  // Load SEO Pages - ONLY runs when seo_pages changes from Redux
-  useEffect(() => {
-    if (seo_pages?.length > 0) {
-      const mapped = seo_pages.map((page) => ({
-        id: page.id || null,
-        isUpdate: !!page.id,
-        pageSlug: page.pageSlug || "",
-        metaTitle: page.metaTitle || "",
-        metaDescription: page.metaDescription || "",
-        metaKeyword: page.metaKeyword || "",
-        canonicalURL: page.canonicalURL || "",
-        OGTitle: page.OGTitle || "",
-        OGDescription: page.OGDescription || "",
-        twitterCardType: page.twitterCardType || "",
-        metaRobots: page.metaRobots || "",
-      }));
-      setSEOPagesContent(mapped);
-      setExpandedSEO({ 0: true });
+    if (expandNextRef.current || Object.keys(expandedSEO).length === 0) {
+      const lastField = seoFields[seoFields.length - 1];
 
-      // Pre-populate watched values
-      mapped.forEach((page, idx) => {
-        watchedSEOValues.current[idx] = {
-          pageSlug: page.pageSlug,
-          metaTitle: page.metaTitle,
-        };
+      setExpandedSEO({
+        [lastField.fieldKey]: true,
       });
+
+      expandNextRef.current = false;
     }
-  }, [seo_pages]);
+  }, [seoFields, expandedSEO]);
 
-  // Auto-populate form - ONLY runs once when data loads
+  const { mutate, isPending } = useAddSiteSettings();
+
+  // ============================================
+  // INITIAL DATA HYDRATION
+  // ============================================
+
   useEffect(() => {
-    if (!site_info || !contact_info) return;
+    if (hydratedRef.current || !site_info || !contact_info) {
+      return;
+    }
 
-    const baseValues = {
-      websiteName: site_info?.websiteName || "",
-      tagline: site_info?.tagline || "",
-      footerText: site_info?.footerText || "",
-      googleAnalytics: site_info?.googleAnalytics || "",
-      linkedinUrl: contact_info?.linkedin || "",
-      githubUrl: contact_info?.github || "",
-      facebookUrl: contact_info?.facebook || "",
-      instagramUrl: contact_info?.instagram || "",
-      email: contact_info?.email || "",
-      contactPhone: contact_info?.contactPhone || "",
+    const initialValues = {
+      websiteName: site_info.websiteName || "",
+      tagline: site_info.tagline || "",
+      footerText: site_info.footerText || "",
+      googleAnalytics: site_info.googleAnalytics || "",
+
+      linkedinUrl: contact_info.linkedin || "",
+      githubUrl: contact_info.github || "",
+      facebookUrl: contact_info.facebook || "",
+      instagramUrl: contact_info.instagram || "",
+      email: contact_info.email || "",
+      contactPhone: contact_info.contactPhone || "",
+
+      seoPages: (seo_pages || []).map(normalizeSeoPage),
     };
 
-    const seoValues = {};
-    seo_pages?.forEach((page, i) => {
-      seoValues[`pageSlug_${i}`] = page.pageSlug || "";
-      seoValues[`metaTitle_${i}`] = page.metaTitle || "";
-      seoValues[`metaDescription_${i}`] = page.metaDescription || "";
-      seoValues[`metaKeyword_${i}`] = page.metaKeyword || "";
-      seoValues[`canonicalURL_${i}`] = page.canonicalURL || "";
-      seoValues[`OGTitle_${i}`] = page.OGTitle || "";
-      seoValues[`OGDescription_${i}`] = page.OGDescription || "";
-      seoValues[`twitterCardType_${i}`] = page.twitterCardType || "";
-      seoValues[`metaRobots_${i}`] = page.metaRobots || "";
-    });
+    reset(initialValues);
 
-    const allValues = { ...baseValues, ...seoValues };
-    reset(allValues);
-    initialDataRef.current = JSON.parse(JSON.stringify(allValues));
+    initialDataRef.current = cloneData(initialValues);
+    hydratedRef.current = true;
+  }, [site_info, contact_info, seo_pages, reset]);
+
+  // ============================================
+  // ADD SEO PAGE
+  // ============================================
+
+  const handleAddSEOPage = useCallback(() => {
+    expandNextRef.current = true;
+    append({ ...EMPTY_SEO_PAGE });
+  }, [append]);
+
+  // ============================================
+  // DELETE SEO PAGE
+  // ============================================
+
+  const handleDeleteSEOPage = useCallback(
+    (index) => {
+      const page = getValues(`seoPages.${index}`);
+
+      if (page?.id) {
+        setDeletedSeoPageIds((previous) =>
+          previous.includes(page.id) ? previous : [...previous, page.id],
+        );
+      }
+
+      remove(index);
+
+      setExpandedSEO({});
+    },
+    [getValues, remove],
+  );
+
+  // ============================================
+  // CLEAR ALL SEO PAGES
+  // ============================================
+
+  const handleClearAllSEO = useCallback(() => {
+    const currentPages = getValues("seoPages") || [];
+
+    if (currentPages.length === 0) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to remove all SEO pages?",
+    );
+
+    if (!confirmed) return;
+
+    const idsToDelete = currentPages.map((page) => page.id).filter(Boolean);
+
+    setDeletedSeoPageIds((previous) => [
+      ...new Set([...previous, ...idsToDelete]),
+    ]);
+
+    replace([]);
+    setExpandedSEO({});
+  }, [getValues, replace]);
+
+  // ============================================
+  // EXPAND / COLLAPSE
+  // ============================================
+
+  const toggleSEOExpand = useCallback((fieldKey) => {
+    setExpandedSEO((previous) => ({
+      ...previous,
+      [fieldKey]: !previous[fieldKey],
+    }));
+  }, []);
+
+  // ============================================
+  // RESET FORM
+  // ============================================
+
+  const handleReset = useCallback(() => {
+    if (!initialDataRef.current) {
+      glassToast.error("Settings data has not loaded yet.");
+      return;
+    }
+
+    if (isDirty) {
+      const confirmed = window.confirm(
+        "You have unsaved changes. Are you sure you want to reset?",
+      );
+
+      if (!confirmed) return;
+    }
+
+    reset(cloneData(initialDataRef.current));
+    setDeletedSeoPageIds([]);
+    setExpandedSEO({});
     setSaveStatus("idle");
-  }, [site_info, seo_pages, contact_info, reset]);
 
-  // Mutation
-  const { mutate, isPending, isSuccess, isError, data, error } =
-    useAddSiteSettings();
+    glassToast.info("Form reset to last saved state.");
+  }, [isDirty, reset]);
 
-  // FIXED Submit handler
+  // ============================================
+  // SUBMIT
+  // ============================================
+
   const onSubmit = useCallback(
     (formData) => {
-      setSaveStatus("saving");
+      if (isPending) return;
 
-      // Safely get file values
-      const logoFile = formData.logoImage || null;
-      const faviconFile = formData.favicon || null;
+      setSaveStatus("saving");
 
       const formattedData = {
         isUpdate: !!site_info,
-        deletedSeoPageIds: deletedSEOPagesIds,
+
+        deletedSeoPageIds: [...new Set(deletedSeoPageIds)],
+
         siteInfo: {
           websiteName: formData.websiteName || "",
           tagline: formData.tagline || "",
           footerText: formData.footerText || "",
           googleAnalytics: formData.googleAnalytics || "",
-          logoImage: logoFile,
-          favicon: faviconFile,
+
+          logoImage: formData.logoImage || null,
+          favicon: formData.favicon || null,
+
           logoImageOBJ: site_info?.logoImage || null,
           faviconOBJ: site_info?.favicon || null,
         },
-        seoPages: SEOPagesContent.map((page, i) => ({
+
+        seoPages: (formData.seoPages || []).map((page) => ({
           id: page.id || null,
-          isUpdate: !!page.id,
-          pageSlug: formData[`pageSlug_${i}`] || "",
-          metaTitle: formData[`metaTitle_${i}`] || "",
-          metaDescription: formData[`metaDescription_${i}`] || "",
-          metaKeyword: formData[`metaKeyword_${i}`] || "",
-          canonicalURL: formData[`canonicalURL_${i}`] || "",
-          OGTitle: formData[`OGTitle_${i}`] || "",
-          OGDescription: formData[`OGDescription_${i}`] || "",
-          twitterCardType: formData[`twitterCardType_${i}`] || "",
-          metaRobots: formData[`metaRobots_${i}`] || "",
+          pageSlug: page.pageSlug?.trim() || "",
+          metaTitle: page.metaTitle || "",
+          metaDescription: page.metaDescription || "",
+          metaKeyword: page.metaKeyword || "",
+          canonicalURL: page.canonicalURL || "",
+          OGTitle: page.OGTitle || "",
+          OGDescription: page.OGDescription || "",
+          twitterCardType: page.twitterCardType || "summary_large_image",
+          metaRobots: page.metaRobots || "index, follow",
         })),
+
         contactInfo: {
           linkedin: formData.linkedinUrl || "",
           github: formData.githubUrl || "",
@@ -402,248 +579,86 @@ const DSiteSettingsPage = () => {
         },
       };
 
-      const fd = new FormData();
-      appendFormData(fd, formattedData);
+      const formDataToSend = new FormData();
+      appendFormData(formDataToSend, formattedData);
 
-      mutate(fd, {
+      mutate(formDataToSend, {
         onSuccess: (response) => {
+          // Mark current values as the new saved state.
+          const savedValues = cloneData(getValues());
+
+          reset(savedValues);
+          initialDataRef.current = savedValues;
+
+          setDeletedSeoPageIds([]);
           setSaveStatus("saved");
-          setDeletedSEOPagesIds([]);
-          initialDataRef.current = JSON.parse(JSON.stringify(getValues()));
+
           glassToast.success(
             response?.message || "Settings saved successfully!",
           );
-          setTimeout(() => setSaveStatus("idle"), 3000);
         },
-        onError: (err) => {
+
+        onError: (error) => {
           setSaveStatus("error");
+
           glassToast.error(
-            err?.response?.data?.message || "Failed to save settings",
+            error?.response?.data?.message || "Failed to save settings.",
           );
         },
       });
     },
-    [site_info, SEOPagesContent, deletedSEOPagesIds, mutate, getValues],
+    [isPending, site_info, deletedSeoPageIds, mutate, getValues, reset],
   );
 
-  // Handle Reset with confirmation
-  const handleReset = useCallback(() => {
-    if (isDirty) {
-      const confirmed = window.confirm(
-        "You have unsaved changes. Are you sure you want to reset?",
-      );
-      if (!confirmed) return;
-    }
-    reset(initialDataRef.current);
-    setDeletedSEOPagesIds([]);
-    setSEOPagesContent(
-      seo_pages?.map((page) => ({
-        id: page.id || null,
-        isUpdate: !!page.id,
-        pageSlug: page.pageSlug || "",
-        metaTitle: page.metaTitle || "",
-        metaDescription: page.metaDescription || "",
-        metaKeyword: page.metaKeyword || "",
-        canonicalURL: page.canonicalURL || "",
-        OGTitle: page.OGTitle || "",
-        OGDescription: page.OGDescription || "",
-        twitterCardType: page.twitterCardType || "",
-        metaRobots: page.metaRobots || "",
-      })) || [],
-    );
-    setSaveStatus("idle");
-    glassToast.info("Form reset to last saved state");
-  }, [isDirty, reset, seo_pages]);
+  // ============================================
+  // UNSAVED CHANGES WARNING
+  // ============================================
 
-  // Delete SEO Page - OPTIMIZED
-  const handleDeleteSEOPage = useCallback(
-    (idx) => {
-      const deletedPage = SEOPagesContent[idx];
-      const updatedSEO = SEOPagesContent.filter((_, i) => i !== idx);
-      setSEOPagesContent(updatedSEO);
-
-      if (deletedPage?.id) {
-        setDeletedSEOPagesIds((prev) => [...prev, deletedPage.id]);
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      if (isDirty && saveStatus !== "saved") {
+        event.preventDefault();
+        event.returnValue = "";
       }
+    };
 
-      const currentValues = getValues();
-      const newValues = { ...currentValues };
+    window.addEventListener("beforeunload", handleBeforeUnload);
 
-      // Remove all SEO keys
-      Object.keys(newValues).forEach((key) => {
-        if (
-          key.startsWith("pageSlug_") ||
-          key.startsWith("metaTitle_") ||
-          key.startsWith("metaDescription_") ||
-          key.startsWith("metaKeyword_") ||
-          key.startsWith("canonicalURL_") ||
-          key.startsWith("OGTitle_") ||
-          key.startsWith("OGDescription_") ||
-          key.startsWith("twitterCardType_") ||
-          key.startsWith("metaRobots_")
-        ) {
-          delete newValues[key];
-        }
-      });
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isDirty, saveStatus]);
 
-      // Re-index remaining SEO pages
-      updatedSEO.forEach((page, i) => {
-        newValues[`pageSlug_${i}`] = page.pageSlug || "";
-        newValues[`metaTitle_${i}`] = page.metaTitle || "";
-        newValues[`metaDescription_${i}`] = page.metaDescription || "";
-        newValues[`metaKeyword_${i}`] = page.metaKeyword || "";
-        newValues[`canonicalURL_${i}`] = page.canonicalURL || "";
-        newValues[`OGTitle_${i}`] = page.OGTitle || "";
-        newValues[`OGDescription_${i}`] = page.OGDescription || "";
-        newValues[`twitterCardType_${i}`] = page.twitterCardType || "";
-        newValues[`metaRobots_${i}`] = page.metaRobots || "";
-      });
+  // ============================================
+  // ANIMATION
+  // ============================================
 
-      reset(newValues, { keepValues: false });
-
-      // Update expanded state
-      setExpandedSEO((prev) => {
-        const newExpanded = {};
-        updatedSEO.forEach((_, i) => {
-          newExpanded[i] = prev[i] || false;
-        });
-        return newExpanded;
-      });
-
-      // Update watched values ref
-      const newWatched = {};
-      updatedSEO.forEach((page, i) => {
-        newWatched[i] = {
-          pageSlug: page.pageSlug,
-          metaTitle: page.metaTitle,
-        };
-      });
-      watchedSEOValues.current = newWatched;
-    },
-    [SEOPagesContent, getValues, reset],
-  );
-
-  // Toggle SEO expand/collapse
-  const toggleSEOExpand = useCallback((idx) => {
-    setExpandedSEO((prev) => ({ ...prev, [idx]: !prev[idx] }));
-  }, []);
-
-  // Add new SEO page
-  const handleAddSEOPage = useCallback(() => {
-    const newIdx = SEOPagesContent.length;
-    setSEOPagesContent((prev) => [...prev, {}]);
-    setExpandedSEO((prev) => ({ ...prev, [newIdx]: true }));
-    watchedSEOValues.current[newIdx] = { pageSlug: "", metaTitle: "" };
-  }, [SEOPagesContent.length]);
-
-  // Clear all SEO pages
-  const handleClearAllSEO = useCallback(() => {
-    if (SEOPagesContent.length === 0) return;
-    const confirmed = window.confirm(
-      "Are you sure you want to remove all SEO pages?",
-    );
-    if (!confirmed) return;
-
-    const newDeletedIds = SEOPagesContent.filter((page) => page.id).map(
-      (page) => page.id,
-    );
-    setDeletedSEOPagesIds((prev) => [...prev, ...newDeletedIds]);
-    setSEOPagesContent([]);
-
-    const currentValues = getValues();
-    const newValues = { ...currentValues };
-    Object.keys(newValues).forEach((key) => {
-      if (
-        key.startsWith("pageSlug_") ||
-        key.startsWith("metaTitle_") ||
-        key.startsWith("metaDescription_") ||
-        key.startsWith("metaKeyword_") ||
-        key.startsWith("canonicalURL_") ||
-        key.startsWith("OGTitle_") ||
-        key.startsWith("OGDescription_") ||
-        key.startsWith("twitterCardType_") ||
-        key.startsWith("metaRobots_")
-      ) {
-        delete newValues[key];
-      }
-    });
-    reset(newValues);
-    setExpandedSEO({});
-    watchedSEOValues.current = {};
-  }, [SEOPagesContent, getValues, reset]);
-
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.05,
+        staggerChildren: 0.08,
+        delayChildren: 0.04,
       },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 15 },
     show: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.5,
+        duration: 0.35,
         ease: [0.25, 0.46, 0.45, 0.94],
       },
     },
   };
 
-  // Section Card Component
-  const SectionCard = useCallback(
-    ({ children, title, description, icon: Icon, badge }) => (
-      <motion.div
-        variants={itemVariants}
-        className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-2xl p-6 sm:p-8 shadow-2xl shadow-black/20 relative overflow-hidden"
-      >
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-violet-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
-
-        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/[0.06] relative z-10">
-          {Icon && (
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500/20 to-blue-500/20 flex items-center justify-center text-violet-400 border border-violet-500/20 shadow-lg shadow-violet-500/10">
-              <Icon className="w-5 h-5" />
-            </div>
-          )}
-          <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <h2 className="text-lg sm:text-xl font-bold text-white">
-                {title}
-              </h2>
-              {badge && (
-                <span className="px-2.5 py-0.5 rounded-full bg-violet-500/10 text-violet-400 text-xs font-medium border border-violet-500/20">
-                  {badge}
-                </span>
-              )}
-            </div>
-            {description && (
-              <p className="text-slate-400 text-sm mt-0.5">{description}</p>
-            )}
-          </div>
-        </div>
-        <div className="relative z-10">{children}</div>
-      </motion.div>
-    ),
-    [],
-  );
-
-  // Unsaved changes warning
-  useEffect(() => {
-    const handleBeforeUnload = (e) => {
-      if (isDirty && saveStatus !== "saved") {
-        e.preventDefault();
-        e.returnValue = "";
-      }
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isDirty, saveStatus]);
+  // ============================================
+  // RENDER
+  // ============================================
 
   return (
     <FormProvider {...methods}>
@@ -651,9 +666,8 @@ const DSiteSettingsPage = () => {
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12"
+        className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8"
       >
-        {/* Header with form ref for submission */}
         <motion.div variants={itemVariants} className="mb-8 sm:mb-10">
           <DSiteSettingsHeader
             handleReset={handleReset}
@@ -670,34 +684,38 @@ const DSiteSettingsPage = () => {
           encType="multipart/form-data"
           className="space-y-8"
         >
-          {/* Basic Site Settings */}
+          {/* BASIC SITE SETTINGS */}
+
           <SectionCard
             title="Basic Site Settings"
-            description="Configure your website's core information and branding"
+            description="Configure your website's core information and branding."
             icon={Globe}
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <FormField
                 label="Website Name"
                 name="websiteName"
                 register={register}
                 errors={errors}
-                placeholder="My Awesome Portfolio"
+                placeholder="Zaincode"
               />
+
               <FormField
                 label="Tagline"
                 name="tagline"
                 register={register}
                 errors={errors}
-                placeholder="Full Stack Developer & Designer"
+                placeholder="Full-Stack Web Developer"
               />
+
               <FormField
                 label="Footer Text"
                 name="footerText"
                 register={register}
                 errors={errors}
-                placeholder="© 2024 All rights reserved"
+                placeholder="© 2026 Zaincode. All rights reserved."
               />
+
               <FormField
                 label="Google Analytics ID"
                 name="googleAnalytics"
@@ -707,7 +725,7 @@ const DSiteSettingsPage = () => {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-6">
+            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
               <FileInputField
                 label="Logo Image"
                 name="logoImage"
@@ -716,6 +734,7 @@ const DSiteSettingsPage = () => {
                 existingFileUrl={site_info?.logoImage?.url || ""}
                 required={false}
               />
+
               <FileInputField
                 label="Favicon"
                 name="favicon"
@@ -727,85 +746,79 @@ const DSiteSettingsPage = () => {
             </div>
           </SectionCard>
 
-          {/* SEO Pages */}
+          {/* SEO PAGES */}
+
           <SectionCard
             title="SEO — Per Page Settings"
-            description="Add page-specific SEO metadata for better search visibility"
+            description="Manage unique metadata for every website page."
             icon={Search}
-            badge={`${SEOPagesContent.length} page${SEOPagesContent.length !== 1 ? "s" : ""}`}
+            badge={`${seoFields.length} page${seoFields.length !== 1 ? "s" : ""}`}
           >
             <AnimatePresence mode="popLayout">
-              {SEOPagesContent.length > 0 ? (
+              {seoFields.length > 0 ? (
                 <div className="space-y-4">
-                  {SEOPagesContent.map((item, idx) => (
+                  {seoFields.map((field, index) => (
                     <SEOPageItem
-                      key={`seo-${idx}`}
-                      idx={idx}
-                      page={item}
+                      key={field.fieldKey}
+                      fieldKey={field.fieldKey}
+                      index={index}
                       register={register}
+                      control={control}
                       errors={errors}
-                      isExpanded={!!expandedSEO[idx]}
-                      onToggle={toggleSEOExpand}
-                      onDelete={handleDeleteSEOPage}
-                      watchPageSlug={
-                        watchedSEOValues.current[idx]?.pageSlug || ""
-                      }
-                      watchMetaTitle={
-                        watchedSEOValues.current[idx]?.metaTitle || ""
-                      }
+                      isExpanded={!!expandedSEO[field.fieldKey]}
+                      onToggle={() => toggleSEOExpand(field.fieldKey)}
+                      onDelete={() => handleDeleteSEOPage(index)}
                     />
                   ))}
                 </div>
               ) : (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-center py-16 text-slate-400"
-                >
-                  <div className="w-16 h-16 rounded-2xl bg-slate-800/50 flex items-center justify-center mx-auto mb-4 border border-white/5">
-                    <Search className="w-8 h-8 opacity-50" />
+                <div className="py-16 text-center text-slate-400">
+                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/5 bg-slate-800/50">
+                    <Search className="h-8 w-8 opacity-50" />
                   </div>
+
                   <p className="text-lg font-medium text-slate-300">
-                    No SEO pages configured yet
+                    No SEO pages configured
                   </p>
-                  <p className="text-sm text-slate-500 mt-1">
-                    Add SEO pages to improve your search engine visibility
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Add a page to configure its search engine metadata.
                   </p>
-                </motion.div>
+                </div>
               )}
             </AnimatePresence>
 
-            {/* Add/Clear Buttons */}
-            <div className="flex items-center gap-3 mt-6">
+            <div className="mt-6 flex flex-wrap items-center gap-3">
               <button
                 type="button"
                 onClick={handleAddSEOPage}
-                className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-blue-500 text-white font-semibold shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all text-sm relative overflow-hidden group"
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-blue-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/25 transition-all hover:shadow-violet-500/40"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="h-4 w-4" />
                 Add SEO Page
               </button>
 
-              {SEOPagesContent.length > 0 && (
+              {seoFields.length > 0 && (
                 <button
                   type="button"
                   onClick={handleClearAllSEO}
-                  className="flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-800/60 border border-white/10 text-slate-300 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/20 transition-all text-sm font-medium"
+                  className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-800/60 px-5 py-3 text-sm font-medium text-slate-300 transition-all hover:border-rose-500/20 hover:bg-rose-500/10 hover:text-rose-400"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="h-4 w-4" />
                   Clear All
                 </button>
               )}
             </div>
           </SectionCard>
 
-          {/* Social & Contact */}
+          {/* SOCIAL & CONTACT */}
+
           <SectionCard
             title="Social & Contact"
-            description="Your social media profiles and contact information"
+            description="Your social media profiles and contact information."
             icon={Share2}
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <FormField
                 label="LinkedIn URL"
                 name="linkedinUrl"
@@ -813,6 +826,7 @@ const DSiteSettingsPage = () => {
                 errors={errors}
                 placeholder="https://linkedin.com/in/yourprofile"
               />
+
               <FormField
                 label="GitHub URL"
                 name="githubUrl"
@@ -820,6 +834,7 @@ const DSiteSettingsPage = () => {
                 errors={errors}
                 placeholder="https://github.com/yourusername"
               />
+
               <FormField
                 label="Facebook URL"
                 name="facebookUrl"
@@ -827,6 +842,7 @@ const DSiteSettingsPage = () => {
                 errors={errors}
                 placeholder="https://facebook.com/yourpage"
               />
+
               <FormField
                 label="Instagram URL"
                 name="instagramUrl"
@@ -834,62 +850,68 @@ const DSiteSettingsPage = () => {
                 errors={errors}
                 placeholder="https://instagram.com/yourhandle"
               />
+
               <FormField
                 label="Contact Email"
                 name="email"
                 register={register}
                 errors={errors}
-                placeholder="contact@yourdomain.com"
+                placeholder="contact@zaincode.io"
               />
+
               <FormField
                 label="Contact Phone"
                 name="contactPhone"
                 register={register}
                 errors={errors}
-                placeholder="+1 (555) 123-4567"
+                placeholder="+92..."
               />
             </div>
           </SectionCard>
 
-          {/* Bottom Save Bar */}
+          {/* SAVE BAR */}
+
           <motion.div
             variants={itemVariants}
-            className="sticky bottom-4 z-50 flex items-center justify-end gap-3 p-4 rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-white/10 backdrop-blur-2xl shadow-2xl"
+            className="sticky bottom-4 z-50 flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-800/80 p-4 shadow-2xl backdrop-blur-2xl"
           >
             {isDirty && saveStatus !== "saved" && (
-              <span className="flex items-center gap-2 text-amber-400 text-sm mr-auto">
-                <AlertTriangle className="w-4 h-4" />
+              <span className="mr-auto flex items-center gap-2 text-sm text-amber-400">
+                <AlertTriangle className="h-4 w-4" />
                 Unsaved changes
               </span>
             )}
+
             {saveStatus === "saved" && (
-              <span className="flex items-center gap-2 text-emerald-400 text-sm mr-auto">
-                <CheckCircle2 className="w-4 h-4" />
+              <span className="mr-auto flex items-center gap-2 text-sm text-emerald-400">
+                <CheckCircle2 className="h-4 w-4" />
                 Saved successfully
               </span>
             )}
+
             <button
               type="button"
               onClick={handleReset}
               disabled={isPending}
-              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-800/60 border border-white/10 text-slate-300 hover:bg-slate-700/60 hover:text-white transition-all text-sm font-medium disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-800/60 px-5 py-3 text-sm font-medium text-slate-300 transition-all hover:bg-slate-700/60 hover:text-white disabled:opacity-50"
             >
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw className="h-4 w-4" />
               Reset
             </button>
+
             <button
               type="submit"
               disabled={isPending}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-blue-500 text-white font-semibold shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all text-sm relative overflow-hidden group"
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-blue-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/25 transition-all hover:shadow-violet-500/40 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Saving...
                 </>
               ) : (
                 <>
-                  <Save className="w-4 h-4" />
+                  <Save className="h-4 w-4" />
                   Save Changes
                 </>
               )}
