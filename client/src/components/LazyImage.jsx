@@ -21,6 +21,8 @@ const sanitizeUrl = (url) => {
 
 const LazyImage = ({
   src,
+  srcSet,
+  sizes,
   alt = "Image",
   fallback,
   animation = "fade",
@@ -177,7 +179,7 @@ const LazyImage = ({
   return (
     <div
       ref={containerRef}
-      className={`relative isolate overflow-hidden bg-surface-card ${className}`}
+      className={`relative isolate aspect-square overflow-hidden bg-surface-card ${className}`}
       style={{ backgroundColor: placeholderColor, ...style }}
     >
       {/* Shimmer skeleton while loading */}
@@ -230,14 +232,16 @@ const LazyImage = ({
 
       {/* Actual image rendered with motion when visible */}
       {isVisible && currentSrc && !hasError && (
-        <img
+        <motion.img
           ref={imgRef}
           src={currentSrc}
+          srcSet={currentSrc === sanitizeUrl(src) ? srcSet : undefined}
+          sizes={currentSrc === sanitizeUrl(src) ? sizes : undefined}
           alt={alt}
           loading={eager ? "eager" : "lazy"}
-          crossOrigin={crossOrigin ? "anonymous" : undefined}
-          decoding="async"
           fetchPriority={eager ? "high" : "auto"}
+          decoding="async"
+          crossOrigin={crossOrigin ? "anonymous" : undefined}
           initial={animationVariants.initial}
           animate={
             isLoaded ? animationVariants.animate : animationVariants.initial
@@ -250,20 +254,10 @@ const LazyImage = ({
           onLoad={handleLoad}
           onError={handleError}
           className="h-full w-full select-none"
-          style={{
-            objectFit,
-            objectPosition,
-          }}
+          style={{ objectFit, objectPosition }}
           {...rest}
         />
       )}
-
-      <style>{`
-        @keyframes ds-lazy-shimmer {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-      `}</style>
     </div>
   );
 };
@@ -271,6 +265,8 @@ const LazyImage = ({
 LazyImage.propTypes = {
   src: PropTypes.string,
   alt: PropTypes.string,
+  srcSet: PropTypes.string,
+  sizes: PropTypes.string,
   fallback: PropTypes.string,
   animation: PropTypes.oneOf(["fade", "slide", "scale", "none"]),
   duration: PropTypes.number,

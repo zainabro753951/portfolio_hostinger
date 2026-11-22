@@ -1,8 +1,11 @@
-
-const RESPONSIVE_WIDTHS = [480, 768, 1024, 1440];
+const RESPONSIVE_WIDTHS = [320, 480, 640, 768, 1024];
 
 export const RESPONSIVE_IMAGE_SIZES =
-  "(max-width: 480px) 100vw, (max-width: 768px) 90vw, (max-width: 1024px) 50vw, 600px";
+  "(max-width: 639px) 176px, " +
+  "(max-width: 767px) 256px, " +
+  "(max-width: 1023px) 320px, " +
+  "(max-width: 1279px) 50vw, " +
+  "600px";
 
 /**
  * Generates responsive Cloudinary image URLs.
@@ -14,23 +17,32 @@ export const getResponsiveImageSrcSet = (imageUrl) => {
   try {
     const url = new URL(imageUrl);
 
-    if (!url.hostname.includes("res.cloudinary.com")) {
+    if (url.hostname !== "res.cloudinary.com") {
       return undefined;
     }
 
-    const uploadIndex = url.pathname.indexOf("/upload/");
+    if (url.protocol !== "https:") {
+      return undefined;
+    }
+
+    const uploadMarker = "/upload/";
+    const uploadIndex = url.pathname.indexOf(uploadMarker);
 
     if (uploadIndex === -1) return undefined;
+
+    const uploadPrefix = url.pathname.slice(
+      0,
+      uploadIndex + uploadMarker.length,
+    );
+
+    const imagePath = url.pathname.slice(uploadIndex + uploadMarker.length);
+
+    if (!imagePath) return undefined;
 
     return RESPONSIVE_WIDTHS.map((width) => {
       const transformedUrl = new URL(url.toString());
 
-      const uploadPath = transformedUrl.pathname;
-      const beforeUpload = uploadPath.slice(0, uploadIndex + 8);
-      const afterUpload = uploadPath.slice(uploadIndex + 8);
-
-      transformedUrl.pathname =
-        `${beforeUpload}f_auto,q_auto,w_${width},c_limit/${afterUpload}`;
+      transformedUrl.pathname = `${uploadPrefix}f_auto,q_auto,w_${width},c_limit/${imagePath}`;
 
       return `${transformedUrl.toString()} ${width}w`;
     }).join(", ");

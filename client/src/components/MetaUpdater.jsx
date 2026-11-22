@@ -130,7 +130,7 @@ const MetaUpdater = () => {
     const metaRobots = currentSEO?.metaRobots || "index, follow";
     const themeColor = site_info.themeColor || "#0a0a0f";
     const CANONICAL_BASE_URL =
-      process.env.VITE_BACKEND_URL_FOR_IMAGE || "https://www.zaincode.io";
+      import.meta.env.VITE_BACKEND_URL_FOR_IMAGE || "https://www.zaincode.io";
 
     // Resolve absolute URL for OG image
     let rawOgImage = site_info.logoImage?.url || site_info.favicon?.url || "";

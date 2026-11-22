@@ -1,23 +1,34 @@
-import { OutlineButton, PrimaryButton } from '@/components/UI';
-import { fadeUp, staggerParent, useMotionPrefs, VIEWPORT_ONCE } from '@/lib/motion';
-import { getClientSatisfactionRate } from '@/Utils/Utils';
-import { ArrowRight, Award, Star, Users, Zap } from 'lucide-react';
-import { motion } from 'motion/react';
-import { memo, useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import Hero from '../sections/Hero';
-import HeroSkeleton from '../sections/HeroSkeleton';
-import Particles from '../sections/Particles';
-import PricePlanSection from '../sections/PricePlanSection';
-import ServicesSection from '../sections/ServicesSection';
+import { OutlineButton, PrimaryButton } from "@/components/UI";
+import {
+  fadeUp,
+  staggerParent,
+  useMotionPrefs,
+  VIEWPORT_ONCE,
+} from "@/lib/motion";
+import { getClientSatisfactionRate } from "@/Utils/Utils";
+import { ArrowRight, Award, Star, Users, Zap } from "lucide-react";
+import { motion } from "motion/react";
+import { memo, useMemo } from "react";
+import { useSelector } from "react-redux";
+import Hero from "../sections/Hero";
+import HeroSkeleton from "../sections/HeroSkeleton";
+import Particles from "../sections/Particles";
+import PricePlanSection from "../sections/PricePlanSection";
+import ServicesSection from "../sections/ServicesSection";
 
 const useHomeData = () => {
-  const { data: about, isLoading: isAboutLoading } = useSelector((state) => state.about);
-  const { projectCounts, isLoading: isProjectLoading } = useSelector((state) => state.projects);
+  const { data: about, isLoading: isAboutLoading } = useSelector(
+    (state) => state.about,
+  );
+
+  const { projectCounts, isLoading: isProjectLoading } = useSelector(
+    (state) => state.projects,
+  );
 
   return {
     about,
-    isLoading: isAboutLoading || isProjectLoading,
+    isAboutLoading,
+    isProjectLoading,
     projectCounts: projectCounts || {},
   };
 };
@@ -44,59 +55,71 @@ const Home = memo(() => {
       {
         icon: Users,
         value: projectCounts?.publishedProjects,
-        suffix: '+',
-        label: 'Projects Delivered',
+        suffix: "+",
+        label: "Projects Delivered",
       },
       {
         icon: Star,
         value: testimonials?.length,
-        suffix: '+',
-        label: 'Satisfied Clients',
+        suffix: "+",
+        label: "Satisfied Clients",
       },
       {
         icon: Award,
         value: about?.experience,
-        suffix: '+',
-        label: 'Years Experience',
+        suffix: "+",
+        label: "Years Experience",
       },
       {
         icon: Zap,
         value: satisfaction,
-        suffix: '%',
-        label: 'Client Satisfaction',
+        suffix: "%",
+        label: "Client Satisfaction",
       },
     ].filter(
       (s) =>
         s.value !== undefined &&
         s.value !== null &&
-        s.value !== '' &&
-        String(s.value) !== '0' &&
-        String(s.value) !== 'NaN'
+        s.value !== "" &&
+        String(s.value) !== "0" &&
+        String(s.value) !== "NaN",
     );
     return list;
-  }, [projectCounts?.publishedProjects, testimonials?.length, about?.experience, satisfaction]);
+  }, [
+    projectCounts?.publishedProjects,
+    testimonials?.length,
+    about?.experience,
+    satisfaction,
+  ]);
 
   const structuredData = useMemo(() => {
     if (!about) return null;
     return {
-      '@context': 'https://schema.org',
-      '@type': 'WebPage',
-      name: `${about.fullName || 'Developer'} - Professional Portfolio`,
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: `${about.fullName || "Developer"} - Professional Portfolio`,
       description:
         about.shortDesc ||
-        'Professional portfolio showcasing modern web engineering, full stack development, and UI/UX design.',
-      url: typeof window !== 'undefined' ? window.location.href : '',
+        "Professional portfolio showcasing modern web engineering, full stack development, and UI/UX design.",
+      url: typeof window !== "undefined" ? window.location.href : "",
       mainEntity: {
-        '@type': 'Person',
-        name: about.fullName || 'Developer',
-        jobTitle: about.shortRole || 'Full Stack Developer',
-        knowsAbout: ['Web Development', 'UI/UX Design', 'Full Stack Development'],
+        "@type": "Person",
+        name: about.fullName || "Developer",
+        jobTitle: about.shortRole || "Full Stack Developer",
+        knowsAbout: [
+          "Web Development",
+          "UI/UX Design",
+          "Full Stack Development",
+        ],
       },
     };
   }, [about]);
 
   return (
-    <div className="relative isolate overflow-x-clip bg-surface-base text-ink" id="home-page">
+    <div
+      className="relative isolate overflow-x-clip bg-surface-base text-ink"
+      id="home-page"
+    >
       {structuredData && (
         <script
           type="application/ld+json"
@@ -105,21 +128,28 @@ const Home = memo(() => {
       )}
 
       {/* Subtle fixed background gradient and ambient particles */}
-      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden" aria-hidden="true">
+      <div
+        className="fixed inset-0 pointer-events-none -z-10 overflow-hidden"
+        aria-hidden="true"
+      >
         <div
           className="absolute top-1/4 left-1/4 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-[120px] opacity-60"
-          style={{ background: 'rgba(2, 211, 254, 0.08)' }}
+          style={{ background: "rgba(2, 211, 254, 0.08)" }}
         />
         <div
           className="absolute bottom-1/3 right-1/4 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-[120px] opacity-60"
-          style={{ background: 'rgba(154, 92, 183, 0.08)' }}
+          style={{ background: "rgba(154, 92, 183, 0.08)" }}
         />
         <Particles />
       </div>
 
       {/* 🦸 HERO SECTION */}
       <section aria-label="Hero" className="relative z-10">
-        {isLoading ? <HeroSkeleton /> : <Hero about={{ ...about, projectCounts }} />}
+        {isLoading ? (
+          <HeroSkeleton />
+        ) : (
+          <Hero about={{ ...about, projectCounts }} />
+        )}
       </section>
 
       {/* 🛠️ SERVICES OVERVIEW SECTION */}
@@ -182,7 +212,10 @@ const Home = memo(() => {
       </section>
 
       {/* 🚀 CALL TO ACTION SECTION */}
-      <section className="relative z-10 py-16 sm:py-20 lg:py-24" aria-label="Call To Action">
+      <section
+        className="relative z-10 py-16 sm:py-20 lg:py-24"
+        aria-label="Call To Action"
+      >
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             variants={itemVariants}
@@ -203,19 +236,24 @@ const Home = memo(() => {
               </div>
 
               <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-ink mb-4 sm:mb-5 leading-tight">
-                Ready to Build Your{' '}
+                Ready to Build Your{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan via-brand-blue to-brand-purple">
                   Next Project?
                 </span>
               </h2>
 
               <p className="text-sm sm:text-base md:text-lg leading-relaxed text-ink-secondary mb-8 sm:mb-10 max-w-2xl mx-auto">
-                Let's collaborate to bring your vision into reality. Open for select full-stack
-                engineering contracts, performance overhauls, and design systems.
+                Let's collaborate to bring your vision into reality. Open for
+                select full-stack engineering contracts, performance overhauls,
+                and design systems.
               </p>
 
               <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 w-full">
-                <PrimaryButton to="/contact" icon={Zap} className="w-full sm:w-auto justify-center">
+                <PrimaryButton
+                  to="/contact"
+                  icon={Zap}
+                  className="w-full sm:w-auto justify-center"
+                >
                   Get In Touch
                 </PrimaryButton>
                 <OutlineButton
@@ -234,5 +272,5 @@ const Home = memo(() => {
   );
 });
 
-Home.displayName = 'Home';
+Home.displayName = "Home";
 export default Home;
