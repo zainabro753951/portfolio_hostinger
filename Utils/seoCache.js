@@ -160,7 +160,7 @@ export const loadSeoCache = async () => {
     projects.forEach((project) => {
       if (!project.slug) return;
 
-      const path = normalizeSeoPath(`/project/${project.slug}`);
+      const path = normalizeSeoPath(`/projects/${project.slug}`);
 
       newProjectCache.set(path, {
         title: project.seoTitle || project.title || "",

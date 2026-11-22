@@ -1,3 +1,4 @@
+
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
@@ -10,19 +11,75 @@
   </url>
 
   <url>
+    <loc>https://www.zaincode.io/services</loc>
+  </url>
+
+  <url>
     <loc>https://www.zaincode.io/projects</loc>
   </url>
 
   <url>
-    <loc>https://www.zaincode.io/services</loc>
+    <loc>https://www.zaincode.io/reviews</loc>
   </url>
 
   <url>
     <loc>https://www.zaincode.io/contact</loc>
   </url>
 
+  <!-- Add every published service detail URL here -->
+
   <url>
-    <loc>https://www.zaincode.io/reviews</loc>
+    <loc>https://www.zaincode.io/services/website-maintenance-bug-fixing-performance-optimization</loc>
+  </url>
+
+  <url>
+    <loc>https://www.zaincode.io/services/payment-gateway-third-party-api-integration</loc>
+  </url>
+
+  <url>
+    <loc>https://www.zaincode.io/services/real-time-web-application-development</loc>
+  </url>
+
+  <url>
+    <loc>https://www.zaincode.io/services/authentication-authorization-systems</loc>
+  </url>
+
+  <url>
+    <loc>https://www.zaincode.io/services/admin-dashboard-business-management-systems</loc>
+  </url>
+
+  <url>
+    <loc>https://www.zaincode.io/services/backend-development-rest-api-development</loc>
+  </url>
+
+  <url>
+    <loc>https://www.zaincode.io/services/reactjs-nextjs-frontend-development</loc>
+  </url>
+
+  <url>
+    <loc>https://www.zaincode.io/services/e-commerce-website-development</loc>
+  </url>
+
+  <url>
+    <loc>https://www.zaincode.io/services/saas-application-development</loc>
+  </url>
+
+  <url>
+    <loc>https://www.zaincode.io/services/custom-full-stack-web-application-development</loc>
+  </url>
+
+  <!-- Add every published project detail URL here -->
+
+  <url>
+    <loc>https://www.zaincode.io/projects/bazm-event-management-online-ticket-booking-platform</loc>
+  </url>
+
+  <url>
+    <loc>https://www.zaincode.io/projects/voter-strategy-voter-management-campaign-operations-dashboard-ui</loc>
+  </url>
+
+  <url>
+    <loc>https://www.zaincode.io/projects/intellivid-ai-ai-powered-video-generation-platform-frontend-architecture-</loc>
   </url>
 
 </urlset>

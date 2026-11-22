@@ -9,6 +9,10 @@ import {
   PrimaryButton,
   THEME,
 } from "@/components/UI";
+import {
+  getResponsiveImageSrcSet,
+  RESPONSIVE_IMAGE_SIZES,
+} from "@/Utils/responsiveImage.js";
 import { fadeUp, useMotionPrefs } from "@/lib/motion";
 import { ArrowRight, Sparkles, Download } from "lucide-react";
 import { motion, useMotionValue, useSpring } from "motion/react";
@@ -29,6 +33,8 @@ export const HeroImageSection = memo(({ imageUrl, about, satisfaction }) => {
   const rotateX = useSpring(useMotionValue(0), { stiffness: 120, damping: 18 });
   const rotateY = useSpring(useMotionValue(0), { stiffness: 120, damping: 18 });
 
+  const responsiveImageSrcSet = getResponsiveImageSrcSet(imageUrl);
+
   const handlePointerMove = useCallback(
     (e) => {
       if (!canTilt || e.pointerType !== "mouse") return;
@@ -46,14 +52,7 @@ export const HeroImageSection = memo(({ imageUrl, about, satisfaction }) => {
   }, [rotateX, rotateY]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: reduced ? 0 : isMobile ? 12 : 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: reduced ? 0.01 : 0.8,
-        delay: reduced ? 0 : 0.2,
-        ease: [0.16, 1, 0.3, 1],
-      }}
+    <div
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
       className="relative mx-auto w-full max-w-[11rem] sm:max-w-[16rem] md:max-w-xs lg:max-w-none"
@@ -71,14 +70,15 @@ export const HeroImageSection = memo(({ imageUrl, about, satisfaction }) => {
         <div className="relative overflow-hidden rounded-2xl border border-line-strong shadow-[0_30px_60px_-20px_rgba(0,0,0,0.6)]">
           <LazyImage
             src={imageUrl}
+            srcSet={responsiveImageSrcSet}
+            sizes="(max-width: 640px) 176px, (max-width: 1024px) 256px, 40vw"
             alt={`${about?.fullName || "Developer"} - Professional Portrait`}
             fallback={heroImage}
-            eager={true}
-            crossOrigin={false}
-            className="aspect-[4/4] w-full bg-cover"
+            eager
+            animation="none"
+            className="aspect-square w-full"
             objectFit="cover"
             objectPosition="bottom"
-            placeholderColor={THEME.bg}
           />
           <div
             aria-hidden="true"
@@ -132,7 +132,7 @@ export const HeroImageSection = memo(({ imageUrl, about, satisfaction }) => {
           </div>
         )}
       </motion.div>
-    </motion.div>
+    </div>
   );
 });
 HeroImageSection.displayName = "HeroImageSection";
@@ -164,22 +164,6 @@ const Hero = memo(({ about }) => {
 
     return /^https?:\/\//i.test(url.trim()) ? url.trim() : "";
   }, [about?.aboutImage?.url]);
-
-  const structuredData = useMemo(() => {
-    if (!about) return null;
-    return {
-      "@context": "https://schema.org",
-      "@type": "Person",
-      name: about.fullName || "Developer",
-      jobTitle: about.shortRole || "Full Stack Developer",
-      description:
-        about.shortDesc ||
-        "Full Stack Developer specializing in modern web development and UI/UX design.",
-      image: imageUrl || undefined,
-      knowsAbout: ["Web Development", "UI/UX Design", "Full Stack Development"],
-      url: typeof window !== "undefined" ? window.location.href : undefined,
-    };
-  }, [about, imageUrl]);
 
   const headingText = useMemo(() => {
     const firstName =
@@ -215,13 +199,6 @@ const Hero = memo(({ about }) => {
 
   return (
     <div className="relative isolate overflow-clip">
-      {structuredData && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-        />
-      )}
-
       {/* Background: one soft cyan/blue glow top-left, purple depth bottom-right */}
       <div
         aria-hidden="true"

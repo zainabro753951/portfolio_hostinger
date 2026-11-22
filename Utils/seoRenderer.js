@@ -32,8 +32,11 @@ export const renderSeoHtml = async (req, res, next, clientBuildPath) => {
     // Find matching SEO record
     const seo = getSeoByPath(req.path);
 
-    // Homepage SEO as fallback
-    const pageSeo = seo || getSeoByPath("/");
+    if (!seo) {
+      return res.status(404).send("Page not found");
+    }
+
+    const pageSeo = seo;
 
     if (!pageSeo) {
       return res.status(503).send("SEO settings are not available.");
@@ -47,13 +50,13 @@ export const renderSeoHtml = async (req, res, next, clientBuildPath) => {
       pageSeo.canonical?.trim() ||
       `${siteUrl}${req.path === "/" ? "" : req.path}`;
 
-    const ogImage =
-      typeof pageSeo.ogImage === "string"
-        ? pageSeo.ogImage
-        : pageSeo.ogImage?.url || "";
+    const DEFAULT_OG_IMAGE =
+      "https://res.cloudinary.com/db2vbllpf/image/upload/v1795330478/og-image-social-sharing_qkmfgr.png";
 
-    console.log(canonicalURL);
-    console.log(pageSeo);
+    const ogImage =
+      (typeof pageSeo.ogImage === "string"
+        ? pageSeo.ogImage
+        : pageSeo.ogImage?.url) || DEFAULT_OG_IMAGE;
 
     const metadata = {
       title: escapeHtml(pageSeo.title || "Zain Abro"),

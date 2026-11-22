@@ -114,22 +114,6 @@ const LazyImage = ({
     }
   }, [currentSrc, isLoaded, onLoad]);
 
-  // Preload link for eager images
-  useEffect(() => {
-    if (!eager || !currentSrc || typeof document === "undefined") return;
-
-    const link = document.createElement("link");
-    link.rel = "preload";
-    link.as = "image";
-    link.href = currentSrc;
-    if (crossOrigin) link.crossOrigin = "anonymous";
-    document.head.appendChild(link);
-
-    return () => {
-      if (link.parentNode) link.parentNode.removeChild(link);
-    };
-  }, [eager, currentSrc, crossOrigin]);
-
   const handleLoad = useCallback(() => {
     if (!imgRef.current) return;
     if (imgRef.current.naturalWidth > 0 || imgRef.current.complete) {
@@ -246,7 +230,7 @@ const LazyImage = ({
 
       {/* Actual image rendered with motion when visible */}
       {isVisible && currentSrc && !hasError && (
-        <motion.img
+        <img
           ref={imgRef}
           src={currentSrc}
           alt={alt}
