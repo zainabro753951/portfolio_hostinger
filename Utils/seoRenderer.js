@@ -29,6 +29,17 @@ export const renderSeoHtml = async (req, res, next, clientBuildPath) => {
       );
     }
 
+    // Admin routes should bypass dynamic SEO lookup
+    if (req.path === "/admin" || req.path.startsWith("/admin/")) {
+      return (
+        res.setHeader("Cache-Control", "private, no-store"),
+        res
+          .status(200)
+          .type("html")
+          .send(htmlTemplate.replaceAll("__SEO_ROBOTS__", "noindex, nofollow"))
+      );
+    }
+
     // Find matching SEO record
     const seo = getSeoByPath(req.path);
 
@@ -36,51 +47,32 @@ export const renderSeoHtml = async (req, res, next, clientBuildPath) => {
       return res.status(404).send("Page not found");
     }
 
-    const pageSeo = seo;
-
-    if (!pageSeo) {
-      return res.status(503).send("SEO settings are not available.");
-    }
-
     const siteUrl = (
       process.env.FRONTEND_URL || "https://www.zaincode.io"
     ).replace(/\/+$/, "");
 
     const canonicalURL =
-      pageSeo.canonical?.trim() ||
-      `${siteUrl}${req.path === "/" ? "" : req.path}`;
+      seo.canonical?.trim() || `${siteUrl}${req.path === "/" ? "" : req.path}`;
 
     const DEFAULT_OG_IMAGE =
       "https://res.cloudinary.com/db2vbllpf/image/upload/v1795330478/og-image-social-sharing_qkmfgr.png";
 
     const ogImage =
-      (typeof pageSeo.ogImage === "string"
-        ? pageSeo.ogImage
-        : pageSeo.ogImage?.url) || DEFAULT_OG_IMAGE;
+      (typeof seo.ogImage === "string" ? seo.ogImage : seo.ogImage?.url) ||
+      DEFAULT_OG_IMAGE;
 
     const metadata = {
-      title: escapeHtml(pageSeo.title || "Zain Abro"),
-
-      description: escapeHtml(pageSeo.description || ""),
-
-      keywords: escapeHtml(pageSeo.keywords || ""),
-
+      title: escapeHtml(seo.title || "Zain Abro"),
+      description: escapeHtml(seo.description || ""),
+      keywords: escapeHtml(seo.keywords || ""),
       canonical: escapeHtml(canonicalURL),
-
-      ogTitle: escapeHtml(pageSeo.ogTitle || pageSeo.title || ""),
-
-      ogDescription: escapeHtml(
-        pageSeo.ogDescription || pageSeo.description || "",
-      ),
-
+      ogTitle: escapeHtml(seo.ogTitle || seo.title || ""),
+      ogDescription: escapeHtml(seo.ogDescription || seo.description || ""),
       ogImage: escapeHtml(ogImage),
-
-      twitterCard: escapeHtml(pageSeo.twitterCardType || "summary_large_image"),
-
-      robots: escapeHtml(pageSeo.robots || "index, follow"),
+      twitterCard: escapeHtml(seo.twitterCardType || "summary_large_image"),
+      robots: escapeHtml(seo.robots || "index, follow"),
     };
 
-    // Inject SEO metadata into HTML
     let html = htmlTemplate;
 
     const replacements = {
